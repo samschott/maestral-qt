@@ -1,7 +1,7 @@
 import sys
 from setuptools import setup, find_packages
 
-from maestral import __version__
+from maestral_qt import __author__, __version__
 
 CURRENT_PYTHON = sys.version_info[:2]
 REQUIRED_PYTHON = (3, 6)
@@ -27,9 +27,9 @@ have pip >= 9.0 and setuptools >= 24.2, then try again:
 setup(
     name='maestral_qt',
     version=__version__,
-    description='A Qt GUI for the maestral daemon',
+    description='A Qt GUI for the Maestral daemon',
     url='https://github.com/SamSchott/maestral',
-    author='Sam Schott',
+    author=__author__,
     author_email='ss2151@cam.ac.uk',
     license='MIT',
     long_description=open('README.md').read(),
