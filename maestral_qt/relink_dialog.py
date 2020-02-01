@@ -13,10 +13,10 @@ import logging
 from PyQt5 import QtCore, QtWidgets, QtGui, uic
 from PyQt5.QtCore import Qt
 
-# maestral modules
-from maestral.gui.resources import RELINK_DIALOG_PATH, APP_ICON_PATH
-from maestral.gui.utils import get_scaled_font, icon_to_pixmap
-from maestral.gui.utils import BackgroundTask
+# local imports
+from .resources import RELINK_DIALOG_PATH, APP_ICON_PATH
+from .utils import get_scaled_font, icon_to_pixmap
+from .utils import BackgroundTask
 
 logger = logging.getLogger(__name__)
 

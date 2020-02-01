@@ -23,12 +23,12 @@ from PyQt5 import QtCore, QtWidgets
 # maestral modules
 from maestral import __version__
 from maestral.config.main import MaestralConfig
-from maestral.sync.utils import set_keyring_backend
-from maestral.sync.constants import (
+from maestral.utils import set_keyring_backend
+from maestral.constants import (
     IDLE, SYNCING, PAUSED, STOPPED, DISCONNECTED, SYNC_ERROR, ERROR,
     IS_MACOS_BUNDLE,
 )
-from maestral.sync.daemon import (
+from maestral.daemon import (
     start_maestral_daemon_process,
     start_maestral_daemon_thread,
     stop_maestral_daemon_process,
@@ -36,12 +36,14 @@ from maestral.sync.daemon import (
     get_maestral_proxy,
     Start
 )
-from maestral.gui.settings_window import SettingsWindow
-from maestral.gui.sync_issues_window import SyncIssueWindow
-from maestral.gui.rebuild_index_dialog import RebuildIndexDialog
-from maestral.gui.resources import get_system_tray_icon, DESKTOP
-from maestral.gui.autostart import AutoStart
-from maestral.gui.utils import (
+
+# local imports
+from maestral_qt.settings_window import SettingsWindow
+from maestral_qt.sync_issues_window import SyncIssueWindow
+from maestral_qt.rebuild_index_dialog import RebuildIndexDialog
+from maestral_qt.resources import get_system_tray_icon, DESKTOP
+from maestral_qt.autostart import AutoStart
+from maestral_qt.utils import (
     MaestralBackgroundTask,
     BackgroundTaskProgressDialog,
     elide_string,
@@ -159,7 +161,7 @@ class MaestralGuiApp(QtWidgets.QSystemTrayIcon):
         pending_dbx_folder = not os.path.isdir(self._conf.get('main', 'path'))
 
         if pending_link or pending_dbx_folder:
-            from maestral.gui.setup_dialog import SetupDialog
+            from maestral_qt.setup_dialog import SetupDialog
             logger.info('Setting up Maestral...')
             done = SetupDialog.configureMaestral(self._config_name, pending_link)
             if done:
@@ -470,10 +472,10 @@ class MaestralGuiApp(QtWidgets.QSystemTrayIcon):
         elif err['type'] == 'DropboxDeletedError':
             self.restart()  # will launch into setup dialog
         elif err['type'] == 'DropboxAuthError':
-            from maestral.gui.relink_dialog import RelinkDialog
+            from maestral_qt.relink_dialog import RelinkDialog
             self._stop_and_exec_relink_dialog(RelinkDialog.REVOKED)
         elif err['type'] == 'TokenExpiredError':
-            from maestral.gui.relink_dialog import RelinkDialog
+            from maestral_qt.relink_dialog import RelinkDialog
             self._stop_and_exec_relink_dialog(RelinkDialog.EXPIRED)
         else:
             self._stop_and_exec_error_dialog(err)
@@ -482,7 +484,7 @@ class MaestralGuiApp(QtWidgets.QSystemTrayIcon):
 
         self.mdbx.stop_sync()
 
-        from maestral.gui.relink_dialog import RelinkDialog
+        from maestral_qt.relink_dialog import RelinkDialog
 
         relink_dialog = RelinkDialog(self, reason)
         relink_dialog.exec_()  # will perform quit / restart as appropriate

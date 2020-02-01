@@ -94,7 +94,7 @@
   <customwidget>
    <class>QProgressIndicator</class>
    <extends>QWidget</extends>
-   <header>maestral.gui.utils.h</header>
+   <header>maestral_qt.utils.h</header>
    <container>1</container>
   </customwidget>
  </customwidgets>

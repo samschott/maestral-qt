@@ -14,11 +14,11 @@ import urllib
 import click
 from PyQt5 import QtCore, QtGui, QtWidgets, uic
 
-# maestral modules
-from maestral.gui.resources import (SYNC_ISSUES_WINDOW_PATH, SYNC_ISSUE_WIDGET_PATH,
-                                    get_native_item_icon)
-from maestral.gui.utils import (elide_string, icon_to_pixmap, get_scaled_font,
-                                isDarkWindow, LINE_COLOR_DARK, LINE_COLOR_LIGHT)
+# local imports
+from .resources import (SYNC_ISSUES_WINDOW_PATH, SYNC_ISSUE_WIDGET_PATH,
+                        get_native_item_icon)
+from .utils import (elide_string, icon_to_pixmap, get_scaled_font,
+                    isDarkWindow, LINE_COLOR_DARK, LINE_COLOR_LIGHT)
 
 
 class SyncIssueWidget(QtWidgets.QWidget):

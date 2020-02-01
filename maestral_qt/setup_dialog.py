@@ -14,14 +14,16 @@ from PyQt5.QtCore import QModelIndex, Qt
 
 # maestral modules
 from maestral.config.main import MaestralConfig
-from maestral.sync.main import Maestral
-from maestral.sync.utils import handle_disconnect
-from maestral.sync.utils.path import delete_file_or_folder
-from maestral.sync.oauth import OAuth2Session
+from maestral.main import Maestral
+from maestral.utils import handle_disconnect
+from maestral.utils.path import delete_file_or_folder
+from maestral.oauth import OAuth2Session
 from maestral.config.base import get_home_dir
-from maestral.gui.resources import APP_ICON_PATH, SETUP_DIALOG_PATH, get_native_item_icon
-from maestral.gui.utils import UserDialog, icon_to_pixmap, BackgroundTask
-from maestral.gui.folders_dialog import AsyncLoadFolders, TreeModel, DropboxPathModel
+
+# local imports
+from .resources import APP_ICON_PATH, SETUP_DIALOG_PATH, get_native_item_icon
+from .utils import UserDialog, icon_to_pixmap, BackgroundTask
+from .folders_dialog import AsyncLoadFolders, TreeModel, DropboxPathModel
 
 
 class SetupDialog(QtWidgets.QDialog):

@@ -13,8 +13,10 @@ from PyQt5.QtCore import Qt, QRect
 from PyQt5.QtGui import QBrush, QImage, QPainter, QPixmap
 
 # maestral modules
-from maestral.gui.resources import APP_ICON_PATH, rgb_to_luminance
-from maestral.sync.daemon import MaestralProxy
+from maestral.daemon import MaestralProxy
+
+# local imports
+from .resources import APP_ICON_PATH, rgb_to_luminance
 
 THEME_DARK = 'dark'
 THEME_LIGHT = 'light'

@@ -9,9 +9,9 @@ Created on Wed Oct 31 16:23:13 2018
 # external packages
 from PyQt5 import QtCore, QtWidgets, uic
 
-# maestral modules
-from maestral.gui.resources import REBUILD_INDEX_DIALOG_PATH
-from maestral.gui.utils import MaestralBackgroundTask, get_scaled_font
+# local imports
+from .resources import REBUILD_INDEX_DIALOG_PATH
+from .utils import MaestralBackgroundTask, get_scaled_font
 
 
 class RebuildIndexDialog(QtWidgets.QDialog):

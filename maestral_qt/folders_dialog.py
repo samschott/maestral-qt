@@ -15,10 +15,12 @@ from PyQt5 import QtCore, QtWidgets, QtGui, uic
 from PyQt5.QtCore import QAbstractItemModel, QModelIndex, Qt, QVariant
 
 # maestral modules
-from maestral.sync.utils.path import is_child
-from maestral.sync.utils import handle_disconnect
-from maestral.gui.resources import FOLDERS_DIALOG_PATH, get_native_folder_icon
-from maestral.gui.utils import BackgroundTask
+from maestral.utils.path import is_child
+from maestral.utils import handle_disconnect
+
+# local imports
+from .resources import FOLDERS_DIALOG_PATH, get_native_folder_icon
+from .utils import BackgroundTask
 
 logger = logging.getLogger(__name__)
 
