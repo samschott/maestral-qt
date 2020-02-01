@@ -135,6 +135,7 @@ Icon?
 Network Trash Folder
 Temporary Items
 .apdisk
+.idea/**
 .idea/dictionaries/samschott.xml
 .idea/inspectionProfiles/Project_Default.xml
 .idea/maestral.iml
