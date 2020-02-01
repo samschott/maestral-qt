@@ -156,7 +156,7 @@ class SettingsWindow(QtWidgets.QWidget):
             pixmap = get_masked_image(self.mdbx.account_profile_pic_path, size=self._profile_pic_height)
         except OSError:
             initials = self.mdbx.get_conf("account", "abbreviated_name")
-            pixmap = get_masked_image(FACEHOLDER_PATH, size=self._profile_pic_height, overlay_text=initials)
+            pixmap = get_masked_image(FACEHOLDER_PATH, size=self._profile_pic_height)
 
         self.labelUserProfilePic.setPixmap(pixmap)
 
