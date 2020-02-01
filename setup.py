@@ -51,8 +51,8 @@ setup(
         'click>=7.0',
         'keyring>=19.0.0',
         'keyrings.alt>=3.0.0',
-        'maestral>=0.6.0',
-        'PyQt5>5.9',
+        'maestral',
+        'PyQt5>=5.9',
     ],
     zip_safe=False,
     entry_points={
