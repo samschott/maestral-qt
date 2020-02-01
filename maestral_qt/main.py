@@ -113,8 +113,6 @@ class MaestralGuiApp(QtWidgets.QSystemTrayIcon):
         self.show_when_systray_available()
 
         self.menu = QtWidgets.QMenu()
-        self.menu.aboutToShow.connect(self._onContextMenuAboutToShow)
-        self.menu.aboutToHide.connect(self._onContextMenuAboutToHide)
         self.setContextMenu(self.menu)
 
         self.setup_ui_unlinked()
@@ -522,22 +520,6 @@ class MaestralGuiApp(QtWidgets.QSystemTrayIcon):
 
         if auto_share:
             self.mdbx.set_conf('app', 'analytics', True)
-
-    @QtCore.pyqtSlot()
-    def _onContextMenuAboutToShow(self):
-        self._context_menu_visible = True
-
-        if IS_MACOS:
-            self.icons = self.load_tray_icons('light')
-            self.setIcon(self._current_icon)
-
-    @QtCore.pyqtSlot()
-    def _onContextMenuAboutToHide(self):
-        self._context_menu_visible = False
-
-        if IS_MACOS:
-            self.icons = self.load_tray_icons()
-            self.setIcon(self._current_icon)
 
     def contextMenuVisible(self):
         return self._context_menu_visible

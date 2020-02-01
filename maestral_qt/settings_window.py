@@ -22,7 +22,7 @@ from maestral.gui.resources import (get_native_item_icon, UNLINK_DIALOG_PATH,
                                     SETTINGS_WINDOW_PATH, APP_ICON_PATH, FACEHOLDER_PATH)
 from maestral.gui.utils import (
     get_scaled_font, isDarkWindow,
-    LINE_COLOR_DARK, LINE_COLOR_LIGHT, IS_MACOS,
+    LINE_COLOR_DARK, LINE_COLOR_LIGHT,
     icon_to_pixmap, get_masked_image, MaestralBackgroundTask
 )
 
@@ -86,12 +86,6 @@ class SettingsWindow(QtWidgets.QWidget):
         # fixes sizes of label and profile pic
         self.labelAccountName.setFixedHeight(self.labelAccountName.height())
         self._profile_pic_height = round(self.labelUserProfilePic.height() * 0.65)
-
-        if IS_MACOS:  # bug fixes for macOS
-            self.setAttribute(QtCore.Qt.WA_TranslucentBackground)  # allows for proper adjustment of window color in dark mode
-            self.spacerMacOS.setFixedWidth(2 if NEW_QT else 0)  # fix for combobox spacing in qt 5.11 and higher
-            self.comboBoxUpdateInterval.setFocusPolicy(QtCore.Qt.NoFocus)  # don't show combobox focus, it is offset
-            self.comboBoxDropboxPath.setFocusPolicy(QtCore.Qt.NoFocus)  # don't show combobox focus, it is offset
 
         self.refresh_gui()
 
