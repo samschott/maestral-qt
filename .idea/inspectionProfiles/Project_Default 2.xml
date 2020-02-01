@@ -1,0 +1,104 @@
+<component name="InspectionProjectProfileManager">
+  <profile version="1.0">
+    <option name="myName" value="Project Default" />
+    <inspection_tool class="ProblematicWhitespace" enabled="true" level="WARNING" enabled_by_default="true" />
+    <inspection_tool class="PyBroadExceptionInspection" enabled="false" level="WEAK WARNING" enabled_by_default="false" />
+    <inspection_tool class="PyClassicStyleClassInspection" enabled="true" level="WARNING" enabled_by_default="true" />
+    <inspection_tool class="PyCompatibilityInspection" enabled="true" level="WARNING" enabled_by_default="true">
+      <option name="ourVersions">
+        <value>
+          <list size="3">
+            <item index="0" class="java.lang.String" itemvalue="3.6" />
+            <item index="1" class="java.lang.String" itemvalue="3.7" />
+            <item index="2" class="java.lang.String" itemvalue="3.8" />
+          </list>
+        </value>
+      </option>
+    </inspection_tool>
+    <inspection_tool class="PyPackageRequirementsInspection" enabled="true" level="WARNING" enabled_by_default="true">
+      <option name="ignoredPackages">
+        <value>
+          <list size="4">
+            <item index="0" class="java.lang.String" itemvalue="PyQt5" />
+            <item index="1" class="java.lang.String" itemvalue="systemd-python" />
+            <item index="2" class="java.lang.String" itemvalue="systemd" />
+            <item index="3" class="java.lang.String" itemvalue="maestral" />
+          </list>
+        </value>
+      </option>
+    </inspection_tool>
+    <inspection_tool class="PyPep8NamingInspection" enabled="true" level="WEAK WARNING" enabled_by_default="true">
+      <option name="ignoredErrors">
+        <list>
+          <option value="N803" />
+          <option value="N802" />
+          <option value="N806" />
+        </list>
+      </option>
+      <option name="ignoredBaseClasses">
+        <list>
+          <option value="unittest.TestCase" />
+          <option value="unittest.case.TestCase" />
+          <option value="PyQt5.QtWidgets.QDialog" />
+        </list>
+      </option>
+    </inspection_tool>
+    <inspection_tool class="PyProtectedMemberInspection" enabled="false" level="WEAK WARNING" enabled_by_default="false" />
+    <inspection_tool class="PyStubPackagesAdvertiser" enabled="true" level="WARNING" enabled_by_default="true">
+      <option name="ignoredPackages">
+        <list>
+          <option value="PyQt5" />
+          <option value="PyQt5-stubs==5.13.1.4" />
+        </list>
+      </option>
+    </inspection_tool>
+    <inspection_tool class="PyUnresolvedReferencesInspection" enabled="true" level="WARNING" enabled_by_default="true">
+      <option name="ignoredIdentifiers">
+        <list>
+          <option value="PyQt5.QtCore.pyqtSignal.*" />
+          <option value="matplotlib.*" />
+          <option value="PyQt5.QtCore.timeout.*" />
+          <option value="os.startfile" />
+          <option value="PyQt5.QtCore.aboutToQuit.*" />
+          <option value="PyQt5.QtCore.started.*" />
+          <option value="object.__getattr__" />
+          <option value="pygments.formatters.HtmlFormatter" />
+          <option value="pygments.lexers.PythonTracebackLexer" />
+          <option value="PyQt5.QtWidgets.accepted.connect" />
+          <option value="PyQt5.QtWidgets.rejected.*" />
+          <option value="PyQt5.QtWidgets.fileSelected.*" />
+          <option value="dropbox.*" />
+          <option value="maestral.monitor.TimedQueue.queue" />
+          <option value="PyQt5.QtWidgets.hovered.*" />
+          <option value="PyQt5.QtWidgets.aboutToShow.*" />
+          <option value="PyQt5.QtWidgets.triggered.*" />
+          <option value="http.server.HTTPServer.query_params" />
+          <option value="sys._MEIPASS" />
+          <option value="Pyro4.errors" />
+          <option value="Pyro4.naming" />
+          <option value="PyQt5.QtCore.dataChanged.emit" />
+          <option value="urllib.parse" />
+          <option value="PyQt5.QtCore.dataChanged.*" />
+          <option value="PyQt5.QtCore.layoutChanged.*" />
+          <option value="PyQt5.QtCore.modelReset.*" />
+          <option value="keyring.*" />
+          <option value="queue.Queue.mutex" />
+          <option value="Pyro4.util" />
+          <option value="objc.*" />
+          <option value="Foundation.*" />
+          <option value="PyQt5.QtWidgets.aboutToHide.*" />
+          <option value="UserNotifications.*" />
+          <option value="multiprocessing.context.BaseContext.Process" />
+        </list>
+      </option>
+    </inspection_tool>
+    <inspection_tool class="RegExpRedundantEscape" enabled="true" level="WEAK WARNING" enabled_by_default="true" />
+    <inspection_tool class="RestRoleInspection" enabled="true" level="WARNING" enabled_by_default="true">
+      <option name="ignoredRoles">
+        <value>
+          <list size="0" />
+        </value>
+      </option>
+    </inspection_tool>
+  </profile>
+</component>
