@@ -52,6 +52,7 @@ setup(
         'keyring>=19.0.0',
         'keyrings.alt>=3.0.0',
         'maestral',
+        'markdown2',
         'PyQt5>=5.9',
     ],
     zip_safe=False,

@@ -8,6 +8,7 @@ Created on Wed Oct 31 16:23:13 2018
 import platform
 
 # external packages
+import markdown2
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtCore import Qt, QRect
 from PyQt5.QtGui import QBrush, QImage, QPainter, QPixmap
@@ -749,7 +750,7 @@ def show_stacktrace_dialog(traceback, ask_share=False):
         return share, ask_share
 
 
-def show_update_dialog(latest_release, release_notes_html):
+def show_update_dialog(latest_release, release_notes_md):
 
     url_r = 'https://github.com/samschott/maestral-dropbox/releases'
     message = (
@@ -760,6 +761,7 @@ def show_update_dialog(latest_release, release_notes_html):
         '<div style="height:5px;font-size:5px;">&nbsp;<br></div>'
         '<b>Release notes:</b>'
     ).format(latest_release, url_r)
+    release_notes_html = markdown2.markdown(release_notes_md)
     list_style = '<ul style="margin-top: 0px; margin-bottom: 0px; margin-left: -20px; ' \
                  'margin-right: 0px; -qt-list-indent: 1;">'
     styled_release_notes = release_notes_html.replace('<ul>', list_style)
