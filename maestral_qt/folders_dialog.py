@@ -10,13 +10,13 @@ import logging
 import threading
 
 # external packages
-from Pyro5 import client
 from PyQt5 import QtCore, QtWidgets, QtGui, uic
 from PyQt5.QtCore import QAbstractItemModel, QModelIndex, Qt, QVariant
 
 # maestral modules
 from maestral.utils.path import is_child
 from maestral.utils import handle_disconnect
+from maestral.daemon import Proxy
 
 # local imports
 from .resources import FOLDERS_DIALOG_PATH, get_native_folder_icon
@@ -391,9 +391,9 @@ class AsyncLoadFolders(QtCore.QObject):
 
             path = "" if path == '/' else path
 
-            if isinstance(self.m, client.Proxy):
+            if isinstance(self.m, Proxy):
                 # use a duplicate proxy to prevent blocking of the main connection
-                with client.Proxy(self.m._pyroUri) as m:
+                with Proxy(self.m._pyroUri) as m:
                     entries = m.list_folder(path, recursive=False)
             else:
                 entries = self.m.list_folder(path, recursive=False)

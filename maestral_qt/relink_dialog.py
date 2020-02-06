@@ -36,7 +36,7 @@ class RelinkDialog(QtWidgets.QDialog):
         uic.loadUi(RELINK_DIALOG_PATH, self)
 
         # import OAuth2Session here because of ~40 MB memory footprint
-        from maestral.sync.oauth import OAuth2Session
+        from maestral.oauth import OAuth2Session
 
         self._parent = parent
         self.auth_session = OAuth2Session(self._parent.mdbx.config_name)
@@ -123,7 +123,7 @@ class RelinkDialog(QtWidgets.QDialog):
     @QtCore.pyqtSlot(object)
     def on_verify_token_finished(self, res):
 
-        from maestral.sync.oauth import OAuth2Session
+        from maestral.oauth import OAuth2Session
 
         if res == OAuth2Session.Success:
             self.auth_session.save_creds()
