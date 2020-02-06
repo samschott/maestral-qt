@@ -16,6 +16,7 @@ from PyQt5 import QtGui, QtCore, QtWidgets, uic
 # maestral modules
 from maestral import __version__, __author__, __url__
 from maestral.config.base import get_home_dir
+from maestral.utils.notify import FILECHANGE
 
 # local imports
 from .autostart import AutoStart
@@ -137,7 +138,7 @@ class SettingsWindow(QtWidgets.QWidget):
 
         # populate app section
         self.checkBoxStartup.setChecked(self.autostart.enabled)
-        self.checkBoxNotifications.setChecked(self.mdbx.get_conf("app", "notification_level") == 15)
+        self.checkBoxNotifications.setChecked(self.mdbx.get_conf("app", "notification_level") == FILECHANGE)
         self.checkBoxAnalytics.setChecked(self.mdbx.get_conf("app", "analytics"))
         update_interval = self.mdbx.get_conf("app", "update_notification_interval")
         closest_key = min(
