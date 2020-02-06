@@ -137,7 +137,7 @@ class SettingsWindow(QtWidgets.QWidget):
 
         # populate app section
         self.checkBoxStartup.setChecked(self.autostart.enabled)
-        self.checkBoxNotifications.setChecked(self.mdbx.get_conf("app", "notifications"))
+        self.checkBoxNotifications.setChecked(self.mdbx.get_conf("app", "notification_level") == 15)
         self.checkBoxAnalytics.setChecked(self.mdbx.get_conf("app", "analytics"))
         update_interval = self.mdbx.get_conf("app", "update_notification_interval")
         closest_key = min(
