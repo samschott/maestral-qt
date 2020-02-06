@@ -394,12 +394,11 @@ class MaestralGuiApp(QtWidgets.QSystemTrayIcon):
         # add new actions
         for dbx_path in reversed(self.mdbx.get_conf('internal', 'recent_changes')):
             file_name = os.path.basename(dbx_path)
-            truncated_name = elide_string(file_name, font=self.menu.font(), side='right')
+            truncated_name = elide_string(file_name, font=self.menu.font())
             local_path = self.mdbx.to_local_path(dbx_path)
             action = self.recentFilesMenu.addAction(truncated_name)
             action.setData(local_path)
             action.triggered.connect(self.on_recent_file_clicked)
-            del action
 
     @QtCore.pyqtSlot()
     def on_recent_file_clicked(self):
