@@ -13,6 +13,7 @@ import logging
 import platform
 import time
 from subprocess import Popen
+from datetime import timedelta, datetime
 
 # external packages
 import click
@@ -135,6 +136,7 @@ class MaestralGuiApp(QtWidgets.QSystemTrayIcon):
     def update_ui(self):
         if self.mdbx:
             self.update_status()
+            self.update_snoozed()
             self.update_error()
 
     def show_when_systray_available(self):
@@ -260,6 +262,7 @@ class MaestralGuiApp(QtWidgets.QSystemTrayIcon):
         self.statusAction.setEnabled(False)
         self.pauseAction = self.menu.addAction(self.PAUSE_TEXT if self.mdbx.syncing else self.RESUME_TEXT)
         self.pauseAction.triggered.connect(self.on_start_stop_clicked)
+
         self.recentFilesMenu = self.menu.addMenu('Recently Changed Files')
         if platform.system() == 'Linux':
             # on linux, submenu.aboutToShow may not be emitted
@@ -271,19 +274,36 @@ class MaestralGuiApp(QtWidgets.QSystemTrayIcon):
 
         self.menu.addSeparator()
 
+        self.snoozeMenu = self.menu.addMenu('Snooze Notifications')
+        self.snooze30 = self.snoozeMenu.addAction('For the next 30 minutes')
+        self.snooze60 = self.snoozeMenu.addAction('For the next hour')
+        self.snooze480 = self.snoozeMenu.addAction('For the next 8 hours')
+
+        def _snooze_for(minutes):
+            self.mdbx.notification_snooze = minutes
+
+        self.snooze30.triggered.connect(lambda: _snooze_for(30))
+        self.snooze60.triggered.connect(lambda: _snooze_for(60))
+        self.snooze480.triggered.connect(lambda: _snooze_for(480))
+        self.snoozeSeparator = QtWidgets.QAction()
+        self.snoozeSeparator.setSeparator(True)
+
+        self.resumeNotificationsAction = QtWidgets.QAction('Turn on notifications')
+        self.resumeNotificationsAction.triggered.connect(lambda: _snooze_for(0))
+
+        self.syncIssuesAction = self.menu.addAction('Show Sync Issues...')
+        self.syncIssuesAction.triggered.connect(self.on_sync_issues_clicked)
+        rebuildAction = self.menu.addAction('Rebuild index...')
+        rebuildAction.triggered.connect(self.on_rebuild_clicked)
+
+        self.menu.addSeparator()
+
         preferencesAction = self.menu.addAction('Preferences...')
         preferencesAction.triggered.connect(self.on_settings_clicked)
         updatesAction = self.menu.addAction('Check for Updates...')
         updatesAction.triggered.connect(self.on_check_for_updates_clicked)
         helpAction = self.menu.addAction('Help Center')
         helpAction.triggered.connect(self.on_help_clicked)
-
-        self.menu.addSeparator()
-
-        self.syncIssuesAction = self.menu.addAction('Show Sync Issues...')
-        self.syncIssuesAction.triggered.connect(self.on_sync_issues_clicked)
-        rebuildAction = self.menu.addAction('Rebuild index...')
-        rebuildAction.triggered.connect(self.on_rebuild_clicked)
 
         self.menu.addSeparator()
 
@@ -360,6 +380,21 @@ class MaestralGuiApp(QtWidgets.QSystemTrayIcon):
         elif self.pauseAction.text() == 'Start Syncing':
             self.mdbx.start_sync()
             self.pauseAction.setText(self.PAUSE_TEXT)
+
+    @QtCore.pyqtSlot()
+    def update_snoozed(self):
+        minutes = self.mdbx.notification_snooze
+
+        if minutes > 0:
+            eta = datetime.now() + timedelta(minutes=minutes)
+
+            self.snoozeMenu.setTitle('Notifications snoozed until %s' % eta.strftime('%H:%M'))
+            self.snoozeMenu.insertAction(self.snooze30, self.resumeNotificationsAction)
+            self.snoozeMenu.insertAction(self.snooze30, self.snoozeSeparator)
+        else:
+            self.snoozeMenu.removeAction(self.resumeNotificationsAction)
+            self.snoozeMenu.removeAction(self.snoozeSeparator)
+            self.snoozeMenu.setTitle('Snooze Notifications')
 
     @QtCore.pyqtSlot()
     def on_settings_clicked(self):
