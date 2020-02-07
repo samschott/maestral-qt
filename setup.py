@@ -36,15 +36,15 @@ setup(
     long_description_content_type='text/markdown',
     packages=find_packages(),
     package_data={
-            'maestral_qt': [
-                    'resources/*.ui',
-                    'resources/*.icns',
-                    'resources/*.png',
-                    'resources/*.svg',
-                    'resources/*/*.svg',
-                    'resources/*/*.png',
-                    ],
-            },
+        'maestral_qt': [
+            'resources/*.ui',
+            'resources/*.icns',
+            'resources/*.png',
+            'resources/*.svg',
+            'resources/*/*.svg',
+            'resources/*/*.png',
+            ],
+        },
     setup_requires=['wheel'],
     install_requires=[
         'bugsnag',
