@@ -349,6 +349,12 @@ class UserDialog(QtWidgets.QDialog):
     def setAcceptButtonName(self, name):
         self.buttonBox.buttons()[0].setText(name)
 
+    def setAcceptButtonIcon(self, icon):
+        if isinstance(icon, QtGui.QIcon):
+            self.buttonBox.buttons()[0].setIcon(icon)
+        elif isinstance(icon, str):
+            self.buttonBox.buttons()[0].setIcon(QtGui.QIcon.fromTheme(icon))
+
     def addCancelButton(self, name='Cancel', icon=None):
         self._cancelButton = self.buttonBox.addButton(QtWidgets.QDialogButtonBox.Cancel)
         self._cancelButton.setText(name)
