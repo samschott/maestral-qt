@@ -16,7 +16,7 @@ from PyQt5 import QtGui, QtCore, QtWidgets, uic
 # maestral modules
 from maestral import __version__, __author__, __url__
 from maestral.config.base import get_home_dir
-from maestral.utils.notify import FILECHANGE
+from maestral.utils.notify import FILECHANGE, SYNCISSUE
 
 # local imports
 from .autostart import AutoStart
@@ -221,7 +221,8 @@ class SettingsWindow(QtWidgets.QWidget):
 
     @QtCore.pyqtSlot(int)
     def on_notifications_clicked(self, state):
-        self.mdbx.set_conf("app", "notifications", state == 2)
+        level = FILECHANGE if state == 2 else SYNCISSUE
+        self.mdbx.set_conf("app", "notification_level", level)
 
     @QtCore.pyqtSlot(int)
     def on_analytics_clicked(self, state):
