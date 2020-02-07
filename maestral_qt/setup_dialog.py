@@ -8,7 +8,6 @@ Created on Wed Oct 31 16:23:13 2018
 
 # system imports
 import os.path as osp
-import shutil
 from PyQt5 import QtGui, QtCore, QtWidgets, uic
 from PyQt5.QtCore import QModelIndex, Qt
 
@@ -228,36 +227,47 @@ class SetupDialog(QtWidgets.QDialog):
 
         # apply dropbox path
         dropbox_path = osp.join(self.dropbox_location, self.mdbx.get_conf("main", "default_dir_name"))
-        if osp.isdir(dropbox_path):
-            msg = ('The folder "{}" already exists. Would '
-                   'you like to keep using it?').format(dropbox_path)
-            msg_box = UserDialog("Folder already exists", msg, parent=self)
-            msg_box.setAcceptButtonName("Keep")
-            msg_box.addSecondAcceptButton("Replace", icon="edit-clear")
-            msg_box.addCancelButton()
-            res = msg_box.exec_()
 
-            if res == 1:
+        if osp.exists(dropbox_path):
+            if osp.isdir(dropbox_path):
+                msg = ('The folder "{}" already exists. Would '
+                       'you like to keep using it?').format(dropbox_path)
+                msg_box = UserDialog("Folder already exists", msg, parent=self)
+                msg_box.setAcceptButtonName("Replace")
+                msg_box.setAcceptButtonIcon("edit-clear")
+                msg_box.addSecondAcceptButton("Keep")
+                msg_box.addCancelButton()
+                res = msg_box.exec_()
+
+            else:
+                msg = ('There already is a file named "{0}" at this location. Would '
+                       'you like to replace it?'.format(self.mdbx.get_conf("main", "default_dir_name")))
+                msg_box = UserDialog("File conflict", msg, parent=self)
+                msg_box.setAcceptButtonName("Replace")
+                msg_box.addCancelButton()
+                res = msg_box.exec_()
+
+            if res == UserDialog.Rejected:
+                return
+            elif res == UserDialog.Accepted:
+                err = delete_file_or_folder(dropbox_path)
+                if err:
+                    msg = ("Please check if you have permissions to write to the "
+                           "selected location.")
+                    msg_box = UserDialog("Could not write to destination", msg, parent=self)
+                    msg_box.exec_()
+                    return
+            elif res == UserDialog.Accepted2:
                 pass
-            elif res == 2:
-                shutil.rmtree(dropbox_path, ignore_errors=True)
-            else:
-                return
 
-        elif osp.isfile(dropbox_path):
-            msg = ('There already is a file named "{0}" at this location. Would '
-                   'you like to replace it?'.format(self.mdbx.get_conf("main", "default_dir_name")))
-            msg_box = UserDialog("File conflict", msg, parent=self)
-            msg_box.setAcceptButtonName("Replace")
-            msg_box.addCancelButton()
-            res = msg_box.exec_()
-
-            if res == 0:
-                return
-            else:
-                delete_file_or_folder(dropbox_path)
-
-        self.mdbx.create_dropbox_directory(path=dropbox_path, overwrite=False)
+        try:
+            self.mdbx.create_dropbox_directory(dropbox_path)
+        except OSError:
+            msg = ("Please check if you have permissions to write to the "
+                   "selected location.")
+            msg_box = UserDialog("Could not create directory", msg, parent=self)
+            msg_box.exec_()
+            return
 
         # switch to next page
         self.mdbx.set_conf("main", "excluded_folders", [])

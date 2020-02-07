@@ -24,6 +24,7 @@ from .folders_dialog import FoldersDialog
 from .resources import (get_native_item_icon, UNLINK_DIALOG_PATH,
                         SETTINGS_WINDOW_PATH, APP_ICON_PATH, FACEHOLDER_PATH)
 from .utils import (
+    UserDialog,
     get_scaled_font, isDarkWindow,
     LINE_COLOR_DARK, LINE_COLOR_LIGHT,
     icon_to_pixmap, get_masked_image, MaestralBackgroundTask
@@ -206,11 +207,19 @@ class SettingsWindow(QtWidgets.QWidget):
 
         self.comboBoxDropboxPath.setCurrentIndex(0)
         if not new_location == '':
-            self.comboBoxDropboxPath.setItemText(0, self.rel_path(new_location))
-            self.comboBoxDropboxPath.setItemIcon(0, get_native_item_icon(new_location))
 
             new_path = osp.join(new_location, self.mdbx.get_conf("main", "default_dir_name"))
-            self.mdbx.move_dropbox_directory(new_path)
+
+            try:
+                self.mdbx.move_dropbox_directory(new_path)
+            except OSError:
+                msg = ("Please check if you have permissions to write to the "
+                       "selected location.")
+                msg_box = UserDialog("Could not create directory", msg, parent=self)
+                msg_box.exec_()
+            else:
+                self.comboBoxDropboxPath.setItemText(0, self.rel_path(new_location))
+                self.comboBoxDropboxPath.setItemIcon(0, get_native_item_icon(new_location))
 
     @QtCore.pyqtSlot(int)
     def on_start_on_login_clicked(self, state):
