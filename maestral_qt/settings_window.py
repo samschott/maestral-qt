@@ -216,7 +216,8 @@ class SettingsWindow(QtWidgets.QWidget):
                 msg = ("Please check if you have permissions to write to the "
                        "selected location.")
                 msg_box = UserDialog("Could not create directory", msg, parent=self)
-                msg_box.exec_()
+                msg_box.open()  # no need to block with exec
+                self.mdbx.resume_sync()
             else:
                 self.comboBoxDropboxPath.setItemText(0, self.rel_path(new_location))
                 self.comboBoxDropboxPath.setItemIcon(0, get_native_item_icon(new_location))
