@@ -25,7 +25,7 @@ have pip >= 9.0 and setuptools >= 24.2, then try again:
 
 
 setup(
-    name='maestral_qt',
+    name='maestral-qt',
     version=__version__,
     description='A Qt GUI for the Maestral daemon',
     url='https://github.com/SamSchott/maestral',
@@ -57,7 +57,7 @@ setup(
     ],
     zip_safe=False,
     entry_points={
-      'console_scripts': ['maestral_qt=maestral_qt.main:run'],
+      'console_scripts': ['maestral_qt=maestral_qt.main:run_from_console'],
     },
     python_requires='>=3.6',
     classifiers=[

@@ -620,5 +620,15 @@ def run(config_name='maestral'):
     sys.exit(app.exec())
 
 
+def run_from_console():
+    import argparse
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-c', help='config name', default='maestral')
+    args = parser.parse_args()
+
+    run(args.c)
+
+
 if __name__ == '__main__':
     run()
