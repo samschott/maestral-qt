@@ -1,3 +1,1 @@
-## v1.0.0
-
-Initial commit, split off from `maestral`.
+For release notes, please refer to [Maestral](https://www.github.com/samschott/maestral).
