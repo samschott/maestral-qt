@@ -263,6 +263,8 @@ class UserDialog(QtWidgets.QDialog):
 
     MINIMUM_BUTTON_SIZE = 85
 
+    Accepted2 = 2
+
     def __init__(self, title, message, details=None, checkbox=None, parent=None, button_names=('Ok',)):
         """
         A user dialog for Maestral.
@@ -366,7 +368,7 @@ class UserDialog(QtWidgets.QDialog):
             self._acceptButton2.setIcon(icon)
         elif isinstance(icon, str):
             self._acceptButton2.setIcon(QtGui.QIcon.fromTheme(icon))
-        self._acceptButton2.clicked.connect(lambda: self.setResult(2))
+        self._acceptButton2.clicked.connect(lambda: self.setResult(self.Accepted2))
         self._acceptButton2.clicked.connect(self.close)
 
     def setSecondAcceptButtonName(self, name):
