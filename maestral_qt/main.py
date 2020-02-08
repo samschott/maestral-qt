@@ -17,14 +17,12 @@ from datetime import timedelta, datetime
 
 # external packages
 import click
-import keyring
-from keyring.errors import KeyringLocked
 from PyQt5 import QtCore, QtWidgets
 
 # maestral modules
 from maestral import __version__
 from maestral.config.main import MaestralConfig
-from maestral.utils import set_keyring_backend
+from maestral.utils import pending_link, pending_dropbox_folder
 from maestral.constants import (
     IDLE, SYNCING, PAUSED, STOPPED, DISCONNECTED, SYNC_ERROR, ERROR,
     IS_MACOS_BUNDLE,
@@ -55,7 +53,6 @@ from maestral_qt.utils import (
 )
 
 logger = logging.getLogger(__name__)
-set_keyring_backend()
 
 
 # noinspection PyTypeChecker,PyArgumentList
@@ -159,10 +156,7 @@ class MaestralGuiApp(QtWidgets.QSystemTrayIcon):
 
     def load_maestral(self):
 
-        pending_link = not _is_linked(self._conf)
-        pending_dbx_folder = not os.path.isdir(self._conf.get('main', 'path'))
-
-        if pending_link or pending_dbx_folder:
+        if pending_link(self._config_name) or pending_dropbox_folder(self._config_name):
             from maestral_qt.setup_dialog import SetupDialog
             logger.info('Setting up Maestral...')
             done = SetupDialog.configureMaestral(self._config_name, pending_link)
@@ -279,17 +273,17 @@ class MaestralGuiApp(QtWidgets.QSystemTrayIcon):
         self.snooze60 = self.snoozeMenu.addAction('For the next hour')
         self.snooze480 = self.snoozeMenu.addAction('For the next 8 hours')
 
-        def _snooze_for(minutes):
+        def snooze_for(minutes):
             self.mdbx.notification_snooze = minutes
 
-        self.snooze30.triggered.connect(lambda: _snooze_for(30))
-        self.snooze60.triggered.connect(lambda: _snooze_for(60))
-        self.snooze480.triggered.connect(lambda: _snooze_for(480))
+        self.snooze30.triggered.connect(lambda: snooze_for(30))
+        self.snooze60.triggered.connect(lambda: snooze_for(60))
+        self.snooze480.triggered.connect(lambda: snooze_for(480))
         self.snoozeSeparator = QtWidgets.QAction()
         self.snoozeSeparator.setSeparator(True)
 
         self.resumeNotificationsAction = QtWidgets.QAction('Turn on notifications')
-        self.resumeNotificationsAction.triggered.connect(lambda: _snooze_for(0))
+        self.resumeNotificationsAction.triggered.connect(lambda: snooze_for(0))
 
         self.syncIssuesAction = self.menu.addAction('Show Sync Issues...')
         self.syncIssuesAction.triggered.connect(self.on_sync_issues_clicked)
@@ -609,24 +603,6 @@ class MaestralGuiApp(QtWidgets.QSystemTrayIcon):
 
         # quit Maestral
         self.quit(stop_daemon=True)
-
-
-def _is_linked(conf):
-    """
-    Checks if auth key has been saved.
-
-    :raises: ``KeyringLocked`` if the system keyring cannot be accessed.
-    """
-    account_id = conf.get('account', 'account_id')
-    try:
-        if account_id == "":
-            access_token = None
-        else:
-            access_token = keyring.get_password('Maestral', account_id)
-        return access_token
-    except KeyringLocked:
-        info = 'Please make sure that your keyring is unlocked and restart Maestral.'
-        raise KeyringLocked(info)
 
 
 def _is_pyqt_obj(obj):
