@@ -88,7 +88,7 @@ class MaestralGuiApp(QtWidgets.QSystemTrayIcon):
     def __init__(self, config_name='maestral'):
         QtWidgets.QSystemTrayIcon.__init__(self)
 
-        self._config_name = config_name
+        self.config_name = config_name
         self._conf = MaestralConfig(config_name)
 
         self._n_sync_errors = None
@@ -156,10 +156,10 @@ class MaestralGuiApp(QtWidgets.QSystemTrayIcon):
 
     def load_maestral(self):
 
-        if pending_link(self._config_name) or pending_dropbox_folder(self._config_name):
+        if pending_link(self.config_name) or pending_dropbox_folder(self.config_name):
             from maestral_qt.setup_dialog import SetupDialog
             logger.info('Setting up Maestral...')
-            done = SetupDialog.configureMaestral(self._config_name, pending_link)
+            done = SetupDialog.configureMaestral(self.config_name, pending_link)
             if done:
                 logger.info('Successfully set up Maestral')
                 self.restart()
@@ -172,14 +172,14 @@ class MaestralGuiApp(QtWidgets.QSystemTrayIcon):
 
     def _get_or_start_maestral_daemon(self):
 
-        pid = get_maestral_pid(self._config_name)
+        pid = get_maestral_pid(self.config_name)
         if pid:
             self._started = False
         else:
             if IS_MACOS_BUNDLE:
-                res = start_maestral_daemon_thread(self._config_name)
+                res = start_maestral_daemon_thread(self.config_name)
             else:
-                res = start_maestral_daemon_process(self._config_name)
+                res = start_maestral_daemon_process(self.config_name)
             if res == Start.Failed:
                 title = 'Could not start Maestral'
                 message = ('Could not start or connect to sync daemon. Please try again '
@@ -191,7 +191,7 @@ class MaestralGuiApp(QtWidgets.QSystemTrayIcon):
             elif res == Start.Ok:
                 self._started = True
 
-        return get_maestral_proxy(self._config_name)
+        return get_maestral_proxy(self.config_name)
 
     def setup_ui_unlinked(self):
 
@@ -576,7 +576,7 @@ class MaestralGuiApp(QtWidgets.QSystemTrayIcon):
         # stop sync daemon if we started it or ``stop_daemon==True``
         if stop_daemon and self.mdbx and not IS_MACOS_BUNDLE:
             self.mdbx._pyroRelease()
-            stop_maestral_daemon_process(self._config_name)
+            stop_maestral_daemon_process(self.config_name)
 
         # quit
         self.deleteLater()
@@ -596,10 +596,10 @@ class MaestralGuiApp(QtWidgets.QSystemTrayIcon):
             Popen('lsof -p {0} +r 1 &>/dev/null; {0}'.format(launch_command), shell=True)
         elif IS_MACOS:
             Popen('lsof -p {0} +r 1 &>/dev/null; maestral gui --config-name=\'{1}\''.format(
-                pid, self._config_name), shell=True)
+                pid, self.config_name), shell=True)
         elif platform.system() == 'Linux':
             Popen('tail --pid={0} -f /dev/null; maestral gui --config-name=\'{1}\''.format(
-                pid, self._config_name), shell=True)
+                pid, self.config_name), shell=True)
 
         # quit Maestral
         self.quit(stop_daemon=True)
