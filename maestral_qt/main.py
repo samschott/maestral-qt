@@ -569,19 +569,18 @@ class MaestralGuiApp(QtWidgets.QSystemTrayIcon):
         """
         logger.info('Quitting...')
 
-        if stop_daemon is None:
-            stop_daemon = self._started
-
         # stop update timer to stop communication with daemon
         self.update_ui_timer.stop()
 
-        # stop sync daemon if we started it or ``stop_daemon==True``
-        if stop_daemon and self.mdbx and not IS_MACOS_BUNDLE:
+        threaded = os.getpid() == get_maestral_pid(self.config_name)
+
+        # stop sync daemon if we started it or ``stop_daemon`` is ``True``
+        # never stop the daemon process if it is the current process
+        if (stop_daemon or self._started) and not threaded:
             self.mdbx._pyroRelease()
             stop_maestral_daemon_process(self.config_name)
 
         # quit
-        self.deleteLater()
         QtCore.QCoreApplication.quit()
         sys.exit(0)
 
