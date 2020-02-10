@@ -162,7 +162,9 @@ class MaestralGuiApp(QtWidgets.QSystemTrayIcon):
             done = SetupDialog.configureMaestral(self.config_name, pending_link)
             if done:
                 logger.info('Successfully set up Maestral')
-                self.restart()
+                self.mdbx = get_maestral_proxy(self.config_name)
+                self.mdbx.run()
+                self.setup_ui_linked()
             else:
                 logger.info('Setup aborted.')
                 self.quit()
