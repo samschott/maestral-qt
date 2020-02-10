@@ -13,7 +13,7 @@ from PyQt5.QtCore import QModelIndex, Qt
 
 # maestral modules
 from maestral.config.main import MaestralConfig
-from maestral.main import Maestral
+from maestral.daemon import start_maestral_daemon_thread, get_maestral_proxy
 from maestral.utils import handle_disconnect
 from maestral.utils.path import delete_file_or_folder
 from maestral.oauth import OAuth2Session
@@ -98,7 +98,8 @@ class SetupDialog(QtWidgets.QDialog):
 
         # check if we are already authenticated, skip authentication if yes
         if not pending_link:
-            self.mdbx = Maestral(self._config_name, run=False)
+            start_maestral_daemon_thread(self._config_name, run=False)
+            self.mdbx = get_maestral_proxy(self._config_name)
             self.mdbx.get_account_info()
             self.labelDropboxPath.setText("""
             <html><head/><body>
@@ -202,7 +203,8 @@ class SetupDialog(QtWidgets.QDialog):
             self.lineEditAuthCode.clear()  # clear since we might come back on unlink
 
             # start Maestral after linking to Dropbox account
-            self.mdbx = Maestral(self._config_name, run=False)
+            start_maestral_daemon_thread(self._config_name, run=False)
+            self.mdbx = get_maestral_proxy(self._config_name)
             self.mdbx.get_account_info()
         elif res == OAuth2Session.InvalidToken:
             msg = "Please make sure that you entered the correct authentication token."
