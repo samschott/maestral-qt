@@ -496,7 +496,7 @@ class MaestralGuiApp(QtWidgets.QSystemTrayIcon):
 
         err = errs[-1]
 
-        if err['type'] in ('RevFileError', 'BadInputError', 'CursorResetError', 'InotifyError'):
+        if err['type'] in ('RevFileError', 'BadInputError', 'CursorResetError', 'InotifyError', 'OutOfMemoryError'):
             self.mdbx.stop_sync()
             show_dialog(err['title'], err['message'], level='error')
         elif err['type'] == 'DropboxDeletedError':
