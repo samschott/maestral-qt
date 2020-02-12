@@ -12,12 +12,12 @@ from PyQt5 import QtGui, QtCore, QtWidgets, uic
 from PyQt5.QtCore import QModelIndex, Qt
 
 # maestral modules
-from maestral.config.main import MaestralConfig
+from maestral.config import MaestralConfig
 from maestral.daemon import start_maestral_daemon_thread, get_maestral_proxy
 from maestral.utils import handle_disconnect
+from maestral.utils.appdirs import get_home_dir
 from maestral.utils.path import delete_file_or_folder
 from maestral.oauth import OAuth2Session
-from maestral.config.base import get_home_dir
 
 # local imports
 from .resources import APP_ICON_PATH, SETUP_DIALOG_PATH, get_native_item_icon

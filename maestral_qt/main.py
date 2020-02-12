@@ -21,11 +21,10 @@ from PyQt5 import QtCore, QtWidgets
 
 # maestral modules
 from maestral import __version__
-from maestral.config.main import MaestralConfig
 from maestral.utils import pending_link, pending_dropbox_folder
 from maestral.constants import (
     IDLE, SYNCING, PAUSED, STOPPED, DISCONNECTED, SYNC_ERROR, ERROR,
-    IS_MACOS_BUNDLE,
+    IS_MACOS_BUNDLE, APP_NAME
 )
 from maestral.daemon import (
     start_maestral_daemon_process,
@@ -89,7 +88,6 @@ class MaestralGuiApp(QtWidgets.QSystemTrayIcon):
         QtWidgets.QSystemTrayIcon.__init__(self)
 
         self.config_name = config_name
-        self._conf = MaestralConfig(config_name)
 
         self._n_sync_errors = None
         self._current_icon = None
@@ -246,10 +244,10 @@ class MaestralGuiApp(QtWidgets.QSystemTrayIcon):
 
         self.menu.addSeparator()
 
-        self.accountEmailAction = self.menu.addAction(self.mdbx.get_conf('account', 'email'))
+        self.accountEmailAction = self.menu.addAction(self.mdbx.get_state('account', 'email'))
         self.accountEmailAction.setEnabled(False)
 
-        self.accountUsageAction = self.menu.addAction(self.mdbx.get_conf('account', 'usage'))
+        self.accountUsageAction = self.menu.addAction(self.mdbx.get_state('account', 'usage'))
         self.accountUsageAction.setEnabled(False)
 
         self.menu.addSeparator()
@@ -317,7 +315,7 @@ class MaestralGuiApp(QtWidgets.QSystemTrayIcon):
     @QtCore.pyqtSlot()
     def auto_check_for_updates(self):
 
-        last_update_check = self.mdbx.get_conf('app', 'update_notification_last')
+        last_update_check = self.mdbx.get_state('app', 'update_notification_last')
         interval = self.mdbx.get_conf('app', 'update_notification_interval')
         if interval == 0:  # checks disabled
             return
@@ -351,7 +349,7 @@ class MaestralGuiApp(QtWidgets.QSystemTrayIcon):
     def _notify_updates_auto(self, res):
 
         if res['update_available']:
-            self.mdbx.set_conf('app', 'update_notification_last', time.time())
+            self.mdbx.set_state('app', 'update_notification_last', time.time())
             show_update_dialog(res['latest_release'], res['release_notes'])
 
     @QtCore.pyqtSlot()
@@ -423,7 +421,7 @@ class MaestralGuiApp(QtWidgets.QSystemTrayIcon):
         self.recentFilesMenu.clear()
 
         # add new actions
-        for dbx_path in reversed(self.mdbx.get_conf('internal', 'recent_changes')):
+        for dbx_path in reversed(self.mdbx.get_state('sync', 'recent_changes')):
             file_name = os.path.basename(dbx_path)
             truncated_name = elide_string(file_name, font=self.menu.font())
             local_path = self.mdbx.to_local_path(dbx_path)
@@ -465,8 +463,8 @@ class MaestralGuiApp(QtWidgets.QSystemTrayIcon):
                 self.syncIssuesAction.setText('Show Sync Issues...')
 
             self.pauseAction.setText(self.RESUME_TEXT if is_paused else self.PAUSE_TEXT)
-            self.accountUsageAction.setText(self.mdbx.get_conf('account', 'usage'))
-            self.accountEmailAction.setText(self.mdbx.get_conf('account', 'email'))
+            self.accountUsageAction.setText(self.mdbx.get_state('account', 'usage'))
+            self.accountEmailAction.setText(self.mdbx.get_state('account', 'email'))
 
             status_short = elide_string(status)
             self.statusAction.setText(status_short)
@@ -623,7 +621,7 @@ def run(config_name='maestral'):
     QtCore.QCoreApplication.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling)
     QtCore.QCoreApplication.setAttribute(QtCore.Qt.AA_UseHighDpiPixmaps)
 
-    app = QtWidgets.QApplication(['Maestral GUI'])
+    app = QtWidgets.QApplication([APP_NAME])
     app.setQuitOnLastWindowClosed(False)
 
     maestral_gui = MaestralGuiApp(config_name)

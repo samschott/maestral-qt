@@ -15,7 +15,7 @@ from PyQt5 import QtGui, QtCore, QtWidgets, uic
 
 # maestral modules
 from maestral import __version__, __author__, __url__
-from maestral.config.base import get_home_dir
+from maestral.utils.appdirs import get_home_dir
 from maestral.utils.notify import FILECHANGE, SYNCISSUE
 
 # local imports
@@ -159,18 +159,17 @@ class SettingsWindow(QtWidgets.QWidget):
         try:
             pixmap = get_masked_image(self.mdbx.account_profile_pic_path, size=self._profile_pic_height)
         except OSError:
-            initials = self.mdbx.get_conf("account", "abbreviated_name")
             pixmap = get_masked_image(FACEHOLDER_PATH, size=self._profile_pic_height)
 
         self.labelUserProfilePic.setPixmap(pixmap)
 
     def set_account_info_from_cache(self):
 
-        acc_display_name = self.mdbx.get_conf("account", "display_name")
-        acc_mail = self.mdbx.get_conf("account", "email")
-        acc_type = self.mdbx.get_conf("account", "type")
-        acc_space_usage = self.mdbx.get_conf("account", "usage")
-        acc_space_usage_type = self.mdbx.get_conf("account", "usage_type")
+        acc_display_name = self.mdbx.get_state("account", "display_name")
+        acc_mail = self.mdbx.get_state("account", "email")
+        acc_type = self.mdbx.get_state("account", "type")
+        acc_space_usage = self.mdbx.get_state("account", "usage")
+        acc_space_usage_type = self.mdbx.get_state("account", "usage_type")
 
         if acc_space_usage_type == "team":
             acc_space_usage += " (Team)"
