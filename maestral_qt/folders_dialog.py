@@ -15,7 +15,6 @@ from PyQt5.QtCore import QAbstractItemModel, QModelIndex, Qt, QVariant
 
 # maestral modules
 from maestral.utils.path import is_child
-from maestral.utils import handle_disconnect
 from maestral.daemon import Proxy
 
 # local imports
@@ -391,12 +390,9 @@ class AsyncLoadFolders(QtCore.QObject):
 
             path = "" if path == '/' else path
 
-            if isinstance(self.m, Proxy):
-                # use a duplicate proxy to prevent blocking of the main connection
-                with Proxy(self.m._pyroUri) as m:
-                    entries = m.list_folder(path, recursive=False)
-            else:
-                entries = self.m.list_folder(path, recursive=False)
+            # use a duplicate proxy to prevent blocking of the main connection
+            with Proxy(self.m._pyroUri) as m:
+                entries = m.list_folder(path, recursive=False)
 
             if entries is False:
                 folders = False
@@ -424,11 +420,10 @@ class FoldersDialog(QtWidgets.QDialog):
         self.buttonBox.accepted.connect(self.on_accepted)
         self.selectAllCheckBox.clicked.connect(self.on_select_all_clicked)
 
-    @handle_disconnect
     def populate_folders_list(self, overload=None):
         self.excluded_folders = self.mdbx.excluded_folders
         self.async_loader = AsyncLoadFolders(self.mdbx, self)
-        self.dbx_root = DropboxPathModel(self.mdbx, self.async_loader, '/')
+        self.dbx_root = DropboxPathModel(self.mdbx, self.async_loader)
         self.dbx_model = TreeModel(self.dbx_root)
         self.dbx_model.loading_done.connect(self.ui_loaded)
         self.dbx_model.loading_failed.connect(self.ui_failed)
@@ -453,7 +448,6 @@ class FoldersDialog(QtWidgets.QDialog):
             index = self.dbx_model.index(irow, 0, QModelIndex())
             self.dbx_model.setCheckState(index, checked_state)
 
-    @handle_disconnect
     def on_accepted(self, overload=None):
         """
         Apply changes to local Dropbox folder.
