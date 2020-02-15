@@ -139,8 +139,8 @@ class SettingsWindow(QtWidgets.QWidget):
 
         # populate app section
         self.checkBoxStartup.setChecked(self.autostart.enabled)
-        self.checkBoxNotifications.setChecked(self.mdbx.get_conf("app", "notification_level") == FILECHANGE)
-        self.checkBoxAnalytics.setChecked(self.mdbx.get_conf("app", "analytics"))
+        self.checkBoxNotifications.setChecked(self.mdbx.notification_level == FILECHANGE)
+        self.checkBoxAnalytics.setChecked(self.mdbx.analytics)
         update_interval = self.mdbx.get_conf("app", "update_notification_interval")
         closest_key = min(
             self._update_interval_mapping,
@@ -230,13 +230,11 @@ class SettingsWindow(QtWidgets.QWidget):
 
     @QtCore.pyqtSlot(int)
     def on_notifications_clicked(self, state):
-        level = FILECHANGE if state == 2 else SYNCISSUE
-        self.mdbx.set_conf("app", "notification_level", level)
+        self.mdbx.notification_level = FILECHANGE if state == 2 else SYNCISSUE
 
     @QtCore.pyqtSlot(int)
     def on_analytics_clicked(self, state):
-        self.mdbx.set_conf("app", "analytics", state == 2)
-        self.mdbx.set_share_error_reports(state == 2)
+        self.mdbx.analytics = state == 2
 
     @staticmethod
     def rel_path(path):

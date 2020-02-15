@@ -523,7 +523,7 @@ class MaestralGuiApp(QtWidgets.QSystemTrayIcon):
 
         share, auto_share = show_stacktrace_dialog(
             err['traceback'],
-            ask_share=not self.mdbx.get_conf('app', 'analytics')
+            ask_share=not self.mdbx.analytics
         )
 
         if share:
@@ -548,8 +548,7 @@ class MaestralGuiApp(QtWidgets.QSystemTrayIcon):
                 }
             )
 
-        if auto_share:
-            self.mdbx.set_conf('app', 'analytics', True)
+        self.mdbx.analytics = auto_share
 
     def contextMenuVisible(self):
         return self._context_menu_visible

@@ -149,7 +149,6 @@ class SetupDialog(QtWidgets.QDialog):
         if self.mdbx:
             self.mdbx.set_conf("main", "path", "")
 
-        del self.mdbx
         self.accepted = False
         self.reject()
 
