@@ -14,9 +14,8 @@ from PyQt5.QtCore import QModelIndex, Qt
 # maestral modules
 from maestral.config import MaestralConfig
 from maestral.daemon import start_maestral_daemon_thread, get_maestral_proxy
-from maestral.utils import handle_disconnect
 from maestral.utils.appdirs import get_home_dir
-from maestral.utils.path import delete_file_or_folder
+from maestral.utils.path import delete
 from maestral.oauth import OAuth2Session
 
 # local imports
@@ -251,7 +250,7 @@ class SetupDialog(QtWidgets.QDialog):
             if res == UserDialog.Rejected:
                 return
             elif res == UserDialog.Accepted:
-                err = delete_file_or_folder(dropbox_path)
+                err = delete(dropbox_path)
                 if err:
                     msg = ("Please check if you have permissions to write to the "
                            "selected location.")
@@ -288,7 +287,7 @@ class SetupDialog(QtWidgets.QDialog):
         # if any excluded folders are currently on the drive, delete them
         for folder in self.excluded_folders:
             local_folder = self.mdbx.to_local_path(folder)
-            delete_file_or_folder(local_folder)
+            delete(local_folder)
 
         # switch to next page
         self.stackedWidget.slideInIdx(4)
@@ -311,7 +310,6 @@ class SetupDialog(QtWidgets.QDialog):
 
         self.dropbox_location = new_location
 
-    @handle_disconnect
     def populate_folders_list(self, overload=None):
         self.async_loader = AsyncLoadFolders(self.mdbx, self)
         self.dbx_root = DropboxPathModel(self.mdbx, self.async_loader, "/")
