@@ -13,7 +13,7 @@ import platform
 
 from maestral import __version__
 from maestral.utils.appdirs import get_autostart_path
-from maestral.constants import IS_MACOS_BUNDLE
+from maestral.constants import IS_MACOS_BUNDLE, BUNDLE_ID
 
 _root = os.path.abspath(os.path.dirname(__file__))
 
@@ -24,9 +24,7 @@ class AutoStart(object):
 
     system = platform.system()
 
-    def __init__(self):
-
-        config_name = os.getenv('MAESTRAL_CONFIG', 'maestral')
+    def __init__(self, config_name):
 
         if IS_MACOS_BUNDLE:
             launch_command = os.path.join(sys._MEIPASS, 'main')
@@ -34,7 +32,7 @@ class AutoStart(object):
             launch_command = 'maestral gui --config-name=\'{}\''.format(config_name)
 
         if self.system == 'Darwin':
-            app_name = 'com.samschott.maestral.{}'.format(config_name)
+            app_name = '{}.{}'.format(BUNDLE_ID, config_name)
             filename = app_name + '.plist'
             self.contents = _plist_template.format(app_name, launch_command)
         elif self.system == 'Linux':
@@ -67,6 +65,7 @@ class AutoStart(object):
     @property
     def enabled(self):
         return os.path.isfile(self.destination)
+
 
 # noinspection ProblematicWhitespace
 _plist_template = """

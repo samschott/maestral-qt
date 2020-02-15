@@ -81,7 +81,7 @@ class SettingsWindow(QtWidgets.QWidget):
         self.mdbx = mdbx
         self.folders_dialog = FoldersDialog(self.mdbx, parent=self)
         self.unlink_dialog = UnlinkDialog(self.mdbx, self._parent.restart, parent=self)
-        self.autostart = AutoStart()
+        self.autostart = AutoStart(self.mdbx.config_name)
 
         self.labelAccountName.setFont(get_scaled_font(1.5))
         self.labelAccountInfo.setFont(get_scaled_font(0.9))

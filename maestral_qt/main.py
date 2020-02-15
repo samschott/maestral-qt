@@ -104,7 +104,7 @@ class MaestralGuiApp(QtWidgets.QSystemTrayIcon):
         self.pauseAction = None
         self.recentFilesMenu = None
 
-        self.autostart = AutoStart()
+        self.autostart = AutoStart(self.config_name)
 
         self.icons = self.load_tray_icons()
         self.setIcon(DISCONNECTED)
