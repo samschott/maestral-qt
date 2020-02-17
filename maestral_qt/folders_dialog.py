@@ -33,7 +33,7 @@ class TreeModel(QAbstractItemModel):
     loading_done = QtCore.pyqtSignal()
 
     def __init__(self, root, parent=None):
-        super(TreeModel, self).__init__(parent)
+        super().__init__(parent=parent)
         self._root_item = root
         self.display_message('Loading your folders...')
         self._root_item.loading_done.connect(self.reloadData)
@@ -362,7 +362,7 @@ class AsyncLoadFolders(QtCore.QObject):
         :param Maestral m: Instance of :class:`maestral.sync.main.Maestral`.
         :param parent: QObject. Defaults to None.
         """
-        super(self.__class__, self).__init__(parent=parent)
+        super().__init__(parent=parent)
         self.m = m
 
     def loadFolders(self, path):
@@ -405,7 +405,7 @@ class AsyncLoadFolders(QtCore.QObject):
 class FoldersDialog(QtWidgets.QDialog):
 
     def __init__(self, mdbx,  parent=None):
-        super(self.__class__, self).__init__(parent=parent)
+        super().__init__(parent=parent)
         uic.loadUi(FOLDERS_DIALOG_PATH, self)
         self.setModal(True)
 

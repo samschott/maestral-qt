@@ -27,7 +27,7 @@ class SyncIssueWidget(QtWidgets.QWidget):
     """
 
     def __init__(self, sync_err, parent=None):
-        super(self.__class__, self).__init__(parent=parent)
+        super().__init__(parent=parent)
         uic.loadUi(SYNC_ISSUE_WIDGET_PATH, self)
 
         self.sync_err = sync_err
@@ -98,7 +98,7 @@ class SyncIssueWindow(QtWidgets.QWidget):
     """
 
     def __init__(self, mdbx, parent=None):
-        super(self.__class__, self).__init__(parent=parent)
+        super().__init__(parent=parent)
         uic.loadUi(SYNC_ISSUES_WINDOW_PATH, self)
         self.setWindowFlags(QtCore.Qt.WindowStaysOnTopHint)
 

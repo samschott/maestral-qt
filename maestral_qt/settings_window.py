@@ -37,7 +37,7 @@ NEW_QT = LooseVersion(QtCore.QT_VERSION_STR) >= LooseVersion("5.11")
 class UnlinkDialog(QtWidgets.QDialog):
 
     def __init__(self, mdbx, restart_func, parent=None):
-        super(self.__class__, self).__init__(parent=parent)
+        super().__init__(parent=parent)
         # load user interface layout from .ui file
         uic.loadUi(UNLINK_DIALOG_PATH, self)
 
@@ -70,7 +70,7 @@ class SettingsWindow(QtWidgets.QWidget):
     _update_interval_mapping = {0: 60*60*24, 1: 60*60*24*7, 2: 60*60*24*30, 3: 0}
 
     def __init__(self, parent, mdbx):
-        super(self.__class__, self).__init__(parent=None)
+        super().__init__()
         uic.loadUi(SETTINGS_WINDOW_PATH, self)
         self._parent = parent
         self.update_dark_mode()

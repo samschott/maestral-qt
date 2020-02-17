@@ -32,7 +32,7 @@ class RelinkDialog(QtWidgets.QDialog):
     REVOKED = 1
 
     def __init__(self, parent, reason=EXPIRED):
-        super(self.__class__, self).__init__(parent=None)
+        super().__init__()
         uic.loadUi(RELINK_DIALOG_PATH, self)
 
         # import OAuth2Session here because of ~40 MB memory footprint

@@ -205,7 +205,7 @@ class BackgroundTaskProgressDialog(QtWidgets.QDialog):
     """A progress dialog to show during long-running background tasks."""
 
     def __init__(self, title, message="", cancel=True, parent=None, width=450):
-        super(self.__class__, self).__init__(parent=parent)
+        super().__init__(parent=parent)
         self.setModal(True)
         self.setWindowModality(Qt.WindowModal)
         self.setWindowFlags(Qt.WindowStaysOnTopHint | Qt.Sheet | Qt.WindowTitleHint | Qt.CustomizeWindowHint)
@@ -275,7 +275,7 @@ class UserDialog(QtWidgets.QDialog):
         :param str checkbox: Optional checkbox to show above dialog buttons.
         :param QtWidget parent: Parent.
         """
-        super(self.__class__, self).__init__(parent=parent)
+        super().__init__(parent=parent)
         self.setModal(True)
         self.setWindowModality(Qt.WindowModal)
         self.setWindowFlags(Qt.WindowStaysOnTopHint | Qt.Sheet | Qt.WindowTitleHint |
@@ -486,7 +486,7 @@ class AnimatedStackedWidget(QtWidgets.QStackedWidget):
     """
 
     def __init__(self, parent=None):
-        super(AnimatedStackedWidget, self).__init__(parent)
+        super().__init__(parent=parent)
 
         self.m_direction = Qt.Horizontal
         self.m_speed = 300
@@ -615,7 +615,7 @@ class QProgressIndicator(QtWidgets.QWidget):
 
     def __init__(self, parent=None):
         # Call parent class constructor first
-        super(QProgressIndicator, self).__init__(parent)
+        super().__init__(parent)
 
         # Initialize instance variables
         self.m_angle = 0

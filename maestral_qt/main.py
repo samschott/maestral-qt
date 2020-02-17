@@ -85,7 +85,7 @@ class MaestralGuiApp(QtWidgets.QSystemTrayIcon):
     )
 
     def __init__(self, config_name='maestral'):
-        QtWidgets.QSystemTrayIcon.__init__(self)
+        super().__init__()
 
         self.config_name = config_name
 

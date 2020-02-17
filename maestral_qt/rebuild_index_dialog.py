@@ -18,7 +18,7 @@ class RebuildIndexDialog(QtWidgets.QDialog):
     """A dialog to rebuild Maestral's sync index."""
 
     def __init__(self, mdbx, parent=None):
-        super(self.__class__, self).__init__(parent=parent)
+        super().__init__(parent=parent)
         uic.loadUi(REBUILD_INDEX_DIALOG_PATH, self)
         self.setWindowFlags(QtCore.Qt.WindowStaysOnTopHint | QtCore.Qt.CustomizeWindowHint | QtCore.Qt.WindowTitleHint)
 

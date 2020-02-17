@@ -33,7 +33,7 @@ class SetupDialog(QtWidgets.QDialog):
     accepted = False
 
     def __init__(self, config_name='maestral', pending_link=True, parent=None):
-        super(self.__class__, self).__init__(parent=parent)
+        super().__init__(parent=parent)
         # load user interface layout from .ui file
         uic.loadUi(SETUP_DIALOG_PATH, self)
 
