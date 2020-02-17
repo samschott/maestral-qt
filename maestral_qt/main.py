@@ -22,6 +22,7 @@ from PyQt5 import QtCore, QtWidgets
 # maestral modules
 from maestral import __version__
 from maestral.utils import pending_link, pending_dropbox_folder
+from maestral.utils.autostart import AutoStart
 from maestral.constants import (
     IDLE, SYNCING, PAUSED, STOPPED, DISCONNECTED, SYNC_ERROR, ERROR,
     IS_MACOS_BUNDLE, APP_NAME
@@ -40,7 +41,6 @@ from maestral_qt.settings_window import SettingsWindow
 from maestral_qt.sync_issues_window import SyncIssueWindow
 from maestral_qt.rebuild_index_dialog import RebuildIndexDialog
 from maestral_qt.resources import get_system_tray_icon, DESKTOP
-from maestral_qt.autostart import AutoStart
 from maestral_qt.utils import (
     MaestralBackgroundTask,
     BackgroundTaskProgressDialog,
@@ -104,7 +104,7 @@ class MaestralGuiApp(QtWidgets.QSystemTrayIcon):
         self.pauseAction = None
         self.recentFilesMenu = None
 
-        self.autostart = AutoStart(self.config_name)
+        self.autostart = AutoStart(self.mdbx.config_name, gui=True)
 
         self.icons = self.load_tray_icons()
         self.setIcon(DISCONNECTED)

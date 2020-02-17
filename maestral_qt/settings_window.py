@@ -17,9 +17,9 @@ from PyQt5 import QtGui, QtCore, QtWidgets, uic
 from maestral import __version__, __author__, __url__
 from maestral.utils.appdirs import get_home_dir
 from maestral.utils.notify import FILECHANGE, SYNCISSUE
+from maestral.utils.autostart import AutoStart
 
 # local imports
-from .autostart import AutoStart
 from .folders_dialog import FoldersDialog
 from .resources import (get_native_item_icon, UNLINK_DIALOG_PATH,
                         SETTINGS_WINDOW_PATH, APP_ICON_PATH, FACEHOLDER_PATH)
@@ -81,7 +81,7 @@ class SettingsWindow(QtWidgets.QWidget):
         self.mdbx = mdbx
         self.folders_dialog = FoldersDialog(self.mdbx, parent=self)
         self.unlink_dialog = UnlinkDialog(self.mdbx, self._parent.restart, parent=self)
-        self.autostart = AutoStart(self.mdbx.config_name)
+        self.autostart = AutoStart(self.mdbx.config_name, gui=True)
 
         self.labelAccountName.setFont(get_scaled_font(1.5))
         self.labelAccountInfo.setFont(get_scaled_font(0.9))
@@ -223,10 +223,7 @@ class SettingsWindow(QtWidgets.QWidget):
 
     @QtCore.pyqtSlot(int)
     def on_start_on_login_clicked(self, state):
-        if state == 0:
-            self.autostart.disable()
-        elif state == 2:
-            self.autostart.enable()
+        self.autostart.enabled = state == 2
 
     @QtCore.pyqtSlot(int)
     def on_notifications_clicked(self, state):
