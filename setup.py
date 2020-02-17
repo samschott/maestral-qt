@@ -77,8 +77,5 @@ setup(
             'maestral_qt/resources/tray-icons-gnome/maestral-icon-paused-symbolic.svg',
             'maestral_qt/resources/tray-icons-gnome/maestral-icon-syncing-symbolic.svg',
         ]),
-        ('share/icons/hicolor/512x512/apps', [
-            'maestral_qt/resources/maestral.png',
-        ])
-    ]
+    ],
 )
