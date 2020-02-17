@@ -131,7 +131,6 @@ class MaestralGuiApp(QtWidgets.QSystemTrayIcon):
     def update_ui(self):
         if self.mdbx:
             self.update_status()
-            self.update_snoozed()
             self.update_error()
 
     def show_when_systray_available(self):
@@ -258,13 +257,9 @@ class MaestralGuiApp(QtWidgets.QSystemTrayIcon):
         self.pauseAction.triggered.connect(self.on_start_stop_clicked)
 
         self.recentFilesMenu = self.menu.addMenu('Recently Changed Files')
-        if platform.system() == 'Linux':
-            # on linux, submenu.aboutToShow may not be emitted
-            # (see https://bugreports.qt.io/browse/QTBUG-55911)
-            # therefore, we update the recent files list when the main menu is about to show
-            self.menu.aboutToShow.connect(self.update_recent_files)
-        else:
-            self.recentFilesMenu.aboutToShow.connect(self.update_recent_files)
+
+        self.menu.aboutToShow.connect(self.update_recent_files)
+        self.menu.aboutToShow.connect(self.update_snoozed)
 
         self.menu.addSeparator()
 
