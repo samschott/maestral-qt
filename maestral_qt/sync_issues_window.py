@@ -17,7 +17,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets, uic
 # local imports
 from .resources import (SYNC_ISSUES_WINDOW_PATH, SYNC_ISSUE_WIDGET_PATH,
                         get_native_item_icon)
-from .utils import (elide_string, icon_to_pixmap, get_scaled_font,
+from .utils import (elide_string, icon_to_pixmap, get_scaled_font, center_window,
                     isDarkWindow, LINE_COLOR_DARK, LINE_COLOR_LIGHT)
 
 
@@ -106,6 +106,8 @@ class SyncIssueWindow(QtWidgets.QWidget):
         self.sync_issue_widgets = []
 
         self.reload()
+
+        center_window(self)
 
     def reload(self):
 

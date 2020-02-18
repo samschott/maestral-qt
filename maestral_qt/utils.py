@@ -30,6 +30,10 @@ _USER_DIALOG_ICON_SIZE = 60
 IS_MACOS = platform.system() == 'Darwin'
 
 
+# ========================================================================================
+# Helper functions
+# ========================================================================================
+
 def elide_string(string, font=None, pixels=200, side='right'):
     """
     Elides a string to fit into the given width.
@@ -97,6 +101,87 @@ def icon_to_pixmap(icon, width, height=None):
     return px
 
 
+def center_window(widget):
+    """
+    Centers the given widget on screen.
+
+    :param widget: QtWidgets.QWidget
+    """
+    screen = QtWidgets.QApplication.primaryScreen()
+    geometry = screen.availableGeometry()
+
+    x = (geometry.width() - widget.width()) / 2
+    y = (geometry.height() - widget.height()) / 3
+
+    widget.move(x, y)
+
+
+def get_masked_image(path, size=64, overlay_text=""):
+    """
+    Returns a ``QPixmap`` from an image file masked with a smooth circle.
+    The returned pixmap will have a size of *size* × *size* pixels.
+
+    :param str path: Path to image file.
+    :param int size: Target size. Will be the diameter of the masked image.
+    :param overlay_text: Overlay text. This will be shown in white sans-serif on top of
+        the image.
+    :return: `QPixmap`` instance.
+    """
+
+    with open(path, 'rb') as f:
+        imgdata = f.read()
+
+    imgtype = path.split('.')[-1]
+
+    # Load image and convert to 32-bit ARGB (adds an alpha channel):
+    image = QImage.fromData(imgdata, imgtype)
+    image.convertToFormat(QImage.Format_ARGB32)
+
+    # Crop image to a square:
+    imgsize = min(image.width(), image.height())
+    rect = QRect(
+        (image.width() - imgsize) / 2,
+        (image.height() - imgsize) / 2,
+        imgsize,
+        imgsize,
+    )
+    image = image.copy(rect)
+
+    # Create the output image with the same dimensions and an alpha channel
+    # and make it completely transparent:
+    out_img = QImage(imgsize, imgsize, QImage.Format_ARGB32)
+    out_img.fill(Qt.transparent)
+
+    # Create a texture brush and paint a circle with the original image onto
+    # the output image:
+    brush = QBrush(image)        # Create texture brush
+    painter = QPainter(out_img)  # Paint the output image
+    painter.setBrush(brush)      # Use the image texture brush
+    painter.setPen(Qt.NoPen)     # Don't draw an outline
+    painter.setRenderHint(QPainter.Antialiasing, True)  # Use AA
+    painter.drawEllipse(0, 0, imgsize, imgsize)  # Actually draw the circle
+
+    if overlay_text:
+        # draw text
+        font = QtGui.QFont('Arial Rounded MT Bold')
+        font.setPointSize(imgsize * 0.4)
+        painter.setFont(font)
+        painter.setPen(Qt.white)
+        painter.drawText(QRect(0, 0, imgsize, imgsize), Qt.AlignCenter, overlay_text)
+
+    painter.end()                # We are done (segfault if you forget this)
+
+    # Convert the image to a pixmap and rescale it.  Take pixel ratio into
+    # account to get a sharp image on retina displays:
+    pr = QtWidgets.QApplication.instance().devicePixelRatio()
+    pm = QPixmap.fromImage(out_img)
+    pm.setDevicePixelRatio(pr)
+    size *= pr
+    pm = pm.scaled(size, size, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+
+    return pm
+
+
 def windowTheme():
     """Returns one of gui.utils.THEME_LIGHT or gui.utils.THEME_DARK, corresponding to
     current user's UI theme."""
@@ -112,6 +197,10 @@ def isDarkWindow():
     """Returns ``True`` if windows have a dark UI theme."""
     return windowTheme() == THEME_DARK
 
+
+# ========================================================================================
+# Threading
+# ========================================================================================
 
 class Worker(QtCore.QObject):
     """A worker object. To be used in QThreads."""
@@ -256,7 +345,12 @@ class BackgroundTaskProgressDialog(QtWidgets.QDialog):
             self.gridLayout.addWidget(self.buttonBox, 2, 1, -1, -1)
 
         self.adjustSize()
+        center_window(self)
 
+
+# ========================================================================================
+# Custom widgets
+# ========================================================================================
 
 class UserDialog(QtWidgets.QDialog):
     """A template user dialog for Maestral. Shows a traceback if given in constructor."""
@@ -311,7 +405,6 @@ class UserDialog(QtWidgets.QDialog):
             self.details = QtWidgets.QTextBrowser(self)
             self.details.setText(details)
             self.details.setOpenExternalLinks(True)
-            # self.details.setLineWrapMode(QtWidgets.QTextBrowser.NoWrap)
 
         if checkbox:
             self.checkbox = QtWidgets.QCheckBox(checkbox)
@@ -343,6 +436,7 @@ class UserDialog(QtWidgets.QDialog):
             ValueError('Dialog cannot have more than three buttons')
 
         self.adjustSize()
+        center_window(self)
 
         for button in self.buttonBox.buttons():
             if button.sizeHint().width() < self.MINIMUM_BUTTON_SIZE:
@@ -381,72 +475,6 @@ class UserDialog(QtWidgets.QDialog):
 
     def setSecondAcceptButtonName(self, name):
         self._acceptButton2.setText(name)
-
-
-def get_masked_image(path, size=64, overlay_text=""):
-    """
-    Returns a ``QPixmap`` from an image file masked with a smooth circle.
-    The returned pixmap will have a size of *size* × *size* pixels.
-
-    :param str path: Path to image file.
-    :param int size: Target size. Will be the diameter of the masked image.
-    :param overlay_text: Overlay text. This will be shown in white sans-serif on top of
-        the image.
-    :return: `QPixmap`` instance.
-    """
-
-    with open(path, 'rb') as f:
-        imgdata = f.read()
-
-    imgtype = path.split('.')[-1]
-
-    # Load image and convert to 32-bit ARGB (adds an alpha channel):
-    image = QImage.fromData(imgdata, imgtype)
-    image.convertToFormat(QImage.Format_ARGB32)
-
-    # Crop image to a square:
-    imgsize = min(image.width(), image.height())
-    rect = QRect(
-        (image.width() - imgsize) / 2,
-        (image.height() - imgsize) / 2,
-        imgsize,
-        imgsize,
-    )
-    image = image.copy(rect)
-
-    # Create the output image with the same dimensions and an alpha channel
-    # and make it completely transparent:
-    out_img = QImage(imgsize, imgsize, QImage.Format_ARGB32)
-    out_img.fill(Qt.transparent)
-
-    # Create a texture brush and paint a circle with the original image onto
-    # the output image:
-    brush = QBrush(image)        # Create texture brush
-    painter = QPainter(out_img)  # Paint the output image
-    painter.setBrush(brush)      # Use the image texture brush
-    painter.setPen(Qt.NoPen)     # Don't draw an outline
-    painter.setRenderHint(QPainter.Antialiasing, True)  # Use AA
-    painter.drawEllipse(0, 0, imgsize, imgsize)  # Actually draw the circle
-
-    if overlay_text:
-        # draw text
-        font = QtGui.QFont('Arial Rounded MT Bold')
-        font.setPointSize(imgsize * 0.4)
-        painter.setFont(font)
-        painter.setPen(Qt.white)
-        painter.drawText(QRect(0, 0, imgsize, imgsize), Qt.AlignCenter, overlay_text)
-
-    painter.end()                # We are done (segfault if you forget this)
-
-    # Convert the image to a pixmap and rescale it.  Take pixel ratio into
-    # account to get a sharp image on retina displays:
-    pr = QtWidgets.QApplication.instance().devicePixelRatio()
-    pm = QPixmap.fromImage(out_img)
-    pm.setDevicePixelRatio(pr)
-    size *= pr
-    pm = pm.scaled(size, size, Qt.KeepAspectRatio, Qt.SmoothTransformation)
-
-    return pm
 
 
 class FaderWidget(QtWidgets.QWidget):
@@ -726,6 +754,10 @@ class QProgressIndicator(QtWidgets.QWidget):
         else:
             self.setColor(self.m_dark_color)
 
+
+# ========================================================================================
+# Dialog helper functions
+# ========================================================================================
 
 def show_dialog(title, message, details=None, level='info'):
     UserDialog(title, message, details).exec_()

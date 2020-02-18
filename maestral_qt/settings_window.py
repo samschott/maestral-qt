@@ -25,7 +25,7 @@ from .resources import (get_native_item_icon, UNLINK_DIALOG_PATH,
                         SETTINGS_WINDOW_PATH, APP_ICON_PATH, FACEHOLDER_PATH)
 from .utils import (
     UserDialog,
-    get_scaled_font, isDarkWindow,
+    get_scaled_font, isDarkWindow, center_window,
     LINE_COLOR_DARK, LINE_COLOR_LIGHT,
     icon_to_pixmap, get_masked_image, MaestralBackgroundTask
 )
@@ -119,6 +119,8 @@ class SettingsWindow(QtWidgets.QWidget):
         self.dropbox_folder_dialog.fileSelected.connect(self.on_new_dbx_folder)
         self.dropbox_folder_dialog.rejected.connect(
                 lambda: self.comboBoxDropboxPath.setCurrentIndex(0))
+
+        center_window(self)
 
     @QtCore.pyqtSlot()
     def refresh_gui(self):
