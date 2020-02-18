@@ -25,7 +25,7 @@ THEME_LIGHT = 'light'
 LINE_COLOR_DARK = (70, 70, 70)
 LINE_COLOR_LIGHT = (213, 213, 213)
 
-_USER_DIALOG_ICON_SIZE = 70
+_USER_DIALOG_ICON_SIZE = 60
 
 IS_MACOS = platform.system() == 'Darwin'
 
@@ -293,6 +293,8 @@ class UserDialog(QtWidgets.QDialog):
 
         self.iconLabel.setMinimumSize(_USER_DIALOG_ICON_SIZE, _USER_DIALOG_ICON_SIZE)
         self.iconLabel.setMaximumSize(_USER_DIALOG_ICON_SIZE, _USER_DIALOG_ICON_SIZE)
+        self.gridLayout.setHorizontalSpacing(self.gridLayout.horizontalSpacing()*2)
+        self.gridLayout.setVerticalSpacing(self.gridLayout.verticalSpacing()*2)
         self.titleLabel.setFont(get_scaled_font(bold=True))
         self.infoLabel.setFont(get_scaled_font(scaling=0.9))
         self.infoLabel.setFixedWidth(width-150)
