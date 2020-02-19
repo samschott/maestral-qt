@@ -187,7 +187,7 @@ class SettingsWindow(QtWidgets.QWidget):
             self.labelAccountName.setFont(font)
         self.labelAccountName.setText(acc_display_name)
 
-        if acc_type is not "":
+        if acc_type != "":
             acc_type_text = ", Dropbox {0}".format(acc_type.capitalize())
         else:
             acc_type_text = ""
