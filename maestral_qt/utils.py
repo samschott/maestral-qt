@@ -51,7 +51,7 @@ def elide_string(string, font=None, pixels=200, side='right'):
         font = QtWidgets.QLabel().font()
 
     metrics = QtGui.QFontMetrics(font)
-    mode = Qt.ElideRight if side is 'right' else Qt.ElideLeft
+    mode = Qt.ElideRight if side == 'right' else Qt.ElideLeft
 
     return metrics.elidedText(string, mode, pixels)
 
@@ -722,7 +722,7 @@ class QProgressIndicator(QtWidgets.QWidget):
         innerRadius = (width - 1) * 0.5 * 0.4375
 
         capsuleHeight = outerRadius - innerRadius
-        capsuleWidth  = width * 3/32
+        capsuleWidth = width * 3/32
         capsuleRadius = capsuleWidth / 2
 
         for i in range(0, 12):

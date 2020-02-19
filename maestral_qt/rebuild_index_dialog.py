@@ -111,4 +111,3 @@ def _filter_text(text):
         return n, n_tot
     else:
         raise ValueError("Cannot get progress indication from given string.")
-

@@ -134,6 +134,7 @@ class SyncIssueWindow(QtWidgets.QWidget):
         while self.verticalLayout.itemAt(0):
             item = self.verticalLayout.takeAt(0)
             w = item.widget()
-            if w: w.deleteLater()
+            if w:
+                w.deleteLater()
 
         self.sync_issue_widgets.clear()
