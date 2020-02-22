@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>697</width>
-    <height>267</height>
+    <width>700</width>
+    <height>270</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -23,9 +23,6 @@
    <bool>true</bool>
   </property>
   <layout class="QGridLayout" name="gridLayout">
-   <property name="horizontalSpacing">
-    <number>20</number>
-   </property>
    <item row="6" column="0">
     <spacer name="spaper1">
      <property name="orientation">
@@ -42,48 +39,10 @@
      </property>
     </spacer>
    </item>
-   <item row="8" column="0" colspan="2">
-    <widget class="QDialogButtonBox" name="buttonBox">
-     <property name="orientation">
-      <enum>Qt::Horizontal</enum>
-     </property>
-     <property name="standardButtons">
-      <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
-     </property>
-     <property name="centerButtons">
-      <bool>false</bool>
-     </property>
-    </widget>
-   </item>
    <item row="5" column="0">
     <widget class="QLabel" name="statusLabel">
      <property name="text">
       <string/>
-     </property>
-    </widget>
-   </item>
-   <item row="4" column="0">
-    <widget class="QProgressBar" name="progressBar">
-     <property name="maximum">
-      <number>0</number>
-     </property>
-     <property name="value">
-      <number>0</number>
-     </property>
-     <property name="textVisible">
-      <bool>false</bool>
-     </property>
-    </widget>
-   </item>
-   <item row="1" column="0" colspan="2">
-    <widget class="QLabel" name="infoLabel">
-     <property name="text">
-      <string>If you encounter sync issues, please open &quot;Show Sync Issues...&quot; to check for incompatible file names, insufficient permissions or other issues which should be resolved manually. After resolving them, please pause and resume syncing. Only rebuild the index if you continue to have problems after taking those steps.
-
-Rebuilding the index may take several minutes, depending on the size of your Dropbox. Please do not modify any items in your local Dropbox folder during this process. Any changes to local files while rebuilding may be lost. </string>
-     </property>
-     <property name="wordWrap">
-      <bool>true</bool>
      </property>
     </widget>
    </item>
@@ -103,6 +62,37 @@ Rebuilding the index may take several minutes, depending on the size of your Dro
      </property>
     </spacer>
    </item>
+   <item row="1" column="0">
+    <widget class="QLabel" name="infoLabel">
+     <property name="text">
+      <string>If you encounter sync issues, please open &quot;Show Sync Issues...&quot; to check for incompatible file names, insufficient permissions or other issues which should be resolved manually. After resolving them, please pause and resume syncing. Only rebuild the index if you continue to have problems after taking those steps.
+
+Rebuilding the index may take several minutes, depending on the size of your Dropbox. Please do not modify any items in your local Dropbox folder during this process. Any changes to local files while rebuilding may be lost. </string>
+     </property>
+     <property name="wordWrap">
+      <bool>true</bool>
+     </property>
+    </widget>
+   </item>
+   <item row="4" column="0">
+    <widget class="QProgressBar" name="progressBar">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
+     <property name="maximum">
+      <number>0</number>
+     </property>
+     <property name="value">
+      <number>0</number>
+     </property>
+     <property name="textVisible">
+      <bool>false</bool>
+     </property>
+    </widget>
+   </item>
    <item row="0" column="0">
     <widget class="QLabel" name="titleLabel">
      <property name="font">
@@ -113,6 +103,19 @@ Rebuilding the index may take several minutes, depending on the size of your Dro
      </property>
      <property name="text">
       <string>Rebuilt the Maestral index?</string>
+     </property>
+    </widget>
+   </item>
+   <item row="7" column="0" rowspan="2">
+    <widget class="QDialogButtonBox" name="buttonBox">
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
+     </property>
+     <property name="standardButtons">
+      <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
+     </property>
+     <property name="centerButtons">
+      <bool>false</bool>
      </property>
     </widget>
    </item>
