@@ -21,7 +21,7 @@ from PyQt5 import QtCore, QtWidgets
 
 # maestral modules
 from maestral import __version__
-from maestral.utils import pending_link, pending_dropbox_folder
+from maestral.utils.backend import pending_link, pending_dropbox_folder
 from maestral.utils.autostart import AutoStart
 from maestral.constants import (
     IDLE, SYNCING, PAUSED, STOPPED, DISCONNECTED, SYNC_ERROR, ERROR,
