@@ -42,7 +42,6 @@ class UnlinkDialog(QtWidgets.QDialog):
         uic.loadUi(UNLINK_DIALOG_PATH, self)
 
         self.setWindowFlags(QtCore.Qt.Sheet)
-        self.setAttribute(QtCore.Qt.WA_TranslucentBackground)
         self.setModal(True)
 
         self.restart_func = restart_func
