@@ -12,7 +12,7 @@ from PyQt5 import QtGui, QtCore, QtWidgets, uic
 from PyQt5.QtCore import QModelIndex, Qt
 
 # maestral modules
-from maestral.config import MaestralConfig
+from maestral.config import MaestralConfig, MaestralState
 from maestral.daemon import start_maestral_daemon_thread, get_maestral_proxy
 from maestral.utils.appdirs import get_home_dir
 from maestral.utils.path import delete
@@ -39,6 +39,7 @@ class SetupDialog(QtWidgets.QDialog):
 
         self._config_name = config_name
         self._conf = MaestralConfig(config_name)
+        self._state = MaestralState(config_name)
 
         self.app_icon = QtGui.QIcon(APP_ICON_PATH)
 
@@ -124,6 +125,9 @@ class SetupDialog(QtWidgets.QDialog):
         else:
             self.stackedWidget.setCurrentIndex(0)
             self.stackedWidgetButtons.setCurrentIndex(0)
+            # start with fresh config and sync state
+            self._conf.reset_to_defaults()
+            self._state.reset_to_defaults()
 
 # =============================================================================
 # Main callbacks
@@ -220,10 +224,10 @@ class SetupDialog(QtWidgets.QDialog):
     @QtCore.pyqtSlot()
     def on_dropbox_location_selected(self):
 
-        # reset sync status, we are starting fresh!
-        self.mdbx.sync.last_cursor = ""
-        self.mdbx.sync.last_sync = 0
-        self.mdbx.sync.dropbox_path = ""
+        # start with clean sync state
+        self.mdbx.set_conf("main", "path", "")
+        self.mdbx.set_state("sync", "last_sync", 0.0)
+        self.mdbx.set_state("sync", "cursor", "")
 
         # apply dropbox path
         dropbox_path = osp.join(self.dropbox_location, self.mdbx.get_conf("main", "default_dir_name"))
