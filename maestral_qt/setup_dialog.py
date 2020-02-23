@@ -125,9 +125,6 @@ class SetupDialog(QtWidgets.QDialog):
         else:
             self.stackedWidget.setCurrentIndex(0)
             self.stackedWidgetButtons.setCurrentIndex(0)
-            # start with fresh config and sync state
-            self._conf.reset_to_defaults()
-            self._state.reset_to_defaults()
 
 # =============================================================================
 # Main callbacks
@@ -207,6 +204,7 @@ class SetupDialog(QtWidgets.QDialog):
             # start Maestral after linking to Dropbox account
             start_maestral_daemon_thread(self._config_name, run=False)
             self.mdbx = get_maestral_proxy(self._config_name)
+            self.mdbx.reset_state()
             self.mdbx.get_account_info()
         elif res == OAuth2Session.InvalidToken:
             msg = "Please make sure that you entered the correct authentication token."
@@ -225,9 +223,7 @@ class SetupDialog(QtWidgets.QDialog):
     def on_dropbox_location_selected(self):
 
         # start with clean sync state
-        self.mdbx.set_conf("main", "path", "")
-        self.mdbx.set_state("sync", "last_sync", 0.0)
-        self.mdbx.set_state("sync", "cursor", "")
+        self.mdbx.reset_state()
 
         # apply dropbox path
         dropbox_path = osp.join(self.dropbox_location, self.mdbx.get_conf("main", "default_dir_name"))
