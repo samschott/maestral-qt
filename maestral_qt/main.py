@@ -572,7 +572,6 @@ class MaestralGuiApp(QtWidgets.QSystemTrayIcon):
         # stop sync daemon if we started it or ``stop_daemon`` is ``True``
         # never stop the daemon process if it is the current process
         if (stop_daemon or self._started) and not threaded:
-            self.mdbx._pyroRelease()
             stop_maestral_daemon_process(self.config_name)
 
         # quit

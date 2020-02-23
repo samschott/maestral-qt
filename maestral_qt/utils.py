@@ -251,8 +251,8 @@ class BackgroundTask(QtCore.QObject):
 
         self.thread = QtCore.QThread(self)
         self.worker = Worker(target=self._target, args=self._args, kwargs=self._kwargs)
-        self.worker.sig_done.connect(self.sig_done.emit)
         self.worker.sig_done.connect(self.thread.quit)
+        self.worker.sig_done.connect(self.sig_done.emit)
         self.worker.moveToThread(self.thread)
         self.thread.started.connect(self.worker.start)
         self.thread.start()
@@ -282,8 +282,8 @@ class MaestralBackgroundTask(BackgroundTask):
             kwargs=self._kwargs
         )
 
-        self.worker.sig_done.connect(self.sig_done.emit)
         self.worker.sig_done.connect(self.thread.quit)
+        self.worker.sig_done.connect(self.sig_done.emit)
         self.worker.moveToThread(self.thread)
         self.thread.started.connect(self.worker.start)
         self.thread.start()
