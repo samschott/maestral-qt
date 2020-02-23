@@ -153,10 +153,13 @@ class MaestralGuiApp(QtWidgets.QSystemTrayIcon):
 
     def load_maestral(self):
 
-        if pending_link(self.config_name) or pending_dropbox_folder(self.config_name):
+        not_linked = pending_link(self.config_name)
+
+        if not_linked or pending_dropbox_folder(self.config_name):
             from maestral_qt.setup_dialog import SetupDialog
             logger.info('Setting up Maestral...')
-            done = SetupDialog.configureMaestral(self.config_name, pending_link)
+            done = SetupDialog.configureMaestral(self.config_name, not_linked)
+            self._started = True
             if done:
                 logger.info('Successfully set up Maestral')
                 self.mdbx = get_maestral_proxy(self.config_name)
