@@ -34,14 +34,14 @@
     <widget class="QLabel" name="iconLabel">
      <property name="minimumSize">
       <size>
-       <width>70</width>
-       <height>70</height>
+       <width>60</width>
+       <height>60</height>
       </size>
      </property>
      <property name="maximumSize">
       <size>
-       <width>70</width>
-       <height>70</height>
+       <width>60</width>
+       <height>60</height>
       </size>
      </property>
      <property name="text">
