@@ -631,10 +631,10 @@ def run_from_console():
     import argparse
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('-c', help='config name', default='maestral')
+    parser.add_argument('-c', '--config-name', help='config name', default='maestral')
     args = parser.parse_args()
 
-    run(args.c)
+    run(args.config_name)
 
 
 if __name__ == '__main__':
