@@ -141,10 +141,9 @@ def get_system_tray_icon(status, color=None, geometry=None):
 
     if DESKTOP == 'cocoa':
         icon_color = color or 'dark'
-        is_mask = False if color else True
 
         icon = QtGui.QIcon(TRAY_ICON_PATH_SVG.format(status, icon_color))
-        icon.setIsMask(is_mask)
+        icon.setIsMask(not color)
 
     elif DESKTOP == 'gnome' and IS_GNOME3:
         icon = QtGui.QIcon.fromTheme('maestral-icon-{}-symbolic'.format(status))
