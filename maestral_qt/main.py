@@ -33,7 +33,8 @@ from maestral.daemon import (
     stop_maestral_daemon_process,
     get_maestral_pid,
     get_maestral_proxy,
-    Start
+    Start,
+    Pyro5
 )
 
 # local imports
@@ -144,8 +145,11 @@ class MaestralGuiApp(QtWidgets.QSystemTrayIcon):
 
     def update_ui(self):
         if self.mdbx:
-            self.update_status()
-            self.update_error()
+            try:
+                self.update_status()
+                self.update_error()
+            except Pyro5.errors.CommunicationError:
+                self.quit()
 
     def show_when_systray_available(self):
         # If available, show icon, otherwise, set a timer to check back later.
@@ -506,7 +510,8 @@ class MaestralGuiApp(QtWidgets.QSystemTrayIcon):
 
         err = errs[-1]
 
-        if err['type'] in ('RevFileError', 'BadInputError', 'CursorResetError', 'InotifyError', 'OutOfMemoryError'):
+        if err['type'] in ('RevFileError', 'BadInputError', 'CursorResetError',
+                           'InotifyError', 'OutOfMemoryError'):
             self.mdbx.stop_sync()
             show_dialog(err['title'], err['message'], level='error')
         elif err['type'] == 'DropboxDeletedError':
