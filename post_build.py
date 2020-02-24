@@ -9,6 +9,7 @@ items_to_remove = [
     'QtQuick',
     'QtNetwork',
     'QtWebSockets',
+    'QtQmlModels',
     'PyQt5/Qt/translations',
     'PyQt5/Qt/plugins/imageformats/libqgif.dylib',
     'PyQt5/Qt/plugins/imageformats/libqtiff.dylib',

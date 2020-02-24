@@ -20,16 +20,6 @@ echo "**** REMOVING UNNEEDED MODULES *************************"
 
 python3 post_build.py
 
-echo "**** MOVING COCOA LIBS *********************************"
-
-mv dist/Maestral.app/Contents/MacOS/Foundation/_Foundation.cpython-37m-darwin.so dist/Maestral.app/Contents/MacOS/Foundation.so
-mv dist/Maestral.app/Contents/MacOS/CoreFoundation/_CoreFoundation.cpython-37m-darwin.so dist/Maestral.app/Contents/MacOS/CoreFoundation.so
-mv dist/Maestral.app/Contents/MacOS/AppKit/_AppKit.cpython-37m-darwin.so dist/Maestral.app/Contents/MacOS/AppKit.so
-
-rm -R -f dist/Maestral.app/Contents/MacOS/Foundation/
-rm -R -f dist/Maestral.app/Contents/MacOS/CoreFoundation/
-rm -R -f dist/Maestral.app/Contents/MacOS/AppKit/
-
 echo "**** SIGNING ******************************************"
 
 codesign -s "Apple Development: sam.schott@outlook.com (FJNXBRUVWL)" --deep dist/Maestral.app
