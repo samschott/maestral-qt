@@ -31,6 +31,7 @@ from maestral.daemon import (
     start_maestral_daemon_process,
     start_maestral_daemon_thread,
     stop_maestral_daemon_process,
+    stop_maestral_daemon_thread,
     get_maestral_pid,
     get_maestral_proxy,
     Start,
@@ -591,8 +592,7 @@ class MaestralGuiApp(QtWidgets.QSystemTrayIcon):
         # stop sync daemon if we started it or ``stop_daemon`` is ``True``
         # never stop the daemon if it runs in a thread of the current process
         if threaded:
-            self.mdbx.stop_sync()
-            self.mdbx.shutdown_pyro_daemon()
+            stop_maestral_daemon_thread(self.config_name)
         elif stop_daemon or self._started:
             stop_maestral_daemon_process(self.config_name)
 
