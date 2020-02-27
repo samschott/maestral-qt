@@ -125,9 +125,8 @@ class MaestralGuiApp(QtWidgets.QSystemTrayIcon):
         self.check_for_updates_timer.timeout.connect(self.auto_check_for_updates)
         self.check_for_updates_timer.start(30 * 60 * 1000)  # every 30 min
 
-        if IS_MACOS:
-            self.menu.aboutToShow.connect(self._onContextMenuAboutToShow)
-            self.menu.aboutToHide.connect(self._onContextMenuAboutToHide)
+        self.menu.aboutToShow.connect(self._onContextMenuAboutToShow)
+        self.menu.aboutToHide.connect(self._onContextMenuAboutToHide)
 
     def setIcon(self, icon_name):
         icon = self.icons.get(icon_name, self.icons[SYNCING])
@@ -136,13 +135,17 @@ class MaestralGuiApp(QtWidgets.QSystemTrayIcon):
 
     @QtCore.pyqtSlot()
     def _onContextMenuAboutToShow(self):
-        self.icons = self.load_tray_icons('light')
-        self.setIcon(self._current_icon)
+        self._context_menu_visible = True
+        if IS_MACOS:
+            self.icons = self.load_tray_icons('light')
+            self.setIcon(self._current_icon)
 
     @QtCore.pyqtSlot()
     def _onContextMenuAboutToHide(self):
-        self.icons = self.load_tray_icons()
-        self.setIcon(self._current_icon)
+        self._context_menu_visible = False
+        if IS_MACOS:
+            self.icons = self.load_tray_icons()
+            self.setIcon(self._current_icon)
 
     def update_ui(self):
         if self.mdbx:
