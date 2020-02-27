@@ -569,7 +569,7 @@ class MaestralGuiApp(QtWidgets.QSystemTrayIcon):
                 }
             )
 
-        self.mdbx.analytics = auto_share
+        self.mdbx.analytics = self.mdbx.analytics or auto_share
 
     def contextMenuVisible(self):
         return self._context_menu_visible
