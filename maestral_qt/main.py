@@ -565,7 +565,7 @@ class MaestralGuiApp(QtWidgets.QSystemTrayIcon):
                             'gui': f'Qt {QtCore.PYQT_VERSION_STR}',
                             'desktop': DESKTOP,
                         },
-                    'error': err,
+                    'original exception': err,
                 }
             )
 
