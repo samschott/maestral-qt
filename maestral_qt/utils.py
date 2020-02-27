@@ -417,6 +417,7 @@ class UserDialog(QtWidgets.QDialog):
         self.gridLayout.addWidget(self.infoLabel, 1, 1, 1, 1)
         if details:
             self.gridLayout.addWidget(self.details, 2, 1, 1, 1)
+            self.gridLayout.setRowStretch(2, 1)
         if checkbox:
             self.gridLayout.addWidget(self.checkbox, 3, 1, 1, 1)
         self.gridLayout.addWidget(self.buttonBox, 4, 1, -1, -1)
