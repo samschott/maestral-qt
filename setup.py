@@ -55,7 +55,7 @@ setup(
     ],
     zip_safe=False,
     entry_points={
-      'console_scripts': ['maestral_qt=maestral_qt.main:run_from_console'],
+      'console_scripts': ['maestral_qt=maestral_qt.main:run'],
     },
     python_requires='>=3.6',
     classifiers=[
