@@ -267,14 +267,14 @@ class DropboxPathModel(AbstractTreeItem):
         self._checkStateChanged = False
 
         # get info from our own excluded list
-        excluded_folders = self._mdbx.get_conf('main', 'excluded_folders')
-        if path.lower() in excluded_folders:
+        excluded_items = self._mdbx.excluded_items
+        if path.lower() in excluded_items:
             # item is excluded
             self._originalCheckState = 0
-        elif any(is_child(path.lower(), f) for f in excluded_folders):
+        elif any(is_child(path.lower(), f) for f in excluded_items):
             # item's parent is excluded
             self._originalCheckState = 0
-        elif any(is_child(f, path.lower()) for f in excluded_folders):
+        elif any(is_child(f, path.lower()) for f in excluded_items):
             # some of item's children are excluded
             self._originalCheckState = 1
         else:
@@ -428,7 +428,7 @@ class FoldersDialog(QtWidgets.QDialog):
         self.selectAllCheckBox.clicked.connect(self.on_select_all_clicked)
 
     def populate_folders_list(self, overload=None):
-        self.excluded_folders = self.mdbx.excluded_folders
+        self.excluded_items = self.mdbx.excluded_items
         self.async_loader = AsyncListFolder(self.mdbx, self)
         self.dbx_root = DropboxPathModel(self.mdbx, self.async_loader)
         self.dbx_model = TreeModel(self.dbx_root)
@@ -465,7 +465,7 @@ class FoldersDialog(QtWidgets.QDialog):
             return
 
         self.update_selection()
-        self.mdbx.set_excluded_folders(self.excluded_folders)
+        self.mdbx.set_excluded_items(self.excluded_items)
 
     def update_selection(self, index=QModelIndex()):
 
@@ -478,11 +478,11 @@ class FoldersDialog(QtWidgets.QDialog):
             # The list will be cleaned up later.
             if item.checkState == 0:
                 logger.debug('Excluding: %s' % item_dbx_path)
-                self.excluded_folders.append(item_dbx_path)
+                self.excluded_items.append(item_dbx_path)
             elif item.checkState in (1, 2):
                 logger.debug('Including: %s' % item_dbx_path)
-                self.excluded_folders = [f for f in self.excluded_folders
-                                         if not f == item_dbx_path]
+                self.excluded_items = [f for f in self.excluded_items
+                                       if not f == item_dbx_path]
         else:
             item = self.dbx_model._root_item
 

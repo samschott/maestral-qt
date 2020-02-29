@@ -50,7 +50,7 @@ class SetupDialog(QtWidgets.QDialog):
 
         self.mdbx = None
         self.dbx_model = None
-        self.excluded_folders = []
+        self.excluded_items = []
 
         # resize dialog buttons
         width = self.pushButtonAuthPageCancel.width()*1.1
@@ -270,24 +270,25 @@ class SetupDialog(QtWidgets.QDialog):
             return
 
         # switch to next page
-        self.mdbx.set_conf("main", "excluded_folders", [])
+        self.mdbx.set_conf("main", "excluded_items", [])
         self.stackedWidget.slideInIdx(3)
         self.treeViewFolders.setFocus()
 
         # populate folder list
-        if not self.excluded_folders:  # don't repopulate
+        if not self.excluded_items:  # don't repopulate
             self.populate_folders_list()
 
     @QtCore.pyqtSlot()
     def on_folders_selected(self):
 
         self.update_selection()
-        self.mdbx.set_conf("main", "excluded_folders", self.excluded_folders)
+        # this won't trigger downloads because we have not yet performed our first sync
+        self.mdbx.set_excluded_items(self.excluded_items)
 
-        # if any excluded folders are currently on the drive, delete them
-        for folder in self.excluded_folders:
-            local_folder = self.mdbx.to_local_path(folder)
-            delete(local_folder)
+        # if any excluded items are currently on the drive, delete them
+        for item in self.excluded_items:
+            local_item = self.mdbx.to_local_path(item)
+            delete(local_item)
 
         # switch to next page
         self.stackedWidget.slideInIdx(4)
@@ -354,7 +355,7 @@ class SetupDialog(QtWidgets.QDialog):
             # We have started with all folders included. Therefore just append excluded
             # folders here.
             if item.checkState == 0:
-                self.excluded_folders.append(item_dbx_path)
+                self.excluded_items.append(item_dbx_path)
         else:
             item = self.dbx_model._root_item
 
