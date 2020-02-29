@@ -14,11 +14,12 @@ from PyQt5 import QtCore, QtWidgets, QtGui, uic
 from PyQt5.QtCore import QAbstractItemModel, QModelIndex, Qt, QVariant
 
 # maestral modules
-from maestral.utils.path import is_child
 from maestral.daemon import Proxy
+from maestral.errors import NotAFolderError
+from maestral.utils.path import is_child
 
 # local imports
-from .resources import FOLDERS_DIALOG_PATH, get_native_folder_icon
+from .resources import FOLDERS_DIALOG_PATH, get_native_folder_icon, get_native_file_icon
 from .utils import BackgroundTask
 
 logger = logging.getLogger(__name__)
@@ -224,7 +225,7 @@ class AbstractTreeItem(QtCore.QObject):
 class MessageTreeItem(AbstractTreeItem):
     """A tree item to display a message instead of contents."""
 
-    def __init__(self, parent=None, message=""):
+    def __init__(self, parent=None, message=''):
         AbstractTreeItem.__init__(self, parent=parent)
         self._parent = parent
         self._message = message
@@ -253,10 +254,13 @@ class DropboxPathModel(AbstractTreeItem):
     """A Dropbox folder item. It lists its children asynchronously, only when asked to by
     `TreeModel`."""
 
-    def __init__(self, mdbx, async_loader, root='/', parent=None):
-        AbstractTreeItem.__init__(self, parent=parent)
-        self.icon = get_native_folder_icon()
-        self._root = root
+    def __init__(self, mdbx, async_loader, path='/', is_folder=True, parent=None):
+        super().__init__(parent=parent)
+        if is_folder:
+            self.icon = get_native_folder_icon()
+        else:
+            self.icon = get_native_file_icon()
+        self._path = path
         self._mdbx = mdbx
         self._async_loader = async_loader
 
@@ -264,13 +268,13 @@ class DropboxPathModel(AbstractTreeItem):
 
         # get info from our own excluded list
         excluded_folders = self._mdbx.get_conf('main', 'excluded_folders')
-        if root.lower() in excluded_folders:
+        if path.lower() in excluded_folders:
             # item is excluded
             self._originalCheckState = 0
-        elif any(is_child(root.lower(), f) for f in excluded_folders):
+        elif any(is_child(path.lower(), f) for f in excluded_folders):
             # item's parent is excluded
             self._originalCheckState = 0
-        elif any(is_child(f, root.lower()) for f in excluded_folders):
+        elif any(is_child(f, path.lower()) for f in excluded_folders):
             # some of item's children are excluded
             self._originalCheckState = 1
         else:
@@ -288,19 +292,26 @@ class DropboxPathModel(AbstractTreeItem):
             self._checkState = int(self._originalCheckState)
 
     def _create_children_async(self):
-        self._remote = self._async_loader.loadFolders(self._root)
+        self._remote = self._async_loader.listChildren(self._path)
         self._remote.sig_done.connect(self._async_loading_done)
 
-    def _async_loading_done(self, result):
-        if result is False:
+    def _async_loading_done(self, results):
+        if results is False:
             self.loading_failed.emit()
         else:
-            self._children = [self.__class__(self._mdbx, self._async_loader, folder, self)
-                              for folder in result]
+            self._children = [
+                self.__class__(
+                    self._mdbx,
+                    self._async_loader,
+                    path=e['path_display'],
+                    is_folder=e['type'] == 'FolderMetadata',
+                    parent=self
+                ) for e in results
+            ]
             self.loading_done.emit()
 
     def data(self, column):
-        return os.path.basename(self._root)
+        return os.path.basename(self._path)
 
     def header(self):
         return ['name']
@@ -350,7 +361,7 @@ class DropboxPathModel(AbstractTreeItem):
         return self._checkState == self._originalCheckState
 
 
-class AsyncLoadFolders(QtCore.QObject):
+class AsyncListFolder(QtCore.QObject):
 
     _lock = threading.BoundedSemaphore(10)  # do not list more than 10 folders in parallel
 
@@ -365,7 +376,7 @@ class AsyncLoadFolders(QtCore.QObject):
         super().__init__(parent=parent)
         self.m = m
 
-    def loadFolders(self, path):
+    def listChildren(self, path):
         """
         Returns a running instance of :class:`maestral.gui.utils.BackgroundTask` which
         will emit `sig_done` once it has a result.
@@ -376,30 +387,26 @@ class AsyncLoadFolders(QtCore.QObject):
 
         new_job = BackgroundTask(
             parent=self,
-            target=self._loadFolders,
+            target=self._listChildren,
             args=(path, )
         )
 
         return new_job
 
-    def _loadFolders(self, path):
+    def _listChildren(self, path):
         """The actual function which does the listing. Returns a list of Dropbox folder
         paths or ``False`` if the listing fails."""
 
         with self._lock:
 
-            path = "" if path == '/' else path
-
             # use a duplicate proxy to prevent blocking of the main connection
             with Proxy(self.m._pyroUri) as m:
-                entries = m.list_folder(path, recursive=False)
+                try:
+                    entries = m.list_folder(path, recursive=False)
+                except NotAFolderError:
+                    entries = []
 
-            if entries is False:
-                folders = False
-            else:
-                folders = [os.path.join(path, e['path_display']) for e in entries
-                           if e['type'] == 'FolderMetadata']
-            return folders
+            return entries
 
 
 class FoldersDialog(QtWidgets.QDialog):
@@ -422,7 +429,7 @@ class FoldersDialog(QtWidgets.QDialog):
 
     def populate_folders_list(self, overload=None):
         self.excluded_folders = self.mdbx.excluded_folders
-        self.async_loader = AsyncLoadFolders(self.mdbx, self)
+        self.async_loader = AsyncListFolder(self.mdbx, self)
         self.dbx_root = DropboxPathModel(self.mdbx, self.async_loader)
         self.dbx_model = TreeModel(self.dbx_root)
         self.dbx_model.loading_done.connect(self.ui_loaded)
@@ -457,14 +464,14 @@ class FoldersDialog(QtWidgets.QDialog):
             self.dbx_model.on_loading_failed()
             return
 
-        self.apply_selection()
+        self.update_selection()
         self.mdbx.set_excluded_folders(self.excluded_folders)
 
-    def apply_selection(self, index=QModelIndex()):
+    def update_selection(self, index=QModelIndex()):
 
         if index.isValid():
             item = index.internalPointer()
-            item_dbx_path = item._root.lower()
+            item_dbx_path = item._path.lower()
 
             # Include items which have been checked / partially checked.
             # Remove items which have been unchecked.
@@ -481,7 +488,7 @@ class FoldersDialog(QtWidgets.QDialog):
 
         for row in range(item.child_count_loaded()):
             index_child = self.dbx_model.index(row, 0, index)
-            self.apply_selection(index=index_child)
+            self.update_selection(index=index_child)
 
     @QtCore.pyqtSlot()
     def ui_failed(self):

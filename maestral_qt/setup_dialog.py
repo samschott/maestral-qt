@@ -21,7 +21,7 @@ from maestral.oauth import OAuth2Session
 # local imports
 from .resources import APP_ICON_PATH, SETUP_DIALOG_PATH, get_native_item_icon
 from .utils import UserDialog, icon_to_pixmap, BackgroundTask
-from .folders_dialog import AsyncLoadFolders, TreeModel, DropboxPathModel
+from .folders_dialog import AsyncListFolder, TreeModel, DropboxPathModel
 
 
 class SetupDialog(QtWidgets.QDialog):
@@ -281,7 +281,7 @@ class SetupDialog(QtWidgets.QDialog):
     @QtCore.pyqtSlot()
     def on_folders_selected(self):
 
-        self.apply_selection()
+        self.update_selection()
         self.mdbx.set_conf("main", "excluded_folders", self.excluded_folders)
 
         # if any excluded folders are currently on the drive, delete them
@@ -311,7 +311,7 @@ class SetupDialog(QtWidgets.QDialog):
         self.dropbox_location = new_location
 
     def populate_folders_list(self, overload=None):
-        self.async_loader = AsyncLoadFolders(self.mdbx, self)
+        self.async_loader = AsyncListFolder(self.mdbx, self)
         self.dbx_root = DropboxPathModel(self.mdbx, self.async_loader, "/")
         self.dbx_model = TreeModel(self.dbx_root)
         self.dbx_model.dataChanged.connect(self.update_select_all_checkbox)
@@ -345,11 +345,11 @@ class SetupDialog(QtWidgets.QDialog):
             index = self.dbx_model.index(irow, 0, QModelIndex())
             self.dbx_model.setCheckState(index, checked_state)
 
-    def apply_selection(self, index=QModelIndex()):
+    def update_selection(self, index=QModelIndex()):
 
         if index.isValid():
             item = index.internalPointer()
-            item_dbx_path = item._root.lower()
+            item_dbx_path = item._path.lower()
 
             # We have started with all folders included. Therefore just append excluded
             # folders here.
@@ -360,7 +360,7 @@ class SetupDialog(QtWidgets.QDialog):
 
         for row in range(item.child_count_loaded()):
             index_child = self.dbx_model.index(row, 0, index)
-            self.apply_selection(index=index_child)
+            self.update_selection(index=index_child)
 
     @staticmethod
     def rel_path(path):
