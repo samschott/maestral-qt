@@ -79,7 +79,7 @@
      <item row="4" column="0">
       <widget class="QLabel" name="labelExcludedFoldersTitle">
        <property name="text">
-        <string>Select folders to sync:</string>
+        <string>Selective sync:</string>
        </property>
        <property name="alignment">
         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -116,7 +116,7 @@
      <item row="4" column="1">
       <widget class="QPushButton" name="pushButtonExcludedFolders">
        <property name="text">
-        <string>Choose folders to sync...</string>
+        <string>Select files and folders...</string>
        </property>
       </widget>
      </item>
