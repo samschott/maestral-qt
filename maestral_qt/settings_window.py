@@ -20,7 +20,7 @@ from maestral.utils.notify import FILECHANGE, SYNCISSUE
 from maestral.utils.autostart import AutoStart
 
 # local imports
-from .folders_dialog import FoldersDialog
+from .selective_sync_dialog import SelectiveSyncDialog
 from .resources import (get_native_item_icon, UNLINK_DIALOG_PATH,
                         SETTINGS_WINDOW_PATH, APP_ICON_PATH, FACEHOLDER_PATH)
 from .utils import (
@@ -78,7 +78,7 @@ class SettingsWindow(QtWidgets.QWidget):
         self.adjustSize()
 
         self.mdbx = mdbx
-        self.folders_dialog = FoldersDialog(self.mdbx, parent=self)
+        self.selective_sync_dialog = SelectiveSyncDialog(self.mdbx, parent=self)
         self.unlink_dialog = UnlinkDialog(self.mdbx, self._parent.restart, parent=self)
         self.autostart = AutoStart(self.mdbx.config_name, gui=True)
 
@@ -99,8 +99,8 @@ class SettingsWindow(QtWidgets.QWidget):
 
         # connect callbacks
         self.pushButtonUnlink.clicked.connect(self.unlink_dialog.exec_)
-        self.pushButtonExcludedFolders.clicked.connect(self.folders_dialog.populate_folders_list)
-        self.pushButtonExcludedFolders.clicked.connect(self.folders_dialog.open)
+        self.pushButtonExcludedFolders.clicked.connect(self.selective_sync_dialog.populate_folders_list)
+        self.pushButtonExcludedFolders.clicked.connect(self.selective_sync_dialog.open)
         self.checkBoxStartup.stateChanged.connect(self.on_start_on_login_clicked)
         self.checkBoxNotifications.stateChanged.connect(self.on_notifications_clicked)
         self.checkBoxAnalytics.stateChanged.connect(self.on_analytics_clicked)

@@ -21,7 +21,7 @@ from maestral.oauth import OAuth2Session
 # local imports
 from .resources import APP_ICON_PATH, SETUP_DIALOG_PATH, get_native_item_icon
 from .utils import UserDialog, icon_to_pixmap, BackgroundTask
-from .folders_dialog import AsyncListFolder, TreeModel, DropboxPathModel
+from .selective_sync_dialog import AsyncListFolder, TreeModel, DropboxPathModel
 
 
 class SetupDialog(QtWidgets.QDialog):

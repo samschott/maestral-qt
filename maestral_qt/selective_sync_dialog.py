@@ -409,7 +409,7 @@ class AsyncListFolder(QtCore.QObject):
             return entries
 
 
-class FoldersDialog(QtWidgets.QDialog):
+class SelectiveSyncDialog(QtWidgets.QDialog):
 
     def __init__(self, mdbx,  parent=None):
         super().__init__(parent=parent)
