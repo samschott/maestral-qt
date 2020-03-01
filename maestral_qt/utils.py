@@ -359,7 +359,8 @@ class UserDialog(QtWidgets.QDialog):
 
     Accepted2 = 2
 
-    def __init__(self, title, message, details=None, checkbox=None, parent=None, button_names=('Ok',)):
+    def __init__(self, title, message, details=None, checkbox=None, parent=None,
+                 button_names=('Ok',)):
         """
         A user dialog for Maestral.
 

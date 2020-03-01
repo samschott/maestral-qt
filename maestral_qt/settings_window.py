@@ -31,11 +31,12 @@ from .utils import (
 )
 
 
-NEW_QT = LooseVersion(QtCore.QT_VERSION_STR) >= LooseVersion("5.11")
+NEW_QT = LooseVersion(QtCore.QT_VERSION_STR) >= LooseVersion('5.11')
 
 
 class UnlinkDialog(QtWidgets.QDialog):
 
+    # noinspection PyArgumentList
     def __init__(self, mdbx, restart_func, parent=None):
         super().__init__(parent=parent)
         # load user interface layout from .ui file
@@ -47,7 +48,7 @@ class UnlinkDialog(QtWidgets.QDialog):
         self.restart_func = restart_func
         self.mdbx = mdbx
 
-        self.buttonBox.buttons()[0].setText("Unlink")
+        self.buttonBox.buttons()[0].setText('Unlink')
         self.titleLabel.setFont(get_scaled_font(bold=True))
         self.infoLabel.setFont(get_scaled_font(scaling=0.9))
 
@@ -59,10 +60,11 @@ class UnlinkDialog(QtWidgets.QDialog):
 
         self.buttonBox.setEnabled(False)
         self.progressIndicator.startAnimation()
-        self.unlink_thread = MaestralBackgroundTask(self, self.mdbx.config_name, "unlink")
+        self.unlink_thread = MaestralBackgroundTask(self, self.mdbx.config_name, 'unlink')
         self.unlink_thread.sig_done.connect(self.restart_func)
 
 
+# noinspection PyArgumentList
 class SettingsWindow(QtWidgets.QWidget):
     """A widget showing all of Maestral's settings."""
 
@@ -109,7 +111,7 @@ class SettingsWindow(QtWidgets.QWidget):
         self.comboBoxDropboxPath.currentIndexChanged.connect(self.on_combobox_path)
         msg = ('Choose a location for your Dropbox. A folder named "{0}" will be ' +
                'created inside the folder you select.'.format(
-                   self.mdbx.get_conf("main", "default_dir_name")))
+                   self.mdbx.get_conf('main', 'default_dir_name')))
         self.dropbox_folder_dialog = QtWidgets.QFileDialog(self, caption=msg)
         self.dropbox_folder_dialog.setModal(True)
         self.dropbox_folder_dialog.setAcceptMode(QtWidgets.QFileDialog.AcceptOpen)
@@ -136,13 +138,13 @@ class SettingsWindow(QtWidgets.QWidget):
         self.comboBoxDropboxPath.clear()
         self.comboBoxDropboxPath.addItem(folder_icon, relative_path)
         self.comboBoxDropboxPath.insertSeparator(1)
-        self.comboBoxDropboxPath.addItem(QtGui.QIcon(), "Other...")
+        self.comboBoxDropboxPath.addItem(QtGui.QIcon(), 'Other...')
 
         # populate app section
         self.checkBoxStartup.setChecked(self.autostart.enabled)
         self.checkBoxNotifications.setChecked(self.mdbx.notification_level == FILECHANGE)
         self.checkBoxAnalytics.setChecked(self.mdbx.analytics)
-        update_interval = self.mdbx.get_conf("app", "update_notification_interval")
+        update_interval = self.mdbx.get_conf('app', 'update_notification_interval')
         closest_key = min(
             self._update_interval_mapping,
             key=lambda x: abs(self._update_interval_mapping[x] - update_interval)
@@ -166,14 +168,14 @@ class SettingsWindow(QtWidgets.QWidget):
 
     def set_account_info_from_cache(self):
 
-        acc_display_name = self.mdbx.get_state("account", "display_name")
-        acc_mail = self.mdbx.get_state("account", "email")
-        acc_type = self.mdbx.get_state("account", "type")
-        acc_space_usage = self.mdbx.get_state("account", "usage")
-        acc_space_usage_type = self.mdbx.get_state("account", "usage_type")
+        acc_display_name = self.mdbx.get_state('account', 'display_name')
+        acc_mail = self.mdbx.get_state('account', 'email')
+        acc_type = self.mdbx.get_state('account', 'type')
+        acc_space_usage = self.mdbx.get_state('account', 'usage')
+        acc_space_usage_type = self.mdbx.get_state('account', 'usage_type')
 
-        if acc_space_usage_type == "team":
-            acc_space_usage += " (Team)"
+        if acc_space_usage_type == 'team':
+            acc_space_usage += ' (Team)'
 
         # if the display name is longer than 230 pixels, reduce font-size
         default_font = get_scaled_font(1.5)
@@ -186,10 +188,10 @@ class SettingsWindow(QtWidgets.QWidget):
             self.labelAccountName.setFont(font)
         self.labelAccountName.setText(acc_display_name)
 
-        if acc_type != "":
-            acc_type_text = ", Dropbox {0}".format(acc_type.capitalize())
+        if acc_type != '':
+            acc_type_text = ', Dropbox {0}'.format(acc_type.capitalize())
         else:
-            acc_type_text = ""
+            acc_type_text = ''
         self.labelAccountInfo.setText(acc_mail + acc_type_text)
         self.labelSpaceUsage.setText(acc_space_usage)
 
@@ -200,7 +202,8 @@ class SettingsWindow(QtWidgets.QWidget):
 
     @QtCore.pyqtSlot(int)
     def on_combobox_update_interval(self, idx):
-        self.mdbx.set_conf("app", "update_notification_interval", self._update_interval_mapping[idx])
+        self.mdbx.set_conf('app', 'update_notification_interval',
+                           self._update_interval_mapping[idx])
 
     @QtCore.pyqtSlot(str)
     def on_new_dbx_folder(self, new_location):
@@ -208,14 +211,15 @@ class SettingsWindow(QtWidgets.QWidget):
         self.comboBoxDropboxPath.setCurrentIndex(0)
         if not new_location == '':
 
-            new_path = osp.join(new_location, self.mdbx.get_conf("main", "default_dir_name"))
+            new_path = osp.join(new_location,
+                                self.mdbx.get_conf('main', 'default_dir_name'))
 
             try:
                 self.mdbx.move_dropbox_directory(new_path)
             except OSError:
-                msg = ("Please check if you have permissions to write to the "
-                       "selected location.")
-                msg_box = UserDialog("Could not create directory", msg, parent=self)
+                msg = ('Please check if you have permissions to write to the '
+                       'selected location.')
+                msg_box = UserDialog('Could not create directory', msg, parent=self)
                 msg_box.open()  # no need to block with exec
                 self.mdbx.resume_sync()
             else:
@@ -253,7 +257,7 @@ class SettingsWindow(QtWidgets.QWidget):
 
     def update_dark_mode(self):
         rgb = LINE_COLOR_DARK if isDarkWindow() else LINE_COLOR_LIGHT
-        line_style = "color: rgb({0}, {1}, {2})".format(*rgb)
+        line_style = 'color: rgb({0}, {1}, {2})'.format(*rgb)
 
         self.line0.setStyleSheet(line_style)
         self.line1.setStyleSheet(line_style)
