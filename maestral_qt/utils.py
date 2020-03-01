@@ -375,7 +375,7 @@ class UserDialog(QtWidgets.QDialog):
         self.setWindowModality(Qt.WindowModal)
         self.setWindowFlags(Qt.WindowStaysOnTopHint | Qt.Sheet | Qt.WindowTitleHint |
                             Qt.CustomizeWindowHint)
-        self.setWindowTitle("")
+        self.setWindowTitle('')
         width = 700 if details else 450
         self.setFixedWidth(width)
 
@@ -413,7 +413,7 @@ class UserDialog(QtWidgets.QDialog):
         self.buttonBox = QtWidgets.QDialogButtonBox(QtWidgets.QDialogButtonBox.Ok)
         self.buttonBox.accepted.connect(self.accept)
 
-        self.gridLayout.addWidget(self.iconLabel, 0, 0, 2, 1)
+        self.gridLayout.addWidget(self.iconLabel, 0, 0, 2, 1, Qt.AlignTop)
         self.gridLayout.addWidget(self.titleLabel, 0, 1, 1, 1)
         self.gridLayout.addWidget(self.infoLabel, 1, 1, 1, 1)
         if details:
