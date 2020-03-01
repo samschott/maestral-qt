@@ -409,6 +409,7 @@ class AsyncListFolder(QtCore.QObject):
             return entries
 
 
+# noinspection PyArgumentList
 class SelectiveSyncDialog(QtWidgets.QDialog):
 
     def __init__(self, mdbx,  parent=None):

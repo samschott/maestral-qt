@@ -101,6 +101,7 @@ def icon_to_pixmap(icon, width, height=None):
     return px
 
 
+# noinspection PyArgumentList
 def center_window(widget):
     """
     Centers the given widget on screen.
@@ -116,6 +117,7 @@ def center_window(widget):
     widget.move(x, y)
 
 
+# noinspection PyArgumentList
 def get_masked_image(path, size=64, overlay_text=""):
     """
     Returns a ``QPixmap`` from an image file masked with a smooth circle.
@@ -182,6 +184,7 @@ def get_masked_image(path, size=64, overlay_text=""):
     return pm
 
 
+# noinspection PyArgumentList
 def windowTheme():
     """Returns one of gui.utils.THEME_LIGHT or gui.utils.THEME_DARK, corresponding to
     current user's UI theme."""
@@ -352,6 +355,7 @@ class BackgroundTaskProgressDialog(QtWidgets.QDialog):
 # Custom widgets
 # ========================================================================================
 
+# noinspection PyArgumentList
 class UserDialog(QtWidgets.QDialog):
     """A template user dialog for Maestral. Shows a traceback if given in constructor."""
 
@@ -393,7 +397,8 @@ class UserDialog(QtWidgets.QDialog):
         self.titleLabel.setFont(get_scaled_font(bold=True))
         self.infoLabel.setFont(get_scaled_font(scaling=0.9))
         self.infoLabel.setFixedWidth(width-150)
-        self.infoLabel.setSizePolicy(QtWidgets.QSizePolicy.MinimumExpanding, QtWidgets.QSizePolicy.MinimumExpanding)
+        self.infoLabel.setSizePolicy(QtWidgets.QSizePolicy.MinimumExpanding,
+                                     QtWidgets.QSizePolicy.MinimumExpanding)
         self.infoLabel.setWordWrap(True)
         self.infoLabel.setOpenExternalLinks(True)
 
@@ -479,6 +484,7 @@ class UserDialog(QtWidgets.QDialog):
         self._acceptButton2.setText(name)
 
 
+# noinspection PyArgumentList
 class FaderWidget(QtWidgets.QWidget):
 
     pixmap_opacity = 1.0
@@ -512,6 +518,7 @@ class FaderWidget(QtWidgets.QWidget):
         self.repaint()
 
 
+# noinspection PyArgumentList
 class AnimatedStackedWidget(QtWidgets.QStackedWidget):
     """
     A subclass of ``QStackedWidget`` with sliding or fading animations between stacks.
@@ -631,6 +638,7 @@ class AnimatedStackedWidget(QtWidgets.QStackedWidget):
         self.setCurrentIndex(index)
 
 
+# noinspection PyArgumentList
 class QProgressIndicator(QtWidgets.QWidget):
     """
     A macOS style spinning progress indicator. ``QProgressIndicator`` automatically

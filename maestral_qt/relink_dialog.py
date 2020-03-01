@@ -21,6 +21,7 @@ from .utils import BackgroundTask
 logger = logging.getLogger(__name__)
 
 
+# noinspection PyArgumentList
 class RelinkDialog(QtWidgets.QDialog):
     """A dialog to show when Maestral's Dropbox access has expired or has been revoked."""
 

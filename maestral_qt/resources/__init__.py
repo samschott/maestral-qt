@@ -118,6 +118,7 @@ def get_native_file_icon():
     return _icon_provider.icon(_icon_provider.File)
 
 
+# noinspection PyCallByClass,PyArgumentList
 def get_system_tray_icon(status, color=None, geometry=None):
     """Returns the system tray icon for the given status and color. The following icons
     will be used:
@@ -160,6 +161,7 @@ def get_system_tray_icon(status, color=None, geometry=None):
     return icon
 
 
+# noinspection PyArgumentList
 def statusBarTheme(icon_geometry=None):
     """
     Returns one of gui.utils.THEME_LIGHT or gui.utils.THEME_DARK, corresponding to the
@@ -180,10 +182,11 @@ def statusBarTheme(icon_geometry=None):
 
     if not c0 == c1 == c2 == (0, 0, 0):  # we can trust pixel colors from screenshots
 
-        if not icon_geometry or icon_geometry.isEmpty():  # guess the location of the status bar
+        if not icon_geometry or icon_geometry.isEmpty():
+            # guess the location of the status bar
 
-            rec_screen = QtWidgets.QDesktopWidget().screenGeometry()  # screen size
-            rec_available = QtWidgets.QDesktopWidget().availableGeometry()  # available size
+            rec_screen = QtWidgets.QDesktopWidget().screenGeometry()
+            rec_available = QtWidgets.QDesktopWidget().availableGeometry()
 
             # convert to QRegion for subtraction
             region_screen = QtGui.QRegion(rec_screen)
@@ -214,7 +217,8 @@ def statusBarTheme(icon_geometry=None):
         # -------------------- check icon theme for hints --------------------------
         theme_name = QtGui.QIcon.themeName().lower()
 
-        if theme_name in ('breeze-dark', 'adwaita-dark', 'ubuntu-mono-dark', 'humanity-dark'):
+        if theme_name in ('breeze-dark', 'adwaita-dark', 'ubuntu-mono-dark',
+                          'humanity-dark'):
             return THEME_DARK
         elif theme_name in ('breeze', 'adwaita', 'ubuntu-mono-light', 'humanity'):
             return THEME_LIGHT
@@ -238,6 +242,7 @@ def rgb_to_luminance(r, g, b, base=256):
     return (0.2126*r + 0.7152*g + 0.0722*b)/base
 
 
+# noinspection PyArgumentList
 def _pixel_at(x, y):
     """
     Returns (r, g, b) color code for a pixel with given coordinates (each value is in

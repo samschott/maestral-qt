@@ -21,6 +21,7 @@ from .utils import (elide_string, icon_to_pixmap, get_scaled_font, center_window
                     isDarkWindow, LINE_COLOR_DARK, LINE_COLOR_LIGHT)
 
 
+# noinspection PyArgumentList
 class SyncIssueWidget(QtWidgets.QWidget):
     """
     A widget to graphically display a Maestral sync issue.
@@ -35,8 +36,8 @@ class SyncIssueWidget(QtWidgets.QWidget):
         self.errorLabel.setFont(get_scaled_font(scaling=0.85))
         self.update_dark_mode()  # set appropriate item icon and colors in style sheet
 
-        self.pathLabel.setText(self.to_display_path(self.sync_err["local_path"]))
-        self.errorLabel.setText(self.sync_err["title"] + ":\n" + self.sync_err["message"])
+        self.pathLabel.setText(self.to_display_path(self.sync_err['local_path']))
+        self.errorLabel.setText(self.sync_err['title'] + ':\n' + self.sync_err['message'])
 
         def request_context_menu():
             self.actionButton.customContextMenuRequested.emit(self.actionButton.pos())
@@ -48,10 +49,10 @@ class SyncIssueWidget(QtWidgets.QWidget):
     def showContextMenu(self, pos):
 
         self.actionButtonContextMenu = QtWidgets.QMenu()
-        a0 = self.actionButtonContextMenu.addAction("View in folder")
-        a1 = self.actionButtonContextMenu.addAction("View on dropbox.com")
+        a0 = self.actionButtonContextMenu.addAction('View in folder')
+        a1 = self.actionButtonContextMenu.addAction('View on dropbox.com')
 
-        a0.setEnabled(os.path.exists(self.sync_err["local_path"]))
+        a0.setEnabled(os.path.exists(self.sync_err['local_path']))
 
         a0.triggered.connect(self._go_to_local_path)
         a1.triggered.connect(self._go_to_online)
@@ -59,16 +60,17 @@ class SyncIssueWidget(QtWidgets.QWidget):
 
     @QtCore.pyqtSlot()
     def _go_to_local_path(self):
-        click.launch(self.sync_err["local_path"], locate=True)
+        click.launch(self.sync_err['local_path'], locate=True)
 
     @QtCore.pyqtSlot()
     def _go_to_online(self):
-        dbx_address = "https://www.dropbox.com/preview"
-        file_address = urllib.parse.quote(self.sync_err["dbx_path"])
+        dbx_address = 'https://www.dropbox.com/preview'
+        file_address = urllib.parse.quote(self.sync_err['dbx_path'])
         click.launch(dbx_address + file_address)
 
     def to_display_path(self, local_path):
-        return elide_string(os.path.basename(local_path), font=self.pathLabel.font(), pixels=300, side="left")
+        return elide_string(os.path.basename(local_path), font=self.pathLabel.font(),
+                            pixels=300, side='left')
 
     def changeEvent(self, QEvent):
         if QEvent.type() == QtCore.QEvent.PaletteChange:
@@ -87,11 +89,12 @@ class SyncIssueWidget(QtWidgets.QWidget):
         }}""".format(*line_rgb, *bg_color_rgb))
 
         # update item icons (the system may supply different icons in dark mode)
-        icon = get_native_item_icon(self.sync_err["local_path"])
+        icon = get_native_item_icon(self.sync_err['local_path'])
         pixmap = icon_to_pixmap(icon, self.iconLabel.width(), self.iconLabel.height())
         self.iconLabel.setPixmap(pixmap)
 
 
+# noinspection PyArgumentList
 class SyncIssueWindow(QtWidgets.QWidget):
     """
     A widget to graphically display all Maestral sync issues.
@@ -116,7 +119,7 @@ class SyncIssueWindow(QtWidgets.QWidget):
         sync_errors_list = self.mdbx.sync_errors  # get a new copy
 
         if len(sync_errors_list) == 0:
-            no_issues_label = QtWidgets.QLabel("No sync issues :)")
+            no_issues_label = QtWidgets.QLabel('No sync issues :)')
             self.verticalLayout.addWidget(no_issues_label)
             self.sync_issue_widgets.append(no_issues_label)
 
