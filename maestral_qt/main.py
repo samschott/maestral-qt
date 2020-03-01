@@ -41,11 +41,11 @@ from maestral.daemon import (
 # local imports
 from maestral_qt.settings_window import SettingsWindow
 from maestral_qt.sync_issues_window import SyncIssueWindow
-from maestral_qt.rebuild_index_dialog import RebuildIndexDialog
 from maestral_qt.resources import get_system_tray_icon, DESKTOP
 from maestral_qt.utils import (
     MaestralBackgroundTask,
     BackgroundTaskProgressDialog,
+    UserDialog,
     elide_string,
     IS_MACOS,
     show_stacktrace_dialog,
@@ -426,10 +426,19 @@ class MaestralGuiApp(QtWidgets.QSystemTrayIcon):
 
     @QtCore.pyqtSlot()
     def on_rebuild_clicked(self):
-        self.rebuild_dialog = RebuildIndexDialog(self.mdbx)
-        self.rebuild_dialog.show()
-        self.rebuild_dialog.activateWindow()
-        self.rebuild_dialog.raise_()
+        self.rebuild_dialog = UserDialog(
+            title='Rebuilt Maestral\'s sync index?',
+            message=(
+                'Rebuilding the index may take several minutes, depending on the size of '
+                'your Dropbox. Any changes to local files will be synced once rebuilding '
+                'has completed. If you quit Maestral during the process, rebuilding will '
+                'be resumed on the next launch.'
+            ),
+            button_names=('Rebuild', 'Cancel')
+        )
+        res = self.rebuild_dialog.exec_()
+        if res == UserDialog.Accepted:
+            self.mdbx.rebuild_index()
 
     # callbacks to update GUI
 
