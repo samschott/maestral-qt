@@ -395,7 +395,7 @@
        <item row="0" column="0">
         <widget class="QLabel" name="labelFolderSelection">
          <property name="text">
-          <string>Please select which folders to sync below. The inital download may take a while, depending on the size of your Dropbox.</string>
+          <string>Please select which files and folders to sync below. The inital download may take some time, depending on the size of your Dropbox.</string>
          </property>
          <property name="alignment">
           <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
