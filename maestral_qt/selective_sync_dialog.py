@@ -406,6 +406,8 @@ class AsyncListFolder(QtCore.QObject):
                 except NotAFolderError:
                     entries = []
 
+            entries.sort(key=lambda e: e['name'].lower())
+
             return entries
 
 
