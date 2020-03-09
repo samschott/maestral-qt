@@ -119,7 +119,7 @@ class MaestralGuiApp(QtWidgets.QSystemTrayIcon):
 
         self.update_ui_timer = QtCore.QTimer()
         self.update_ui_timer.timeout.connect(self.update_ui)
-        self.update_ui_timer.start(500)  # every 500 ms
+        self.update_ui_timer.start(2000)  # every 2 sec
 
         self.check_for_updates_timer = QtCore.QTimer()
         self.check_for_updates_timer.timeout.connect(self.auto_check_for_updates)
@@ -136,6 +136,7 @@ class MaestralGuiApp(QtWidgets.QSystemTrayIcon):
     @QtCore.pyqtSlot()
     def _onContextMenuAboutToShow(self):
         self._context_menu_visible = True
+        self.update_ui_timer.setInterval(500)
         if IS_MACOS:
             self.icons = self.load_tray_icons('light')
             self.setIcon(self._current_icon)
@@ -154,6 +155,8 @@ class MaestralGuiApp(QtWidgets.QSystemTrayIcon):
                 self.update_error()
             except Pyro5.errors.CommunicationError:
                 self.quit()
+        if not self.contextMenuVisible():
+            self.update_ui_timer.setInterval(2000)
 
     def show_when_systray_available(self):
         # If available, show icon, otherwise, set a timer to check back later.
