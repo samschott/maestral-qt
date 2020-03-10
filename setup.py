@@ -41,6 +41,7 @@ setup(
             'resources/*.icns',
             'resources/*.png',
             'resources/*.svg',
+            'resources/*.desktop',
             'resources/*/*.svg',
             'resources/*/*.png',
             ],
@@ -77,5 +78,6 @@ setup(
             'maestral_qt/resources/tray-icons-gnome/maestral-icon-paused-symbolic.svg',
             'maestral_qt/resources/tray-icons-gnome/maestral-icon-syncing-symbolic.svg',
         ]),
+        ('share/applications', ['maestral_qt/resources/maestral.desktop']),
     ],
 )
