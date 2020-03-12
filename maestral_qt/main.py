@@ -266,7 +266,7 @@ class MaestralGuiApp(QtWidgets.QSystemTrayIcon):
         self.menu.clear()
 
         openDropboxFolderAction = self.menu.addAction('Open Dropbox Folder')
-        openDropboxFolderAction.triggered.connect(lambda: click.launch(self.mdbx.dropbox_path))
+        openDropboxFolderAction.triggered.connect(self.on_folder_clicked)
         openWebsiteAction = self.menu.addAction('Launch Dropbox Website')
         openWebsiteAction.triggered.connect(self.on_website_clicked)
 
@@ -380,6 +380,11 @@ class MaestralGuiApp(QtWidgets.QSystemTrayIcon):
     def on_website_clicked(self):
         """Open the Dropbox website."""
         click.launch('https://www.dropbox.com/')
+
+    @QtCore.pyqtSlot()
+    def on_folder_clicked(self):
+        """Open the Dropbox folder."""
+        click.launch(self.mdbx.dropbox_path)
 
     @QtCore.pyqtSlot()
     def on_help_clicked(self):
