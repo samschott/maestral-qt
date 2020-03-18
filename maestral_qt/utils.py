@@ -85,8 +85,7 @@ def icon_to_pixmap(icon, width, height=None):
     :param int height: Target point height.
     :return: ``QPixmap`` instance.
     """
-    if not height:
-        height = width
+    height = height or width
 
     is_hidpi = QtCore.QCoreApplication.testAttribute(Qt.AA_UseHighDpiPixmaps)
     pr = QtWidgets.QApplication.instance().devicePixelRatio()
@@ -94,11 +93,11 @@ def icon_to_pixmap(icon, width, height=None):
     if not is_hidpi:
         width = width*pr
         height = height*pr
-    px = icon.pixmap(width, height)
+    pixmap = icon.pixmap(width, height)
     if not is_hidpi:
-        px.setDevicePixelRatio(pr)
+        pixmap.setDevicePixelRatio(pr)
 
-    return px
+    return pixmap
 
 
 # noinspection PyArgumentList
@@ -117,7 +116,7 @@ def center_window(widget):
     widget.move(x, y)
 
 
-# noinspection PyArgumentList
+# noinspection PyArgumentList, PyTypeChecker, PyCallByClass
 def get_masked_image(path, size=64, overlay_text=""):
     """
     Returns a ``QPixmap`` from an image file masked with a smooth circle.
@@ -271,7 +270,8 @@ class MaestralBackgroundTask(BackgroundTask):
     """A utility class to manage a worker thread. It uses a separate Maestral proxy
     to prevent the main connection from blocking."""
 
-    def __init__(self, parent=None, config_name='maestral', target=None, args=None, kwargs=None, autostart=True):
+    def __init__(self, parent=None, config_name='maestral', target=None, args=None,
+                 kwargs=None, autostart=True):
         self.config_name = config_name
         BackgroundTask.__init__(self, parent, target, args, kwargs, autostart)
 
@@ -320,7 +320,8 @@ class BackgroundTaskProgressDialog(QtWidgets.QDialog):
         self.titleLabel.setFont(get_scaled_font(bold=True))
         self.infoLabel.setFont(get_scaled_font(scaling=0.9))
         self.infoLabel.setFixedWidth(width-150)
-        self.infoLabel.setSizePolicy(QtWidgets.QSizePolicy.MinimumExpanding, QtWidgets.QSizePolicy.MinimumExpanding)
+        self.infoLabel.setSizePolicy(QtWidgets.QSizePolicy.MinimumExpanding,
+                                     QtWidgets.QSizePolicy.MinimumExpanding)
         self.infoLabel.setWordWrap(True)
         self.infoLabel.setOpenExternalLinks(True)
 
@@ -355,7 +356,7 @@ class BackgroundTaskProgressDialog(QtWidgets.QDialog):
 # Custom widgets
 # ========================================================================================
 
-# noinspection PyArgumentList
+# noinspection PyArgumentList, PyTypeChecker, PyCallByClass
 class UserDialog(QtWidgets.QDialog):
     """A template user dialog for Maestral. Shows a traceback if given in constructor."""
 
