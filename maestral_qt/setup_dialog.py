@@ -400,6 +400,7 @@ class SetupDialog(QtWidgets.QDialog):
     @staticmethod
     def configureMaestral(config_name='maestral', pending_link=True, parent=None):
         fsd = SetupDialog(config_name, pending_link, parent)
+        fsd.show()
         fsd.exec_()
 
         return fsd.accepted

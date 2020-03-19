@@ -554,7 +554,11 @@ class MaestralGuiApp(QtWidgets.QSystemTrayIcon):
         from maestral_qt.relink_dialog import RelinkDialog
 
         relink_dialog = RelinkDialog(self, reason)
-        relink_dialog.show()  # will perform quit / restart as appropriate
+
+        # Call both show and exec: this works around a bug where
+        # the dialog does not stay on top on macOS unless show is called.
+        relink_dialog.show()
+        relink_dialog.exec_()
 
     def _stop_and_exec_error_dialog(self, err):
 
