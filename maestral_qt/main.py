@@ -17,7 +17,7 @@ from datetime import timedelta, datetime
 
 # external packages
 import click
-from PyQt5 import QtCore, QtWidgets
+from PyQt5 import QtCore, QtWidgets, QtGui
 
 # maestral modules
 from maestral import __version__
@@ -41,7 +41,7 @@ from maestral.daemon import (
 # local imports
 from maestral_qt.settings_window import SettingsWindow
 from maestral_qt.sync_issues_window import SyncIssueWindow
-from maestral_qt.resources import get_system_tray_icon, DESKTOP
+from maestral_qt.resources import get_system_tray_icon, DESKTOP, APP_ICON_PATH
 from maestral_qt.utils import (
     MaestralBackgroundTask,
     BackgroundTaskProgressDialog,
@@ -661,6 +661,7 @@ def run(config_name='maestral'):
     QtCore.QCoreApplication.setAttribute(QtCore.Qt.AA_UseHighDpiPixmaps)
 
     app = QtWidgets.QApplication([APP_NAME])
+    app.setWindowIcon(QtGui.QIcon(APP_ICON_PATH))
     app.setQuitOnLastWindowClosed(False)
 
     maestral_gui = MaestralGuiApp(config_name)
