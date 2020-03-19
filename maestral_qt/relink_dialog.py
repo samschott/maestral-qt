@@ -35,16 +35,14 @@ class RelinkDialog(QtWidgets.QDialog):
     def __init__(self, parent, reason=EXPIRED):
         super().__init__()
         uic.loadUi(RELINK_DIALOG_PATH, self)
-        self.setWindowFlags(Qt.WindowStaysOnTopHint)
+        self.setWindowFlags(self.windowFlags() | Qt.WindowStaysOnTopHint
+                            | Qt.WindowTitleHint | Qt.CustomizeWindowHint)
 
         # import OAuth2Session here because of ~40 MB memory footprint
         from maestral.oauth import OAuth2Session
 
         self._parent = parent
         self.auth_session = OAuth2Session(self._parent.mdbx.config_name)
-
-        self.setModal(True)
-        self.setWindowFlags(Qt.WindowTitleHint | Qt.CustomizeWindowHint)
 
         # format text labels
         if reason is self.EXPIRED:

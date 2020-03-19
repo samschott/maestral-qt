@@ -37,6 +37,7 @@ class SetupDialog(QtWidgets.QDialog):
         super().__init__(parent=parent)
         # load user interface layout from .ui file
         uic.loadUi(SETUP_DIALOG_PATH, self)
+        self.setWindowFlags(Qt.WindowStaysOnTopHint)
 
         self._config_name = config_name
         self._conf = MaestralConfig(config_name)
@@ -81,7 +82,7 @@ class SetupDialog(QtWidgets.QDialog):
                 lambda: self.comboBoxDropboxPath.setCurrentIndex(0))
 
         # connect buttons to callbacks
-        self.setAttribute(QtCore.Qt.WA_DeleteOnClose)
+        self.setAttribute(Qt.WA_DeleteOnClose)
         self.pushButtonLink.clicked.connect(self.on_link)
         self.pushButtonAuthPageCancel.clicked.connect(self.on_reject_requested)
         self.pushButtonAuthPageLink.clicked.connect(self.on_auth_clicked)

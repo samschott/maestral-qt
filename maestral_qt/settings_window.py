@@ -73,9 +73,9 @@ class SettingsWindow(QtWidgets.QWidget):
     def __init__(self, parent, mdbx):
         super().__init__()
         uic.loadUi(SETTINGS_WINDOW_PATH, self)
+        self.setWindowFlags(self.windowFlags() | QtCore.Qt.WindowStaysOnTopHint)
         self._parent = parent
         self.update_dark_mode()
-        self.setWindowFlag(QtCore.Qt.WindowStaysOnTopHint)
 
         self.adjustSize()
 
