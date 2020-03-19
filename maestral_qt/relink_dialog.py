@@ -35,6 +35,7 @@ class RelinkDialog(QtWidgets.QDialog):
     def __init__(self, parent, reason=EXPIRED):
         super().__init__()
         uic.loadUi(RELINK_DIALOG_PATH, self)
+        self.setWindowFlags(Qt.WindowStaysOnTopHint)
 
         # import OAuth2Session here because of ~40 MB memory footprint
         from maestral.oauth import OAuth2Session
