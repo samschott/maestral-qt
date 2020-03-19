@@ -148,9 +148,6 @@ class SetupDialog(QtWidgets.QDialog):
 
     @QtCore.pyqtSlot()
     def on_reject_requested(self):
-        if self.mdbx:
-            self.mdbx.set_conf('main', 'path', '')
-
         self.accepted = False
         self.reject()
 
@@ -236,7 +233,7 @@ class SetupDialog(QtWidgets.QDialog):
                     title='Folder already exists',
                     message=(f'The folder "{dropbox_path}" already exists. Would '
                              'you like to keep using it?'),
-                    button_names=('Replace', 'Keep', 'Cancel'),
+                    button_names=('Replace', 'Cancel', 'Keep'),
                     parent=self,
                 )
                 msg_box.setAcceptButtonIcon('edit-clear')
