@@ -49,8 +49,8 @@ setup(
     setup_requires=['wheel'],
     install_requires=[
         'bugsnag',
-        'click>=7.0',
-        'maestral>=0.6.2.dev7',
+        'click>=7.1.1',
+        'maestral>=0.6.2',
         'markdown2',
         'PyQt5>=5.9',
     ],
