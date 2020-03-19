@@ -8,7 +8,7 @@ Created on Wed Oct 31 16:23:13 2018
 import os
 
 __author__ = 'Sam Schott'
-__version__ = '0.6.2'
+__version__ = '0.6.2.post1'
 __url__ = 'https://github.com/SamSchott/maestral'
 
 # add "~/.local/share" to XDG_DATA_DIRS
