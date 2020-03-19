@@ -136,7 +136,8 @@ class MaestralGuiApp(QtWidgets.QSystemTrayIcon):
     @QtCore.pyqtSlot()
     def _onContextMenuAboutToShow(self):
         self._context_menu_visible = True
-        self.update_status()
+        if self.mdbx:
+            self.update_status()
         self.update_ui_timer.setInterval(500)
         if IS_MACOS:
             self.icons = self.load_tray_icons('light')
