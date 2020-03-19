@@ -3,8 +3,15 @@
 block_cipher = None
 
 
-from maestral import __version__, __author__
 import time
+from maestral import __version__, __author__
+
+
+with open('bundle_version.txt', 'r') as f:
+    bundle_version = str(int(f.read()) + 1)
+
+with open('bundle_version.txt', 'w') as f:
+    f.write(bundle_version)
 
 
 a = Analysis(['maestral_qt/main.py'],
@@ -52,7 +59,7 @@ app = BUNDLE(coll,
                 'NSHighResolutionCapable': 'True',
                 'NSRequiresAquaSystemAppearance': 'False',
                 'LSUIElement': '1',
-                'CFBundleVersion': '121',
+                'CFBundleVersion': bundle_version,
                 'CFBundleShortVersionString': __version__,
                 'NSHumanReadableCopyright': 'Copyright © {} {}. All rights reserved.'.format(time.strftime('%Y'), __author__),
                 'LSMinimumSystemVersion': '10.13.0',
