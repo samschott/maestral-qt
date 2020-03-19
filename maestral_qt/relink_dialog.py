@@ -81,7 +81,7 @@ class RelinkDialog(QtWidgets.QDialog):
     @QtCore.pyqtSlot()
     def delete_creds_and_quit(self):
         self.auth_session.delete_creds()
-        self.quit()
+        self._parent.quit(stop_daemon=True)
 
     @QtCore.pyqtSlot(str)
     def _set_text_style(self, text):
