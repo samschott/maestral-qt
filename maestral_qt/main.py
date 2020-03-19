@@ -554,7 +554,7 @@ class MaestralGuiApp(QtWidgets.QSystemTrayIcon):
         from maestral_qt.relink_dialog import RelinkDialog
 
         relink_dialog = RelinkDialog(self, reason)
-        relink_dialog.exec_()  # will perform quit / restart as appropriate
+        relink_dialog.show()  # will perform quit / restart as appropriate
 
     def _stop_and_exec_error_dialog(self, err):
 
