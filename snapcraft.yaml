@@ -1,0 +1,26 @@
+name: maestral
+title: Maestral
+version: git
+license: MIT
+icon: maestral_qt/resources/maestral.png
+summary: An open-source Dropbox client for macOS and Linux.
+description: |
+  Maestral is light-weight and simple Dropbox client for Linux and macOS.
+  It allows two-way syncing with your Dropbox, setting up a 'mignore' file
+  similar to 'gitignore' and syncing multiple Dropbox accounts.
+
+confinement: devmode
+base: core18
+
+parts:
+  maestral:
+    plugin: python
+    python-version: python3
+    source: .
+    stage-packages:
+      - python-six
+    autostart: maestral_qt/resources/maestral.desktop
+
+apps:
+  maestral:
+    command: maestral_qt/main
