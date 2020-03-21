@@ -1,18 +1,9 @@
 #!/usr/bin/env bash
 
 SPEC_FILE=pyinstaller_macos.spec
+BUILD_NO=$(grep -E -o "[0-9]*" bundle_version.txt)
 
-OLD_BUILD=$(grep -E -o "'CFBundleVersion': '[!0-9]*'," $SPEC_FILE | grep -E -o '[0-9]+')
-NEW_BUILD=$(($OLD_BUILD+1))
-
-OLD="'CFBundleVersion': '$OLD_BUILD',"
-NEW="'CFBundleVersion': '$NEW_BUILD',"
-
-echo "**** INCREMENTING BUILD NUMBER TO $NEW_BUILD ***********"
-
-sed -i "" "s/$OLD/$NEW/g" $SPEC_FILE
-
-echo "**** BUILDING ******************************************"
+echo "**** BUILD NUMBER $BUILD_NO ****************************"
 
 python3 -OO -m PyInstaller  -y --clean -w $SPEC_FILE
 
