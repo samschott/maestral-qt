@@ -12,7 +12,6 @@ confinement: classic
 base: core18
 architectures:
   build-on: [i386, arm64]
-  run-on: [i386, arm64]
 
 parts:
   desktop-qt5:
