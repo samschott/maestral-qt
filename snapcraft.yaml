@@ -8,7 +8,7 @@ description: |
   Maestral is light-weight and simple Dropbox client for Linux and macOS.
   It allows two-way syncing with your Dropbox, setting up a 'mignore' file
   similar to 'gitignore' and syncing multiple Dropbox accounts.
-confinement: devmode
+confinement: classic
 base: core18
 
 parts:
@@ -36,6 +36,7 @@ parts:
       - locales-all
       - xdg-user-dirs
       - fcitx-frontend-qt5
+      - appmenu-qt5
 
   maestral:
     after: [desktop-qt5]
