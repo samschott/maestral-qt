@@ -10,6 +10,9 @@ description: |
   similar to 'gitignore' and syncing multiple Dropbox accounts.
 confinement: classic
 base: core18
+architectures:
+  build-on: [i386, arm64]
+  run-on: [i386, arm64]
 
 parts:
   desktop-qt5:
@@ -36,7 +39,6 @@ parts:
       - locales-all
       - xdg-user-dirs
       - fcitx-frontend-qt5
-      - appmenu-qt5
 
   maestral:
     after: [desktop-qt5]
