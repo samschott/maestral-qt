@@ -79,13 +79,16 @@ def get_desktop():
 
     if platform.system() == 'Linux':
         current_desktop = os.environ.get('XDG_CURRENT_DESKTOP', '').lower()
+
+        if current_desktop in ('unity', 'gnome', 'x-cinnamon'):
+            return 'gnome'
+
         desktop_session = os.environ.get('GDMSESSION', '').lower()
 
-        for desktop in ('gnome', 'kde', 'xfce', ''):
-            if desktop in current_desktop or desktop in desktop_session:
-                return desktop
+        if 'kde' == current_desktop or desktop_session.startswith('kde'):
+            return 'kde'
 
-        return current_desktop
+        return ''
 
     elif platform.system() == 'Darwin':
         return 'cocoa'
