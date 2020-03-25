@@ -60,7 +60,7 @@ parts:
         chmod +x /build/maestral/parts/maestral/install/bin
 
   maestral-qt:
-    after: [maestral]
+    after: [desktop-qt5]
     plugin: python
     python-version: python3
     source: git://github.com/samschott/maestral-qt
