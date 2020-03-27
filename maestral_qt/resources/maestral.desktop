@@ -9,6 +9,4 @@ TryExec = maestral_qt
 Exec = maestral_qt
 Hidden = false
 Terminal = false
-Type = Application
 Categories = Network;FileTransfer;
-
