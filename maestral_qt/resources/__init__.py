@@ -140,7 +140,9 @@ def get_system_tray_icon(status, color=None, geometry=None):
     :param geometry: Tray icon geometry on screen. If given, this location will be used to
         to determine the system tray background color.
     """
-    assert status in ('idle', 'syncing', 'paused', 'disconnected', 'info', 'error')
+    allowed_status = ('idle', 'syncing', 'paused', 'disconnected', 'info', 'error')
+    if status not in allowed_status:
+        raise ValueError(f'status must be in {allowed_status}')
 
     if DESKTOP == 'cocoa':
         icon_color = color or 'dark'

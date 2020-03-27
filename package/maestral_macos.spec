@@ -7,21 +7,24 @@ import time
 from maestral import __version__, __author__
 
 
-with open('bundle_version.txt', 'r') as f:
-    bundle_version = str(int(f.read()) + 1)
+try:
+    with open('bundle_version_macos.txt', 'r') as f:
+        bundle_version = str(int(f.read()) + 1)
+except FileNotFoundError:
+    bundle_version = 1
 
-with open('bundle_version.txt', 'w') as f:
+with open('bundle_version_macos.txt', 'w') as f:
     f.write(bundle_version)
 
 
-a = Analysis(['maestral_qt/main.py'],
+a = Analysis(['../maestral_qt/main.py'],
              binaries=[],
              datas= [
-                ('maestral_qt/resources/tray-icons-svg/*.svg', './tray-icons-svg'),
-                ('maestral_qt/resources/maestral.png', '.'),
-                ('maestral_qt/resources/faceholder.png', '.'),
-                ('maestral_qt/resources/*.ui', '.'),
-                ('../maestral-dropbox/maestral/resources/*', '.'),
+                ('../maestral_qt/resources/tray-icons-svg/*.svg', './tray-icons-svg'),
+                ('../maestral_qt/resources/maestral.png', '.'),
+                ('../maestral_qt/resources/faceholder.png', '.'),
+                ('../maestral_qt/resources/*.ui', '.'),
+                ('../../maestral-dropbox/maestral/resources/*', '.'),
              ],
              hiddenimports=['pkg_resources.py2_warn', 'keyring.backends.OS_X',],
              hookspath=[],
@@ -53,7 +56,7 @@ coll = COLLECT(exe,
                name='main')
 app = BUNDLE(coll,
              name='Maestral.app',
-             icon='maestral_qt/resources/maestral.icns',
+             icon='../maestral_qt/resources/maestral.icns',
              bundle_identifier='com.samschott.maestral',
              info_plist={
                 'NSHighResolutionCapable': 'True',
