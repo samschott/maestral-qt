@@ -97,6 +97,7 @@ border-radius: 7px;
 	border: none;
 	background-color: none;
 	color: rgb(68,133,243);
+	font: bold
 }</string>
         </property>
         <property name="text">
