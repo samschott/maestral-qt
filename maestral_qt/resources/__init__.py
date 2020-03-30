@@ -10,6 +10,8 @@ import os
 import os.path as osp
 import platform
 import re
+from packaging.version import Version
+
 from PyQt5 import QtWidgets, QtCore, QtGui
 
 _root = getattr(sys, '_MEIPASS', osp.dirname(osp.abspath(__file__)))
@@ -64,7 +66,6 @@ SYNC_ISSUE_WIDGET_PATH = osp.join(_root, 'sync_issue_widget.ui')
 THEME_DARK = 'dark'
 THEME_LIGHT = 'light'
 
-QT_VERSION_TUPLE = tuple(int(x) for x in QtCore.QT_VERSION_STR.split('.'))
 GNOME_VERSION = _get_gnome_version()
 
 
@@ -156,10 +157,10 @@ def get_system_tray_icon(status, color=None, geometry=None):
             icon_color = color or 'light' if isDarkStatusBar(geometry) else 'dark'
             icon = QtGui.QIcon(TRAY_ICON_PATH_SVG.format(status, icon_color))
 
-    elif DESKTOP == 'kde' and QT_VERSION_TUPLE >= (5, 13, 0):
+    elif DESKTOP == 'kde' and Version(QtCore.QT_VERSION_STR) >= Version('5.13.0'):
         # use SVG icon with specified or contrasting color
         icon_color = color or 'light' if isDarkStatusBar(geometry) else 'dark'
-        icon = QtGui.QIcon(TRAY_ICON_DIR_KDE.format(status, icon_color))
+        icon = QtGui.QIcon(TRAY_ICON_PATH_SVG.format(status, icon_color))
 
     else:
         # use PNG icon with specified or contrasting color
