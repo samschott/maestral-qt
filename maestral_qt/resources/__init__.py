@@ -17,18 +17,19 @@ _icon_provider = QtWidgets.QFileIconProvider()
 
 
 def _get_gnome_version():
+    # this may not work in restricted environments such as snap, docker, etc
+
     gnome3_config_path = "/usr/share/gnome/gnome-version.xml"
     gnome2_config_path = "/usr/share/gnome-about/gnome-version.xml"
 
     xml = None
 
     for path in (gnome2_config_path, gnome3_config_path):
-        if osp.isfile(path):
-            try:
-                with open(path, 'r') as f:
-                    xml = f.read()
-            except OSError:
-                pass
+        try:
+            with open(path, 'r') as f:
+                xml = f.read()
+        except OSError:
+            pass
 
     if xml:
         p = re.compile(r'<platform>(?P<maj>\d+)</platform>\s+<minor>'
@@ -64,7 +65,6 @@ THEME_LIGHT = 'light'
 
 QT_VERSION_TUPLE = tuple(int(x) for x in QtCore.QT_VERSION_STR.split('.'))
 GNOME_VERSION = _get_gnome_version()
-IS_GNOME3 = GNOME_VERSION is not None and GNOME_VERSION[0] >= 3
 
 
 def get_desktop():
@@ -92,6 +92,7 @@ def get_desktop():
 
 
 DESKTOP = get_desktop()
+LEGACY_GNOME = DESKTOP == 'gnome' and GNOME_VERSION[0] < 3
 
 
 def get_native_item_icon(item_path):
@@ -147,7 +148,7 @@ def get_system_tray_icon(status, color=None, geometry=None):
         icon = QtGui.QIcon(TRAY_ICON_PATH_SVG.format(status, icon_color))
         icon.setIsMask(not color)
 
-    elif DESKTOP == 'gnome' and IS_GNOME3:
+    elif DESKTOP == 'gnome' and not LEGACY_GNOME:
         # use 'symbolic' icons: try to use SVG icon from theme, fall back to our own
         icon = QtGui.QIcon.fromTheme('maestral-icon-{}-symbolic'.format(status))
         if not icon.name():
@@ -220,16 +221,8 @@ def statusBarTheme(icon_geometry=None):
         return THEME_LIGHT if lum >= 0.4 else THEME_DARK
 
     else:
-        # -------------------- check icon theme for hints --------------------------
-        theme_name = QtGui.QIcon.themeName().lower()
-
-        if theme_name in ('breeze-dark', 'adwaita-dark', 'ubuntu-mono-dark',
-                          'humanity-dark'):
-            return THEME_DARK
-        elif theme_name in ('breeze', 'adwaita', 'ubuntu-mono-light', 'humanity'):
-            return THEME_LIGHT
-        else:  # we give up, we will never guess the right color!
-            return THEME_DARK
+        # -------------------- give up, default to dark ----------------------------------
+        return THEME_DARK
 
 
 def isDarkStatusBar(icon_geometry=None):
