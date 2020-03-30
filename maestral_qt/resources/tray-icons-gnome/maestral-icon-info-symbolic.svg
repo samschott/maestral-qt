@@ -5,11 +5,11 @@
 	 xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" viewBox="0 0 16 16"
 	 style="enable-background:new 0 0 16 16;" xml:space="preserve">
 <style type="text/css">
-	.fg{color:#bebebe;fill:#2e3436}
+	.fg{color:#bebebe;fill:#2e3436;}
 	.fgopaque{color:#bebebe;fill:#2e3436;opacity:0.5;enable-background:new    ;}
-	.warning{color: #bebebe; fill:#f57900}
-	.error{color: #bebebe; fill:#c00}
-	.success{color: #bebebe; fill:#33d17a}
+	.warning{color: #bebebe; fill:#f57900;}
+	.error{color: #bebebe; fill:#c00;}
+	.success{color: #bebebe; fill:#33d17a;}
 </style>
 <g>
 	<path class="warning" d="M11.3,14.5c-0.8,0-1.1-0.6-1.2-1.1c0-0.1,0-0.2,0.3-0.2h1.9c0.3,0,0.3,0.1,0.3,0.2
