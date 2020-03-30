@@ -142,23 +142,27 @@ def get_system_tray_icon(status, color=None, geometry=None):
         raise ValueError(f'status must be in {allowed_status}')
 
     if DESKTOP == 'cocoa':
+        # use SVG icon with specified or automatic color
         icon_color = color or 'dark'
-
         icon = QtGui.QIcon(TRAY_ICON_PATH_SVG.format(status, icon_color))
         icon.setIsMask(not color)
 
     elif DESKTOP == 'gnome' and IS_GNOME3:
+        # use 'symbolic' icons: try to use SVG icon from theme, fall back to our own
         icon = QtGui.QIcon.fromTheme('maestral-icon-{}-symbolic'.format(status))
-        if not icon.name():  # icon was not found, fall back to our own
+        if not icon.name():
             icon_color = color or 'light' if isDarkStatusBar(geometry) else 'dark'
             icon = QtGui.QIcon(TRAY_ICON_PATH_SVG.format(status, icon_color))
-    else:
-        icon_color = color or 'light' if isDarkStatusBar(geometry) else 'dark'
 
-        if DESKTOP == 'kde' and QT_VERSION_TUPLE >= (5, 13, 0):
-            icon = QtGui.QIcon(TRAY_ICON_PATH_SVG.format(status, icon_color))
-        else:
-            icon = QtGui.QIcon(TRAY_ICON_PATH_PNG.format(status, icon_color))
+    elif DESKTOP == 'kde' and QT_VERSION_TUPLE >= (5, 13, 0):
+        # use SVG icon with specified or contrasting color
+        icon_color = color or 'light' if isDarkStatusBar(geometry) else 'dark'
+        icon = QtGui.QIcon(TRAY_ICON_PATH_SVG.format(status, icon_color))
+
+    else:
+        # use PNG icon with specified or contrasting color
+        icon_color = color or 'light' if isDarkStatusBar(geometry) else 'dark'
+        icon = QtGui.QIcon(TRAY_ICON_PATH_PNG.format(status, icon_color))
 
     return icon
 
