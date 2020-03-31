@@ -110,8 +110,8 @@ class SettingsWindow(QtWidgets.QWidget):
             self.on_combobox_update_interval)
         self.comboBoxDropboxPath.currentIndexChanged.connect(self.on_combobox_path)
         msg = ('Choose a location for your Dropbox. A folder named "{0}" will be ' +
-               'created inside the folder you select.'.format(
-                   self.mdbx.get_conf('main', 'default_dir_name')))
+               'created inside the folder you select.').format(
+                   self.mdbx.get_conf('main', 'default_dir_name'))
         self.dropbox_folder_dialog = QtWidgets.QFileDialog(self, caption=msg)
         self.dropbox_folder_dialog.setModal(True)
         self.dropbox_folder_dialog.setAcceptMode(QtWidgets.QFileDialog.AcceptOpen)
