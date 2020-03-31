@@ -94,7 +94,7 @@ def get_desktop():
 
 
 DESKTOP = get_desktop()
-LEGACY_GNOME = DESKTOP == 'gnome' and GNOME_VERSION[0] < 3
+LEGACY_GNOME = DESKTOP == 'gnome' and GNOME_VERSION and GNOME_VERSION[0] < 3
 
 
 def get_native_item_icon(item_path):
