@@ -24,6 +24,7 @@ from .selective_sync_dialog import SelectiveSyncDialog
 from .resources import (get_native_item_icon, UNLINK_DIALOG_PATH,
                         SETTINGS_WINDOW_PATH, APP_ICON_PATH, FACEHOLDER_PATH)
 from .utils import (
+    IS_MACOS,
     UserDialog,
     get_scaled_font, isDarkWindow, center_window,
     LINE_COLOR_DARK, LINE_COLOR_LIGHT,
@@ -73,7 +74,8 @@ class SettingsWindow(QtWidgets.QWidget):
     def __init__(self, parent, mdbx):
         super().__init__()
         uic.loadUi(SETTINGS_WINDOW_PATH, self)
-        self.setWindowFlags(self.windowFlags() | QtCore.Qt.WindowStaysOnTopHint)
+        if IS_MACOS:
+            self.setWindowFlags(self.windowFlags() | QtCore.Qt.WindowStaysOnTopHint)
         self._parent = parent
         self.update_dark_mode()
 

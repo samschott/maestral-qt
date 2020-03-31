@@ -20,7 +20,7 @@ from maestral.oauth import OAuth2Session
 
 # local imports
 from .resources import APP_ICON_PATH, SETUP_DIALOG_PATH, get_native_item_icon
-from .utils import UserDialog, icon_to_pixmap, BackgroundTask
+from .utils import IS_MACOS, UserDialog, icon_to_pixmap, BackgroundTask
 from .selective_sync_dialog import AsyncListFolder, TreeModel, DropboxPathModel
 
 
@@ -37,7 +37,9 @@ class SetupDialog(QtWidgets.QDialog):
         super().__init__(parent=parent)
         # load user interface layout from .ui file
         uic.loadUi(SETUP_DIALOG_PATH, self)
-        self.setWindowFlags(Qt.WindowStaysOnTopHint)
+
+        if IS_MACOS:
+            self.setWindowFlags(Qt.WindowStaysOnTopHint)
 
         self._config_name = config_name
         self._conf = MaestralConfig(config_name)
