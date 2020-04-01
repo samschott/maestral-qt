@@ -623,7 +623,7 @@ class MaestralGuiApp(QtWidgets.QSystemTrayIcon):
             stop_maestral_daemon_process(self.config_name)
 
         # quit
-        QtCore.QCoreApplication.quit()
+        QtWidgets.QApplication.instance().quit()
 
     def restart(self):
         """Restarts the Maestral GUI and sync daemon."""
@@ -673,8 +673,8 @@ def run(config_name='maestral'):
     app.setQuitOnLastWindowClosed(False)
 
     maestral_gui = MaestralGuiApp(config_name)
-    app.processEvents()  # refresh ui before loading the Maestral daemon
-    maestral_gui.load_maestral()
+    # delay loading until event loop has started
+    QtCore.QTimer.singleShot(0, maestral_gui.load_maestral)
     sys.exit(app.exec())
 
 
