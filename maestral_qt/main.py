@@ -624,7 +624,6 @@ class MaestralGuiApp(QtWidgets.QSystemTrayIcon):
 
         # quit
         QtCore.QCoreApplication.quit()
-        sys.exit(0)
 
     def restart(self):
         """Restarts the Maestral GUI and sync daemon."""
