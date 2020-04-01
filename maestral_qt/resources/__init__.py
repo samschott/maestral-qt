@@ -5,17 +5,20 @@ Created on Wed Oct 31 16:23:13 2018
 
 @author: samschott
 """
-import sys
 import os
 import os.path as osp
 import platform
 import re
+import pkg_resources
 from packaging.version import Version
 
 from PyQt5 import QtWidgets, QtCore, QtGui
 
-_root = getattr(sys, '_MEIPASS', osp.dirname(osp.abspath(__file__)))
 _icon_provider = QtWidgets.QFileIconProvider()
+
+
+def resource_path(name):
+    return pkg_resources.resource_filename('maestral_qt', f'resources/{name}')
 
 
 def _get_gnome_version():
@@ -44,24 +47,24 @@ def _get_gnome_version():
         return None
 
 
-APP_ICON_PATH = osp.join(_root, 'maestral.png')
-TRAY_ICON_DIR_SVG = osp.join(_root, 'tray-icons-svg')
-TRAY_ICON_DIR_GNOME = osp.join(_root, 'tray-icons-gnome')
-TRAY_ICON_DIR_KDE = osp.join(_root, 'tray-icons-kde')
-TRAY_ICON_DIR_PNG = osp.join(_root, 'tray-icons-png')
+APP_ICON_PATH = resource_path('maestral.png')
+TRAY_ICON_DIR_SVG = resource_path('tray-icons-svg')
+TRAY_ICON_DIR_GNOME = resource_path('tray-icons-gnome')
+TRAY_ICON_DIR_KDE = resource_path('tray-icons-kde')
+TRAY_ICON_DIR_PNG = resource_path('tray-icons-png')
 TRAY_ICON_PATH_SVG = osp.join(TRAY_ICON_DIR_SVG, 'maestral-icon-{0}-{1}.svg')
 TRAY_ICON_PATH_GNOME = osp.join(TRAY_ICON_DIR_GNOME, 'maestral-icon-{0}-symbolic.svg')
 TRAY_ICON_PATH_PNG = osp.join(TRAY_ICON_DIR_PNG, 'maestral-icon-{0}-{1}.png')
 
-FACEHOLDER_PATH = osp.join(_root, 'faceholder.png')
+FACEHOLDER_PATH = resource_path('faceholder.png')
 
-FOLDERS_DIALOG_PATH = osp.join(_root, 'folders_dialog.ui')
-SETUP_DIALOG_PATH = osp.join(_root, 'setup_dialog.ui')
-SETTINGS_WINDOW_PATH = osp.join(_root, 'settings_window.ui')
-UNLINK_DIALOG_PATH = osp.join(_root, 'unlink_dialog.ui')
-RELINK_DIALOG_PATH = osp.join(_root, 'relink_dialog.ui')
-SYNC_ISSUES_WINDOW_PATH = osp.join(_root, 'sync_issues_window.ui')
-SYNC_ISSUE_WIDGET_PATH = osp.join(_root, 'sync_issue_widget.ui')
+FOLDERS_DIALOG_PATH = resource_path('folders_dialog.ui')
+SETUP_DIALOG_PATH = resource_path('setup_dialog.ui')
+SETTINGS_WINDOW_PATH = resource_path('settings_window.ui')
+UNLINK_DIALOG_PATH = resource_path('unlink_dialog.ui')
+RELINK_DIALOG_PATH = resource_path('relink_dialog.ui')
+SYNC_ISSUES_WINDOW_PATH = resource_path('sync_issues_window.ui')
+SYNC_ISSUE_WIDGET_PATH = resource_path('sync_issue_widget.ui')
 
 THEME_DARK = 'dark'
 THEME_LIGHT = 'light'
