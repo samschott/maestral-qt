@@ -78,14 +78,6 @@ class MaestralGuiApp(QtWidgets.QSystemTrayIcon):
         ERROR: 'error',
     }
 
-    __slots__ = (
-        'icons', 'menu', 'recentFilesMenu',
-        'settings_window', 'sync_issues_window', 'rebuild_dialog', '_progress_dialog',
-        'update_ui_timer', 'check_for_updates_timer',
-        'statusAction', 'accountEmailAction', 'accountUsageAction', 'pauseAction', 'syncIssuesAction',
-        'autostart', '_current_icon', '_n_sync_errors', '_progress_dialog',
-    )
-
     def __init__(self, config_name='maestral'):
         super().__init__()
 
