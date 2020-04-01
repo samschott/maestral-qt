@@ -25,7 +25,7 @@ from maestral.utils.backend import pending_link, pending_dropbox_folder
 from maestral.utils.autostart import AutoStart
 from maestral.constants import (
     IDLE, SYNCING, PAUSED, STOPPED, DISCONNECTED, SYNC_ERROR, ERROR,
-    IS_MACOS_BUNDLE, APP_NAME
+    IS_MACOS_BUNDLE, IS_LINUX_BUNDLE, APP_NAME
 )
 from maestral.daemon import (
     start_maestral_daemon_process,
@@ -197,7 +197,7 @@ class MaestralGuiApp(QtWidgets.QSystemTrayIcon):
         if pid:
             self._started = False
         else:
-            if IS_MACOS_BUNDLE:
+            if IS_MACOS_BUNDLE or IS_LINUX_BUNDLE:
                 res = start_maestral_daemon_thread(self.config_name)
             else:
                 res = start_maestral_daemon_process(self.config_name)
