@@ -147,4 +147,4 @@ Temporary Items
 *.iml
 *.xml
 maestral/gui/resources/app_icon_svg/*
-bundle_version.txt
+bundle_version_macos.txt

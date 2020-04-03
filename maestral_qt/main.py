@@ -25,7 +25,7 @@ from maestral.utils.backend import pending_link, pending_dropbox_folder
 from maestral.utils.autostart import AutoStart
 from maestral.constants import (
     IDLE, SYNCING, PAUSED, STOPPED, DISCONNECTED, SYNC_ERROR, ERROR,
-    IS_MACOS_BUNDLE, APP_NAME
+    IS_MACOS_BUNDLE, IS_LINUX_BUNDLE, APP_NAME
 )
 from maestral.daemon import (
     start_maestral_daemon_process,
@@ -77,14 +77,6 @@ class MaestralGuiApp(QtWidgets.QSystemTrayIcon):
         SYNC_ERROR: 'info',
         ERROR: 'error',
     }
-
-    __slots__ = (
-        'icons', 'menu', 'recentFilesMenu',
-        'settings_window', 'sync_issues_window', 'rebuild_dialog', '_progress_dialog',
-        'update_ui_timer', 'check_for_updates_timer',
-        'statusAction', 'accountEmailAction', 'accountUsageAction', 'pauseAction', 'syncIssuesAction',
-        'autostart', '_current_icon', '_n_sync_errors', '_progress_dialog',
-    )
 
     def __init__(self, config_name='maestral'):
         super().__init__()
@@ -205,7 +197,7 @@ class MaestralGuiApp(QtWidgets.QSystemTrayIcon):
         if pid:
             self._started = False
         else:
-            if IS_MACOS_BUNDLE:
+            if IS_MACOS_BUNDLE or IS_LINUX_BUNDLE:
                 res = start_maestral_daemon_thread(self.config_name)
             else:
                 res = start_maestral_daemon_process(self.config_name)
@@ -623,8 +615,7 @@ class MaestralGuiApp(QtWidgets.QSystemTrayIcon):
             stop_maestral_daemon_process(self.config_name)
 
         # quit
-        QtCore.QCoreApplication.quit()
-        sys.exit(0)
+        QtWidgets.QApplication.instance().quit()
 
     def restart(self):
         """Restarts the Maestral GUI and sync daemon."""
@@ -662,6 +653,10 @@ def _is_pyqt_obj(obj):
 
 # noinspection PyArgumentList
 def run(config_name='maestral'):
+    from maestral.utils.housekeeping import run_housekeeping
+
+    run_housekeeping()
+
     QtCore.QCoreApplication.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling)
     QtCore.QCoreApplication.setAttribute(QtCore.Qt.AA_UseHighDpiPixmaps)
 
@@ -670,8 +665,8 @@ def run(config_name='maestral'):
     app.setQuitOnLastWindowClosed(False)
 
     maestral_gui = MaestralGuiApp(config_name)
-    app.processEvents()  # refresh ui before loading the Maestral daemon
-    maestral_gui.load_maestral()
+    # delay loading until event loop has started
+    QtCore.QTimer.singleShot(0, maestral_gui.load_maestral)
     sys.exit(app.exec())
 
 

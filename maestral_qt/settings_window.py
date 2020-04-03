@@ -24,6 +24,7 @@ from .selective_sync_dialog import SelectiveSyncDialog
 from .resources import (get_native_item_icon, UNLINK_DIALOG_PATH,
                         SETTINGS_WINDOW_PATH, APP_ICON_PATH, FACEHOLDER_PATH)
 from .utils import (
+    IS_MACOS,
     UserDialog,
     get_scaled_font, isDarkWindow, center_window,
     LINE_COLOR_DARK, LINE_COLOR_LIGHT,
@@ -73,7 +74,8 @@ class SettingsWindow(QtWidgets.QWidget):
     def __init__(self, parent, mdbx):
         super().__init__()
         uic.loadUi(SETTINGS_WINDOW_PATH, self)
-        self.setWindowFlags(self.windowFlags() | QtCore.Qt.WindowStaysOnTopHint)
+        if IS_MACOS:
+            self.setWindowFlags(self.windowFlags() | QtCore.Qt.WindowStaysOnTopHint)
         self._parent = parent
         self.update_dark_mode()
 
@@ -110,8 +112,8 @@ class SettingsWindow(QtWidgets.QWidget):
             self.on_combobox_update_interval)
         self.comboBoxDropboxPath.currentIndexChanged.connect(self.on_combobox_path)
         msg = ('Choose a location for your Dropbox. A folder named "{0}" will be ' +
-               'created inside the folder you select.'.format(
-                   self.mdbx.get_conf('main', 'default_dir_name')))
+               'created inside the folder you select.').format(
+                   self.mdbx.get_conf('main', 'default_dir_name'))
         self.dropbox_folder_dialog = QtWidgets.QFileDialog(self, caption=msg)
         self.dropbox_folder_dialog.setModal(True)
         self.dropbox_folder_dialog.setAcceptMode(QtWidgets.QFileDialog.AcceptOpen)

@@ -5,30 +5,36 @@ Created on Wed Oct 31 16:23:13 2018
 
 @author: samschott
 """
-import sys
 import os
 import os.path as osp
 import platform
 import re
+import pkg_resources
+from packaging.version import Version
+
 from PyQt5 import QtWidgets, QtCore, QtGui
 
-_root = getattr(sys, '_MEIPASS', osp.dirname(osp.abspath(__file__)))
 _icon_provider = QtWidgets.QFileIconProvider()
 
 
+def resource_path(name):
+    return pkg_resources.resource_filename('maestral_qt', f'resources/{name}')
+
+
 def _get_gnome_version():
+    # this may not work in restricted environments such as snap, docker, etc
+
     gnome3_config_path = "/usr/share/gnome/gnome-version.xml"
     gnome2_config_path = "/usr/share/gnome-about/gnome-version.xml"
 
     xml = None
 
     for path in (gnome2_config_path, gnome3_config_path):
-        if osp.isfile(path):
-            try:
-                with open(path, 'r') as f:
-                    xml = f.read()
-            except OSError:
-                pass
+        try:
+            with open(path, 'r') as f:
+                xml = f.read()
+        except OSError:
+            pass
 
     if xml:
         p = re.compile(r'<platform>(?P<maj>\d+)</platform>\s+<minor>'
@@ -41,30 +47,29 @@ def _get_gnome_version():
         return None
 
 
-APP_ICON_PATH = osp.join(_root, 'maestral.png')
-TRAY_ICON_DIR_SVG = osp.join(_root, 'tray-icons-svg')
-TRAY_ICON_DIR_GNOME = osp.join(_root, 'tray-icons-gnome')
-TRAY_ICON_DIR_PNG = osp.join(_root, 'tray-icons-png')
+APP_ICON_PATH = resource_path('maestral.png')
+TRAY_ICON_DIR_SVG = resource_path('tray-icons-svg')
+TRAY_ICON_DIR_GNOME = resource_path('tray-icons-gnome')
+TRAY_ICON_DIR_KDE = resource_path('tray-icons-kde')
+TRAY_ICON_DIR_PNG = resource_path('tray-icons-png')
 TRAY_ICON_PATH_SVG = osp.join(TRAY_ICON_DIR_SVG, 'maestral-icon-{0}-{1}.svg')
 TRAY_ICON_PATH_GNOME = osp.join(TRAY_ICON_DIR_GNOME, 'maestral-icon-{0}-symbolic.svg')
 TRAY_ICON_PATH_PNG = osp.join(TRAY_ICON_DIR_PNG, 'maestral-icon-{0}-{1}.png')
 
-FACEHOLDER_PATH = osp.join(_root, 'faceholder.png')
+FACEHOLDER_PATH = resource_path('faceholder.png')
 
-FOLDERS_DIALOG_PATH = osp.join(_root, 'folders_dialog.ui')
-SETUP_DIALOG_PATH = osp.join(_root, 'setup_dialog.ui')
-SETTINGS_WINDOW_PATH = osp.join(_root, 'settings_window.ui')
-UNLINK_DIALOG_PATH = osp.join(_root, 'unlink_dialog.ui')
-RELINK_DIALOG_PATH = osp.join(_root, 'relink_dialog.ui')
-SYNC_ISSUES_WINDOW_PATH = osp.join(_root, 'sync_issues_window.ui')
-SYNC_ISSUE_WIDGET_PATH = osp.join(_root, 'sync_issue_widget.ui')
+FOLDERS_DIALOG_PATH = resource_path('folders_dialog.ui')
+SETUP_DIALOG_PATH = resource_path('setup_dialog.ui')
+SETTINGS_WINDOW_PATH = resource_path('settings_window.ui')
+UNLINK_DIALOG_PATH = resource_path('unlink_dialog.ui')
+RELINK_DIALOG_PATH = resource_path('relink_dialog.ui')
+SYNC_ISSUES_WINDOW_PATH = resource_path('sync_issues_window.ui')
+SYNC_ISSUE_WIDGET_PATH = resource_path('sync_issue_widget.ui')
 
 THEME_DARK = 'dark'
 THEME_LIGHT = 'light'
 
-QT_VERSION_TUPLE = tuple(int(x) for x in QtCore.QT_VERSION_STR.split('.'))
 GNOME_VERSION = _get_gnome_version()
-IS_GNOME3 = GNOME_VERSION is not None and GNOME_VERSION[0] >= 3
 
 
 def get_desktop():
@@ -81,17 +86,18 @@ def get_desktop():
         current_desktop = os.environ.get('XDG_CURRENT_DESKTOP', '').lower()
         desktop_session = os.environ.get('GDMSESSION', '').lower()
 
-        for desktop in ('gnome', 'kde', 'xfce', ''):
+        for desktop in ('gnome', 'kde', 'xfce', 'mate'):
             if desktop in current_desktop or desktop in desktop_session:
                 return desktop
 
-        return current_desktop
+        return 'unknown'
 
     elif platform.system() == 'Darwin':
         return 'cocoa'
 
 
 DESKTOP = get_desktop()
+LEGACY_GNOME = DESKTOP == 'gnome' and GNOME_VERSION and GNOME_VERSION[0] < 3
 
 
 def get_native_item_icon(item_path):
@@ -137,26 +143,32 @@ def get_system_tray_icon(status, color=None, geometry=None):
     :param geometry: Tray icon geometry on screen. If given, this location will be used to
         to determine the system tray background color.
     """
-    assert status in ('idle', 'syncing', 'paused', 'disconnected', 'info', 'error')
+    allowed_status = ('idle', 'syncing', 'paused', 'disconnected', 'info', 'error')
+    if status not in allowed_status:
+        raise ValueError(f'status must be in {allowed_status}')
 
     if DESKTOP == 'cocoa':
+        # use SVG icon with specified or automatic color
         icon_color = color or 'dark'
-
         icon = QtGui.QIcon(TRAY_ICON_PATH_SVG.format(status, icon_color))
         icon.setIsMask(not color)
 
-    elif DESKTOP == 'gnome' and IS_GNOME3:
+    elif DESKTOP == 'gnome' and not LEGACY_GNOME:
+        # use 'symbolic' icons: try to use SVG icon from theme, fall back to our own
         icon = QtGui.QIcon.fromTheme('maestral-icon-{}-symbolic'.format(status))
-        if not icon.name():  # icon was not found, fall back to our own
+        if not icon.name():
             icon_color = color or 'light' if isDarkStatusBar(geometry) else 'dark'
             icon = QtGui.QIcon(TRAY_ICON_PATH_SVG.format(status, icon_color))
-    else:
-        icon_color = color or 'light' if isDarkStatusBar(geometry) else 'dark'
 
-        if DESKTOP == 'kde' and QT_VERSION_TUPLE >= (5, 13, 0):
-            icon = QtGui.QIcon(TRAY_ICON_PATH_SVG.format(status, icon_color))
-        else:
-            icon = QtGui.QIcon(TRAY_ICON_PATH_PNG.format(status, icon_color))
+    elif DESKTOP == 'kde' and Version(QtCore.QT_VERSION_STR) >= Version('5.13.0'):
+        # use SVG icon with specified or contrasting color
+        icon_color = color or 'light' if isDarkStatusBar(geometry) else 'dark'
+        icon = QtGui.QIcon(TRAY_ICON_PATH_SVG.format(status, icon_color))
+
+    else:
+        # use PNG icon with specified or contrasting color
+        icon_color = color or 'light' if isDarkStatusBar(geometry) else 'dark'
+        icon = QtGui.QIcon(TRAY_ICON_PATH_PNG.format(status, icon_color))
 
     return icon
 
@@ -214,16 +226,8 @@ def statusBarTheme(icon_geometry=None):
         return THEME_LIGHT if lum >= 0.4 else THEME_DARK
 
     else:
-        # -------------------- check icon theme for hints --------------------------
-        theme_name = QtGui.QIcon.themeName().lower()
-
-        if theme_name in ('breeze-dark', 'adwaita-dark', 'ubuntu-mono-dark',
-                          'humanity-dark'):
-            return THEME_DARK
-        elif theme_name in ('breeze', 'adwaita', 'ubuntu-mono-light', 'humanity'):
-            return THEME_LIGHT
-        else:  # we give up, we will never guess the right color!
-            return THEME_DARK
+        # -------------------- give up, default to dark ----------------------------------
+        return THEME_DARK
 
 
 def isDarkStatusBar(icon_geometry=None):
