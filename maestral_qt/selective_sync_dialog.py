@@ -403,11 +403,11 @@ class AsyncListFolder(QtCore.QObject):
             with Proxy(self.m._pyroUri) as m:
                 try:
                     entries = m.list_folder(path, recursive=False)
+                    entries.sort(key=lambda e: e['name'].lower())
                 except NotAFolderError:
                     entries = []
-
-            if isinstance(entries, list):
-                entries.sort(key=lambda e: e['name'].lower())
+                except ConnectionError:
+                    entries = False
 
             return entries
 
