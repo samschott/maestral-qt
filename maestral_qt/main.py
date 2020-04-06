@@ -525,11 +525,9 @@ class MaestralGuiApp(QtWidgets.QSystemTrayIcon):
 
         err = errs[-1]
 
-        if err['type'] in ('RevFileError', 'BadInputError', 'CursorResetError',
-                           'InotifyError', 'OutOfMemoryError'):
-            self.mdbx.stop_sync()
-            show_dialog(err['title'], err['message'], level='error')
-        elif err['type'] == 'DropboxDeletedError':
+        print(err)
+
+        if err['type'] == 'DropboxDeletedError':
             self.restart()  # will launch into setup dialog
         elif err['type'] == 'DropboxAuthError':
             from maestral_qt.relink_dialog import RelinkDialog
@@ -537,8 +535,11 @@ class MaestralGuiApp(QtWidgets.QSystemTrayIcon):
         elif err['type'] == 'TokenExpiredError':
             from maestral_qt.relink_dialog import RelinkDialog
             self._stop_and_exec_relink_dialog(RelinkDialog.EXPIRED)
+        elif 'MaestralApiError' in err['inherits'] or 'SyncError' in err['inherits']:
+            self.mdbx.stop_sync()
+            show_dialog(err['title'], err['message'], level='error')
         else:
-            self._stop_and_exec_error_dialog(err)
+            self._stop_and_exec_stacktrace_dialog(err)
 
     def _stop_and_exec_relink_dialog(self, reason):
 
@@ -553,7 +554,7 @@ class MaestralGuiApp(QtWidgets.QSystemTrayIcon):
         relink_dialog.show()
         relink_dialog.exec_()
 
-    def _stop_and_exec_error_dialog(self, err):
+    def _stop_and_exec_stacktrace_dialog(self, err):
 
         self.mdbx.stop_sync()
 
