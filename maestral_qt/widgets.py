@@ -80,7 +80,7 @@ class BackgroundTaskProgressDialog(QtWidgets.QDialog):
         center_window(self)
 
 
-# noinspection PyArgumentList
+# noinspection PyArgumentList,PyTypeChecker
 class UserDialog(QtWidgets.QDialog):
     """A template user dialog for Maestral. Shows a traceback if given in constructor."""
 
@@ -287,7 +287,7 @@ class AnimatedStackedWidget(QtWidgets.QStackedWidget):
 
     def slideInIdx(self, idx):
         if idx > (self.count() - 1):
-            idx = idx % self.count()
+            idx %= self.count()
         elif idx < 0:
             idx = (idx + self.count()) % self.count()
         self.slideInWgt(self.widget(idx))

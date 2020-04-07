@@ -24,7 +24,7 @@ from maestral.utils.backend import pending_link, pending_dropbox_folder
 from maestral.utils.autostart import AutoStart
 from maestral.constants import (
     IDLE, SYNCING, PAUSED, STOPPED, DISCONNECTED, SYNC_ERROR, ERROR,
-    IS_MACOS_BUNDLE, IS_LINUX_BUNDLE, APP_NAME
+    IS_MACOS_BUNDLE, IS_LINUX_BUNDLE
 )
 from maestral.daemon import (
     start_maestral_daemon_process,
@@ -353,7 +353,7 @@ class MaestralGuiApp(QtWidgets.QSystemTrayIcon):
             show_update_dialog(res['latest_release'], res['release_notes'])
         elif not res['update_available']:
             message = 'Maestral v{} is the newest version available.'.format(res['latest_release'])
-            show_dialog('You’re up-to-date!', message, level='info')
+            show_dialog('You’re up-to-date!', message)
 
     @QtCore.pyqtSlot(dict)
     def _notify_updates_auto(self, res):
@@ -644,7 +644,7 @@ def run(config_name='maestral'):
     QtCore.QCoreApplication.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling)
     QtCore.QCoreApplication.setAttribute(QtCore.Qt.AA_UseHighDpiPixmaps)
 
-    app = QtWidgets.QApplication([APP_NAME])
+    app = QtWidgets.QApplication(['Maestral'])
     app.setWindowIcon(QtGui.QIcon(APP_ICON_PATH))
     app.setQuitOnLastWindowClosed(False)
 

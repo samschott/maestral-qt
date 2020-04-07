@@ -22,6 +22,7 @@ from .resources import FOLDERS_DIALOG_PATH, native_folder_icon, native_file_icon
 from .utils import BackgroundTask
 
 
+# noinspection PyTypeChecker
 class TreeModel(QAbstractItemModel):
     """A QAbstractItemModel which loads items and their children on-demand and
     asynchronously. It is useful for displaying a item hierarchy from a source which is
@@ -186,9 +187,6 @@ class AbstractTreeItem(QtCore.QObject):
         return self._parent
 
     def _async_loading_done(self, result):
-        # subclass this to set the children, depending on the `result` of the async call
-        # self.loading_done.emit()
-        # self.loading_failed.emit()
         raise NotImplementedError(self._async_loading_done)
 
     def _create_children_async(self):

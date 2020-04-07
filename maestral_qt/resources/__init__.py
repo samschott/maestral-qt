@@ -24,14 +24,14 @@ def resource_path(name):
 def _get_gnome_version():
     # this may not work in restricted environments such as snap, docker, etc
 
-    gnome3_config_path = "/usr/share/gnome/gnome-version.xml"
-    gnome2_config_path = "/usr/share/gnome-about/gnome-version.xml"
+    gnome3_config_path = '/usr/share/gnome/gnome-version.xml'
+    gnome2_config_path = '/usr/share/gnome-about/gnome-version.xml'
 
     xml = None
 
     for path in (gnome2_config_path, gnome3_config_path):
         try:
-            with open(path, 'r') as f:
+            with open(path) as f:
                 xml = f.read()
         except OSError:
             pass

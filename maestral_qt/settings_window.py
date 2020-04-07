@@ -73,6 +73,7 @@ class SettingsWindow(QtWidgets.QWidget):
         super().__init__()
         uic.loadUi(SETTINGS_WINDOW_PATH, self)
         if IS_MACOS:
+            # noinspection PyTypeChecker
             self.setWindowFlags(self.windowFlags() | QtCore.Qt.WindowStaysOnTopHint)
         self._parent = parent
         self.update_dark_mode()

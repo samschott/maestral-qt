@@ -29,6 +29,7 @@ class RelinkDialog(QtWidgets.QDialog):
     def __init__(self, parent, reason=EXPIRED):
         super().__init__()
         uic.loadUi(RELINK_DIALOG_PATH, self)
+        # noinspection PyTypeChecker
         self.setWindowFlags(self.windowFlags() | Qt.WindowStaysOnTopHint
                             | Qt.WindowTitleHint | Qt.CustomizeWindowHint)
 

@@ -325,7 +325,7 @@ class SetupDialog(QtWidgets.QDialog):
 
     def populate_folders_list(self):
         self.async_loader = AsyncListFolder(self.mdbx, self)
-        self.dbx_root = DropboxPathModel(self.mdbx, self.async_loader, '/')
+        self.dbx_root = DropboxPathModel(self.mdbx, self.async_loader)
         self.dbx_model = TreeModel(self.dbx_root)
         self.dbx_model.dataChanged.connect(self.update_select_all_checkbox)
         self.treeViewFolders.setModel(self.dbx_model)
