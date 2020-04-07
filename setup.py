@@ -27,7 +27,7 @@ setup(
         },
     setup_requires=['wheel'],
     install_requires=[
-        'bugsnag',
+        'bugsnag>=3.4.0',
         'click>=7.1.1',
         'maestral==0.6.4',
         'markdown2',
