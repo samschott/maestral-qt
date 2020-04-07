@@ -41,7 +41,7 @@ from maestral.daemon import (
 # local imports
 from maestral_qt.settings_window import SettingsWindow
 from maestral_qt.sync_issues_window import SyncIssueWindow
-from maestral_qt.resources import get_system_tray_icon, DESKTOP, APP_ICON_PATH
+from maestral_qt.resources import system_tray_icon, DESKTOP, APP_ICON_PATH
 from maestral_qt.utils import (
     MaestralBackgroundTask,
     BackgroundTaskProgressDialog,
@@ -166,7 +166,7 @@ class MaestralGuiApp(QtWidgets.QSystemTrayIcon):
         icons = dict()
 
         for key in self.icon_mapping:
-            icons[key] = get_system_tray_icon(self.icon_mapping[key], color=color)
+            icons[key] = system_tray_icon(self.icon_mapping[key], color=color)
 
         return icons
 
@@ -398,21 +398,6 @@ class MaestralGuiApp(QtWidgets.QSystemTrayIcon):
             self.pauseAction.setText(self.PAUSE_TEXT)
 
     @QtCore.pyqtSlot()
-    def update_snoozed(self):
-        minutes = self.mdbx.notification_snooze
-
-        if minutes > 0:
-            eta = datetime.now() + timedelta(minutes=minutes)
-
-            self.snoozeMenu.setTitle('Notifications snoozed until %s' % eta.strftime('%H:%M'))
-            self.snoozeMenu.insertAction(self.snooze30, self.resumeNotificationsAction)
-            self.snoozeMenu.insertAction(self.snooze30, self.snoozeSeparator)
-        else:
-            self.snoozeMenu.removeAction(self.resumeNotificationsAction)
-            self.snoozeMenu.removeAction(self.snoozeSeparator)
-            self.snoozeMenu.setTitle('Snooze Notifications')
-
-    @QtCore.pyqtSlot()
     def on_settings_clicked(self):
         self.settings_window.show()
         self.settings_window.raise_()
@@ -442,7 +427,28 @@ class MaestralGuiApp(QtWidgets.QSystemTrayIcon):
         if res == UserDialog.Accepted:
             self.mdbx.rebuild_index()
 
+    @QtCore.pyqtSlot()
+    def on_recent_file_clicked(self):
+        sender = self.sender()
+        local_path = sender.data()
+        click.launch(local_path, locate=True)
+
     # callbacks to update GUI
+
+    @QtCore.pyqtSlot()
+    def update_snoozed(self):
+        minutes = self.mdbx.notification_snooze
+
+        if minutes > 0:
+            eta = datetime.now() + timedelta(minutes=minutes)
+
+            self.snoozeMenu.setTitle('Notifications snoozed until %s' % eta.strftime('%H:%M'))
+            self.snoozeMenu.insertAction(self.snooze30, self.resumeNotificationsAction)
+            self.snoozeMenu.insertAction(self.snooze30, self.snoozeSeparator)
+        else:
+            self.snoozeMenu.removeAction(self.resumeNotificationsAction)
+            self.snoozeMenu.removeAction(self.snoozeSeparator)
+            self.snoozeMenu.setTitle('Snooze Notifications')
 
     @QtCore.pyqtSlot()
     def update_recent_files(self):
@@ -459,12 +465,6 @@ class MaestralGuiApp(QtWidgets.QSystemTrayIcon):
             action = self.recentFilesMenu.addAction(truncated_name)
             action.setData(local_path)
             action.triggered.connect(self.on_recent_file_clicked)
-
-    @QtCore.pyqtSlot()
-    def on_recent_file_clicked(self):
-        sender = self.sender()
-        local_path = sender.data()
-        click.launch(local_path, locate=True)
 
     def update_status(self):
         """Change icon according to status."""
@@ -524,8 +524,6 @@ class MaestralGuiApp(QtWidgets.QSystemTrayIcon):
         self.statusAction.setText(self.mdbx.status)
 
         err = errs[-1]
-
-        print(err)
 
         if err['type'] == 'DropboxDeletedError':
             self.restart()  # will launch into setup dialog
@@ -589,10 +587,6 @@ class MaestralGuiApp(QtWidgets.QSystemTrayIcon):
 
     def contextMenuVisible(self):
         return self._context_menu_visible
-
-    def setToolTip(self, text):
-        # tray icons in macOS should not have tooltips
-        QtWidgets.QSystemTrayIcon.setToolTip(self, text)
 
     def quit(self, *args, stop_daemon=None):
         """Quits Maestral.

@@ -72,7 +72,7 @@ THEME_LIGHT = 'light'
 GNOME_VERSION = _get_gnome_version()
 
 
-def get_desktop():
+def _get_desktop():
     """
     Determines the current desktop environment. This is used for instance to decide
     which keyring backend is preferred to store the auth token.
@@ -96,36 +96,36 @@ def get_desktop():
         return 'cocoa'
 
 
-DESKTOP = get_desktop()
+DESKTOP = _get_desktop()
 LEGACY_GNOME = DESKTOP == 'gnome' and GNOME_VERSION and GNOME_VERSION[0] < 3
 
 
-def get_native_item_icon(item_path):
+def native_item_icon(item_path):
     """Returns the system icon for the given file or folder. If there is no item at the
     given path, the systems default file icon will be returned.
 
     :param str item_path: Path to local item.
     """
     if not osp.exists(item_path):
-        return get_native_file_icon()
+        return native_file_icon()
     else:
         return _icon_provider.icon(QtCore.QFileInfo(item_path))
 
 
-def get_native_folder_icon():
+def native_folder_icon():
     """Returns the system's default folder icon."""
     # use a real folder here because Qt may otherwise
     # return the wrong folder icon in some cases
     return _icon_provider.icon(QtCore.QFileInfo('/usr'))
 
 
-def get_native_file_icon():
+def native_file_icon():
     """Returns the system's default file icon."""
     return _icon_provider.icon(_icon_provider.File)
 
 
 # noinspection PyCallByClass,PyArgumentList
-def get_system_tray_icon(status, color=None, geometry=None):
+def system_tray_icon(status, color=None, geometry=None):
     """Returns the system tray icon for the given status and color. The following icons
     will be used:
 
@@ -156,31 +156,31 @@ def get_system_tray_icon(status, color=None, geometry=None):
     elif DESKTOP == 'gnome' and not LEGACY_GNOME:
         # use 'symbolic' icons: try to use SVG icon from theme, fall back to our own
         icon = QtGui.QIcon.fromTheme('maestral-icon-{}-symbolic'.format(status))
-        if not icon.name():
-            icon_color = color or 'light' if isDarkStatusBar(geometry) else 'dark'
+        if icon.name():
+            icon_color = color or 'light' if is_dark_status_bar(geometry) else 'dark'
             icon = QtGui.QIcon(TRAY_ICON_PATH_SVG.format(status, icon_color))
 
     elif DESKTOP == 'kde' and Version(QtCore.QT_VERSION_STR) >= Version('5.13.0'):
         # use SVG icon with specified or contrasting color
-        icon_color = color or 'light' if isDarkStatusBar(geometry) else 'dark'
+        icon_color = color or 'light' if is_dark_status_bar(geometry) else 'dark'
         icon = QtGui.QIcon(TRAY_ICON_PATH_SVG.format(status, icon_color))
 
     else:
         # use PNG icon with specified or contrasting color
-        icon_color = color or 'light' if isDarkStatusBar(geometry) else 'dark'
+        icon_color = color or 'light' if is_dark_status_bar(geometry) else 'dark'
         icon = QtGui.QIcon(TRAY_ICON_PATH_PNG.format(status, icon_color))
 
     return icon
 
 
 # noinspection PyArgumentList
-def statusBarTheme(icon_geometry=None):
+def systray_theme(icon_geometry=None):
     """
-    Returns one of gui.utils.THEME_LIGHT or gui.utils.THEME_DARK, corresponding to the
-    current status bar theme.
+    Returns one of THEME_LIGHT or THEME_DARK, corresponding to the current status bar
+    color.
 
-    `icon_geometry` provides the geometry (location and dimensions) of the tray
-    icon. If not given, we try to guess the location of the system tray.
+    ``icon_geometry`` provides the geometry (location and dimensions) of the tray icon.
+    If not given, we try to guess the location of the system tray.
     """
 
     # --------------------- check for the status bar color -------------------------
@@ -230,11 +230,11 @@ def statusBarTheme(icon_geometry=None):
         return THEME_DARK
 
 
-def isDarkStatusBar(icon_geometry=None):
+def is_dark_status_bar(icon_geometry=None):
     """Detects the current status bar brightness and returns ``True`` for a dark status
-    bar. `icon_geometry` provides the geometry (location and dimensions) of the tray
+    bar. ``icon_geometry`` provides the geometry (location and dimensions) of the tray
     icon. If not given, we try to guess the location of the system tray."""
-    return statusBarTheme(icon_geometry) == THEME_DARK
+    return systray_theme(icon_geometry) == THEME_DARK
 
 
 def rgb_to_luminance(r, g, b, base=256):

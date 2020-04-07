@@ -782,13 +782,13 @@
   <customwidget>
    <class>AnimatedStackedWidget</class>
    <extends>QStackedWidget</extends>
-   <header>maestral_qt.utils.h</header>
+   <header>maestral_qt.widgets.h</header>
    <container>1</container>
   </customwidget>
   <customwidget>
    <class>QProgressIndicator</class>
    <extends>QWidget</extends>
-   <header>maestral_qt.utils.h</header>
+   <header>maestral_qt.widgets.h</header>
    <container>1</container>
   </customwidget>
  </customwidgets>

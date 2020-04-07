@@ -21,16 +21,14 @@ from maestral.utils.autostart import AutoStart
 
 # local imports
 from .selective_sync_dialog import SelectiveSyncDialog
-from .resources import (get_native_item_icon, UNLINK_DIALOG_PATH,
+from .resources import (native_item_icon, UNLINK_DIALOG_PATH,
                         SETTINGS_WINDOW_PATH, APP_ICON_PATH, FACEHOLDER_PATH)
 from .utils import (
-    IS_MACOS,
-    UserDialog,
-    get_scaled_font, isDarkWindow, center_window,
-    LINE_COLOR_DARK, LINE_COLOR_LIGHT,
+    IS_MACOS, LINE_COLOR_DARK, LINE_COLOR_LIGHT,
+    get_scaled_font, is_dark_window, center_window,
     icon_to_pixmap, get_masked_image, MaestralBackgroundTask
 )
-
+from .widgets import UserDialog
 
 NEW_QT = LooseVersion(QtCore.QT_VERSION_STR) >= LooseVersion('5.11')
 
@@ -135,7 +133,7 @@ class SettingsWindow(QtWidgets.QWidget):
         # populate sync section
         parent_dir = osp.split(self.mdbx.dropbox_path)[0]
         relative_path = self.rel_path(parent_dir)
-        folder_icon = get_native_item_icon(parent_dir)
+        folder_icon = native_item_icon(parent_dir)
 
         self.comboBoxDropboxPath.clear()
         self.comboBoxDropboxPath.addItem(folder_icon, relative_path)
@@ -226,7 +224,7 @@ class SettingsWindow(QtWidgets.QWidget):
                 self.mdbx.resume_sync()
             else:
                 self.comboBoxDropboxPath.setItemText(0, self.rel_path(new_location))
-                self.comboBoxDropboxPath.setItemIcon(0, get_native_item_icon(new_location))
+                self.comboBoxDropboxPath.setItemIcon(0, native_item_icon(new_location))
 
     @QtCore.pyqtSlot(int)
     def on_start_on_login_clicked(self, state):
@@ -258,7 +256,7 @@ class SettingsWindow(QtWidgets.QWidget):
             self.update_dark_mode()
 
     def update_dark_mode(self):
-        rgb = LINE_COLOR_DARK if isDarkWindow() else LINE_COLOR_LIGHT
+        rgb = LINE_COLOR_DARK if is_dark_window() else LINE_COLOR_LIGHT
         line_style = 'color: rgb({0}, {1}, {2})'.format(*rgb)
 
         self.line0.setStyleSheet(line_style)

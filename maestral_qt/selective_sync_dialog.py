@@ -19,7 +19,7 @@ from maestral.errors import NotAFolderError
 from maestral.utils.path import is_child
 
 # local imports
-from .resources import FOLDERS_DIALOG_PATH, get_native_folder_icon, get_native_file_icon
+from .resources import FOLDERS_DIALOG_PATH, native_folder_icon, native_file_icon
 from .utils import BackgroundTask
 
 logger = logging.getLogger(__name__)
@@ -257,9 +257,9 @@ class DropboxPathModel(AbstractTreeItem):
     def __init__(self, mdbx, async_loader, path='/', is_folder=True, parent=None):
         super().__init__(parent=parent)
         if is_folder:
-            self.icon = get_native_folder_icon()
+            self.icon = native_folder_icon()
         else:
-            self.icon = get_native_file_icon()
+            self.icon = native_file_icon()
         self._path = path
         self._mdbx = mdbx
         self._async_loader = async_loader
