@@ -5,10 +5,6 @@ Created on Wed Oct 31 16:23:13 2018
 
 @author: samschott
 """
-
-# system imports
-import logging
-
 # external packages
 from PyQt5 import QtCore, QtWidgets, QtGui, uic
 from PyQt5.QtCore import Qt
@@ -17,8 +13,6 @@ from PyQt5.QtCore import Qt
 from .resources import RELINK_DIALOG_PATH, APP_ICON_PATH
 from .utils import get_scaled_font, icon_to_pixmap
 from .utils import BackgroundTask
-
-logger = logging.getLogger(__name__)
 
 
 # noinspection PyArgumentList

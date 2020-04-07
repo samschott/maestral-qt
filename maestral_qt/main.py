@@ -9,7 +9,6 @@ Created on Wed Oct 31 16:23:13 2018
 # system imports
 import sys
 import os
-import logging
 import platform
 import time
 from subprocess import Popen
@@ -44,16 +43,13 @@ from maestral_qt.sync_issues_window import SyncIssueWindow
 from maestral_qt.resources import system_tray_icon, DESKTOP, APP_ICON_PATH
 from maestral_qt.utils import (
     MaestralBackgroundTask,
-    BackgroundTaskProgressDialog,
-    UserDialog,
     elide_string,
     IS_MACOS,
-    show_stacktrace_dialog,
-    show_update_dialog,
-    show_dialog,
 )
-
-logger = logging.getLogger(__name__)
+from maestral_qt.widgets import (
+    BackgroundTaskProgressDialog, UserDialog,
+    show_dialog, show_stacktrace_dialog, show_update_dialog
+)
 
 
 # noinspection PyTypeChecker,PyArgumentList
@@ -176,16 +172,13 @@ class MaestralGuiApp(QtWidgets.QSystemTrayIcon):
 
         if not_linked or pending_dropbox_folder(self.config_name):
             from maestral_qt.setup_dialog import SetupDialog
-            logger.info('Setting up Maestral...')
             done = SetupDialog.configureMaestral(self.config_name, not_linked)
             self._started = True
             if done:
-                logger.info('Successfully set up Maestral')
                 self.mdbx = get_maestral_proxy(self.config_name)
                 self.mdbx.run()
                 self.setup_ui_linked()
             else:
-                logger.info('Setup aborted.')
                 self.quit()
         else:
             self.mdbx = self._get_or_start_maestral_daemon()
@@ -595,7 +588,6 @@ class MaestralGuiApp(QtWidgets.QSystemTrayIcon):
             quitting the GUI, if ``False``, it will be kept alive. If ``None``, the daemon
             will only be stopped if it was started by the GUI (default).
         """
-        logger.info('Quitting...')
 
         # stop update timer to stop communication with daemon
         self.update_ui_timer.stop()
@@ -615,9 +607,6 @@ class MaestralGuiApp(QtWidgets.QSystemTrayIcon):
     def restart(self):
         """Restarts the Maestral GUI and sync daemon."""
 
-        logger.info('Restarting...')
-
-        # schedule restart after current process has quit
         pid = os.getpid()  # get ID of current process
         if IS_MACOS_BUNDLE:
             # noinspection PyUnresolvedReferences

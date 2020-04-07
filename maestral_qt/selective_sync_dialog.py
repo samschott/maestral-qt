@@ -6,7 +6,6 @@ Created on Wed Oct 31 16:23:13 2018
 @author: samschott
 """
 import os
-import logging
 import threading
 
 # external packages
@@ -21,8 +20,6 @@ from maestral.utils.path import is_child
 # local imports
 from .resources import FOLDERS_DIALOG_PATH, native_folder_icon, native_file_icon
 from .utils import BackgroundTask
-
-logger = logging.getLogger(__name__)
 
 
 class TreeModel(QAbstractItemModel):
@@ -481,10 +478,8 @@ class SelectiveSyncDialog(QtWidgets.QDialog):
             # Remove items which have been unchecked.
             # The list will be cleaned up later.
             if item.checkState == 0:
-                logger.debug('Excluding: %s' % item_dbx_path)
                 self.excluded_items.append(item_dbx_path)
             elif item.checkState in (1, 2):
-                logger.debug('Including: %s' % item_dbx_path)
                 self.excluded_items = [f for f in self.excluded_items
                                        if not f == item_dbx_path]
         else:
