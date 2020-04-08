@@ -651,7 +651,7 @@ def run(config_name='maestral'):
     sys.exit(app.exec())
 
 
-if __name__ == '__main__':
+def run_cli():
     import argparse
 
     parser = argparse.ArgumentParser()
