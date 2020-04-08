@@ -12,7 +12,7 @@ from PyQt5.QtCore import Qt
 # local imports
 from .resources import RELINK_DIALOG_PATH, APP_ICON_PATH
 from .utils import get_scaled_font, icon_to_pixmap
-from .utils import BackgroundTask
+from .utils import MaestralBackgroundTask
 
 
 # noinspection PyArgumentList
@@ -33,21 +33,18 @@ class RelinkDialog(QtWidgets.QDialog):
         self.setWindowFlags(self.windowFlags() | Qt.WindowStaysOnTopHint
                             | Qt.WindowTitleHint | Qt.CustomizeWindowHint)
 
-        # import OAuth2Session here because of ~40 MB memory footprint
-        from maestral.oauth import OAuth2Session
-
         self._parent = parent
-        self.auth_session = OAuth2Session(self._parent.mdbx.config_name)
+        self.mdbx = self._parent.mdbx
 
         # format text labels
         if reason is self.EXPIRED:
             self.titleLabel.setText("Dropbox Access Expired")
             formatted_text = self.infoLabel.text().format(
-                "has expired", self.auth_session.get_auth_url())
+                "has expired", self.mdbx.get_auth_url())
         elif reason is self.REVOKED:
             self.titleLabel.setText("Dropbox Access Revoked")
             formatted_text = self.infoLabel.text().format(
-                "has been revoked", self.auth_session.get_auth_url())
+                "has been revoked", self.mdbx.get_auth_url())
         else:
             raise ValueError("'reason' must be RelinkDialog.EXPIRED or "
                              "RelinkDialog.REVOKED.")
@@ -75,7 +72,7 @@ class RelinkDialog(QtWidgets.QDialog):
 
     @QtCore.pyqtSlot()
     def delete_creds_and_quit(self):
-        self.auth_session.delete_creds()
+        self.mdbx.unlink()
         self._parent.quit(stop_daemon=True)
 
     @QtCore.pyqtSlot(str)
@@ -108,27 +105,25 @@ class RelinkDialog(QtWidgets.QDialog):
 
         self.set_ui_busy()
 
-        self.auth_task = BackgroundTask(
+        self.auth_task = MaestralBackgroundTask(
             parent=self,
-            target=self.auth_session.verify_auth_token,
+            config_name=self.mdbx.config_name,
+            target='link',
             args=(token,)
         )
-        self.auth_task.sig_done.connect(self.on_verify_token_finished)
+        self.auth_task.sig_done.connect(self.on_link_done)
 
     @QtCore.pyqtSlot(object)
-    def on_verify_token_finished(self, res):
+    def on_link_done(self, res):
 
-        from maestral.oauth import OAuth2Session
-
-        if res == OAuth2Session.Success:
-            self.auth_session.save_creds()
+        if res == 0:
             self.lineEditAuthCode.setText(self.VALID_MSG)
             QtWidgets.QApplication.processEvents()
             QtCore.QTimer.singleShot(200, self._parent.restart)
-        elif res == OAuth2Session.InvalidToken:
+        elif res == 1:
             self.lineEditAuthCode.setText(self.INVALID_MSG)
             self.set_ui_idle()
-        elif res == OAuth2Session.ConnectionFailed:
+        elif res == 2:
             self.lineEditAuthCode.setText(self.CONNECTION_ERR_MSG)
             self.set_ui_idle()
 

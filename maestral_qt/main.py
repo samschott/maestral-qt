@@ -20,7 +20,6 @@ from PyQt5 import QtCore, QtWidgets, QtGui
 
 # maestral modules
 from maestral import __version__
-from maestral.utils.backend import pending_link, pending_dropbox_folder
 from maestral.utils.autostart import AutoStart
 from maestral.constants import (
     IDLE, SYNCING, PAUSED, STOPPED, DISCONNECTED, SYNC_ERROR, ERROR,
@@ -38,6 +37,7 @@ from maestral.daemon import (
 )
 
 # local imports
+from maestral_qt.setup_dialog import SetupDialog
 from maestral_qt.settings_window import SettingsWindow
 from maestral_qt.sync_issues_window import SyncIssueWindow
 from maestral_qt.resources import system_tray_icon, DESKTOP, APP_ICON_PATH
@@ -107,7 +107,6 @@ class MaestralGuiApp(QtWidgets.QSystemTrayIcon):
 
         self.update_ui_timer = QtCore.QTimer()
         self.update_ui_timer.timeout.connect(self.update_ui)
-        self.update_ui_timer.start(2000)  # every 2 sec
 
         self.check_for_updates_timer = QtCore.QTimer()
         self.check_for_updates_timer.timeout.connect(self.auto_check_for_updates)
@@ -139,12 +138,12 @@ class MaestralGuiApp(QtWidgets.QSystemTrayIcon):
             self.setIcon(self._current_icon)
 
     def update_ui(self):
-        if self.mdbx:
-            try:
-                self.update_status()
-                self.update_error()
-            except Pyro5.errors.CommunicationError:
-                self.quit()
+        try:
+            self.update_status()
+            self.update_error()
+        except Pyro5.errors.CommunicationError:
+            self.quit()
+
         if not self.contextMenuVisible():
             self.update_ui_timer.setInterval(2000)
 
@@ -168,32 +167,30 @@ class MaestralGuiApp(QtWidgets.QSystemTrayIcon):
 
     def load_maestral(self):
 
-        not_linked = pending_link(self.config_name)
+        self.mdbx = self.get_or_start_maestral_daemon()
 
-        if not_linked or pending_dropbox_folder(self.config_name):
-            from maestral_qt.setup_dialog import SetupDialog
-            done = SetupDialog.configureMaestral(self.config_name, not_linked)
-            self._started = True
-            if done:
-                self.mdbx = get_maestral_proxy(self.config_name)
-                self.mdbx.run()
-                self.setup_ui_linked()
-            else:
+        if self.mdbx.pending_link or self.mdbx.pending_dropbox_folder:
+
+            done = SetupDialog.configureMaestral(self.mdbx)
+
+            if not done:
                 self.quit()
-        else:
-            self.mdbx = self._get_or_start_maestral_daemon()
-            self.setup_ui_linked()
 
-    def _get_or_start_maestral_daemon(self):
+        self.setup_ui_linked()
+        self.mdbx.run()
+
+        self.update_ui_timer.start(2000)  # every 2 sec
+
+    def get_or_start_maestral_daemon(self):
 
         pid = get_maestral_pid(self.config_name)
         if pid:
             self._started = False
         else:
             if IS_MACOS_BUNDLE or IS_LINUX_BUNDLE:
-                res = start_maestral_daemon_thread(self.config_name)
+                res = start_maestral_daemon_thread(self.config_name, run=False)
             else:
-                res = start_maestral_daemon_process(self.config_name)
+                res = start_maestral_daemon_process(self.config_name, run=False)
             if res == Start.Failed:
                 title = 'Could not start Maestral'
                 message = ('Could not start or connect to sync daemon. Please try again '
