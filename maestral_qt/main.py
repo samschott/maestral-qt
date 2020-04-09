@@ -515,7 +515,7 @@ class MaestralGuiApp(QtWidgets.QSystemTrayIcon):
 
         err = errs[-1]
 
-        if err['type'] == 'DropboxDeletedError':
+        if err['type'] == 'NoDropboxDirError':
             self.restart()  # will launch into setup dialog
         elif err['type'] == 'DropboxAuthError':
             from maestral_qt.relink_dialog import RelinkDialog
