@@ -635,9 +635,6 @@ def _is_pyqt_obj(obj):
 
 # noinspection PyArgumentList
 def run(config_name='maestral'):
-    from maestral.utils.housekeeping import run_housekeeping
-
-    run_housekeeping()
 
     QtCore.QCoreApplication.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling)
     QtCore.QCoreApplication.setAttribute(QtCore.Qt.AA_UseHighDpiPixmaps)
