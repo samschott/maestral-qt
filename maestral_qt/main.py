@@ -177,7 +177,7 @@ class MaestralGuiApp(QtWidgets.QSystemTrayIcon):
                 self.quit()
 
         self.setup_ui_linked()
-        self.mdbx.run()
+        self.mdbx.start_sync()
 
         self.update_ui_timer.start(2000)  # every 2 sec
 
@@ -188,9 +188,9 @@ class MaestralGuiApp(QtWidgets.QSystemTrayIcon):
             self._started = False
         else:
             if IS_MACOS_BUNDLE or IS_LINUX_BUNDLE:
-                res = start_maestral_daemon_thread(self.config_name, run=False)
+                res = start_maestral_daemon_thread(self.config_name)
             else:
-                res = start_maestral_daemon_process(self.config_name, run=False)
+                res = start_maestral_daemon_process(self.config_name)
             if res == Start.Failed:
                 title = 'Could not start Maestral'
                 message = ('Could not start or connect to sync daemon. Please try again '
@@ -600,6 +600,7 @@ class MaestralGuiApp(QtWidgets.QSystemTrayIcon):
 
         # quit
         QtWidgets.QApplication.instance().quit()
+        sys.exit()
 
     def restart(self):
         """Restarts the Maestral GUI and sync daemon."""
@@ -646,8 +647,7 @@ def run(config_name='maestral'):
     app.setQuitOnLastWindowClosed(False)
 
     maestral_gui = MaestralGuiApp(config_name)
-    # delay loading until event loop has started
-    QtCore.QTimer.singleShot(0, maestral_gui.load_maestral)
+    maestral_gui.load_maestral()
     sys.exit(app.exec())
 
 
