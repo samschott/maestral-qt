@@ -94,6 +94,8 @@ class MaestralGuiApp(QtWidgets.QSystemTrayIcon):
         self.pauseAction = None
         self.recentFilesMenu = None
 
+        self.loading_done = False
+
         self.autostart = AutoStart(self.config_name, gui=True)
 
         self.icons = self.load_tray_icons()
@@ -123,7 +125,7 @@ class MaestralGuiApp(QtWidgets.QSystemTrayIcon):
     @QtCore.pyqtSlot()
     def _onContextMenuAboutToShow(self):
         self._context_menu_visible = True
-        if self.mdbx:
+        if self.loading_done:
             self.update_status()
         self.update_ui_timer.setInterval(500)
         if IS_MACOS:
@@ -138,11 +140,13 @@ class MaestralGuiApp(QtWidgets.QSystemTrayIcon):
             self.setIcon(self._current_icon)
 
     def update_ui(self):
-        try:
-            self.update_status()
-            self.update_error()
-        except Pyro5.errors.CommunicationError:
-            self.quit()
+
+        if self.loading_done:
+            try:
+                self.update_status()
+                self.update_error()
+            except Pyro5.errors.CommunicationError:
+                self.quit()
 
         if not self.contextMenuVisible():
             self.update_ui_timer.setInterval(2000)
@@ -178,8 +182,6 @@ class MaestralGuiApp(QtWidgets.QSystemTrayIcon):
 
         self.setup_ui_linked()
         self.mdbx.start_sync()
-
-        self.update_ui_timer.start(2000)  # every 2 sec
 
     def get_or_start_maestral_daemon(self):
 
@@ -235,9 +237,6 @@ class MaestralGuiApp(QtWidgets.QSystemTrayIcon):
         quitAction.triggered.connect(self.quit)
 
     def setup_ui_linked(self):
-
-        if not self.mdbx:
-            return
 
         self.autostart = None
         self.settings_window = SettingsWindow(self, self.mdbx)
