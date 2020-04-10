@@ -220,9 +220,9 @@ class SetupDialog(QtWidgets.QDialog):
             if osp.isdir(dropbox_path):
                 msg_box = UserDialog(
                     title='Folder already exists',
-                    message=(f'The folder "{dropbox_path}" already exists. Would '
-                             'you like to keep using it?'),
-                    button_names=('Replace', 'Cancel', 'Keep'),
+                    message=(f'The folder "{dropbox_path}" already exists. Would you  '
+                             f'like to replace it or merge its contents with Dropbox?'),
+                    button_names=('Replace', 'Cancel', 'Merge'),
                     parent=self,
                 )
                 msg_box.setAcceptButtonIcon('edit-clear')
