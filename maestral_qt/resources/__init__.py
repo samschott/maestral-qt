@@ -156,7 +156,7 @@ def system_tray_icon(status, color=None, geometry=None):
     elif DESKTOP == 'gnome' and not LEGACY_GNOME:
         # use 'symbolic' icons: try to use SVG icon from theme, fall back to our own
         icon = QtGui.QIcon.fromTheme('maestral-icon-{}-symbolic'.format(status))
-        if icon.name():
+        if not icon.name():
             icon_color = color or 'light' if is_dark_status_bar(geometry) else 'dark'
             icon = QtGui.QIcon(TRAY_ICON_PATH_SVG.format(status, icon_color))
 
