@@ -6,7 +6,10 @@ Created on Wed Oct 31 16:23:13 2018
 @author: samschott
 """
 # system imports
+import sys
+import os
 import os.path as osp
+from subprocess import call
 import time
 from distutils.version import LooseVersion
 
@@ -21,10 +24,12 @@ from maestral.utils.autostart import AutoStart
 
 # local imports
 from .selective_sync_dialog import SelectiveSyncDialog
-from .resources import (native_item_icon, UNLINK_DIALOG_PATH,
-                        SETTINGS_WINDOW_PATH, APP_ICON_PATH, FACEHOLDER_PATH)
+from .resources import (
+    native_item_icon, UNLINK_DIALOG_PATH,
+    SETTINGS_WINDOW_PATH, APP_ICON_PATH, FACEHOLDER_PATH
+)
 from .utils import (
-    IS_MACOS, LINE_COLOR_DARK, LINE_COLOR_LIGHT,
+    IS_MACOS, IS_MACOS_BUNDLE, LINE_COLOR_DARK, LINE_COLOR_LIGHT,
     get_scaled_font, is_dark_window, center_window,
     icon_to_pixmap, get_masked_image, MaestralBackgroundTask
 )
@@ -69,12 +74,20 @@ class SettingsWindow(QtWidgets.QWidget):
 
     _update_interval_mapping = {0: 60*60*24, 1: 60*60*24*7, 2: 60*60*24*30, 3: 0}
 
+    _macos_cli_tool_path = '/usr/local/bin/maestral'
+
     def __init__(self, parent, mdbx):
         super().__init__()
         uic.loadUi(SETTINGS_WINDOW_PATH, self)
+
         if IS_MACOS:
             # noinspection PyTypeChecker
             self.setWindowFlags(self.windowFlags() | QtCore.Qt.WindowStaysOnTopHint)
+
+        if not IS_MACOS_BUNDLE:
+            self.labelCommandLineTool.hide()
+            self.pushButtonCommandLineTool.hide()
+
         self._parent = parent
         self.update_dark_mode()
 
@@ -117,10 +130,12 @@ class SettingsWindow(QtWidgets.QWidget):
         self.dropbox_folder_dialog.setModal(True)
         self.dropbox_folder_dialog.setAcceptMode(QtWidgets.QFileDialog.AcceptOpen)
         self.dropbox_folder_dialog.setFileMode(QtWidgets.QFileDialog.Directory)
-        self.dropbox_folder_dialog.setOption(QtWidgets.QFileDialog.ShowDirsOnly, True)
+        self.dropbox_folder_dialog.setOption(QtWidgets.QFileDialog.ShowDirsOnly)
         self.dropbox_folder_dialog.fileSelected.connect(self.on_new_dbx_folder)
         self.dropbox_folder_dialog.rejected.connect(
                 lambda: self.comboBoxDropboxPath.setCurrentIndex(0))
+
+        self.pushButtonCommandLineTool.clicked.connect(self.on_cli_tool_clicked)
 
         center_window(self)
 
@@ -152,11 +167,24 @@ class SettingsWindow(QtWidgets.QWidget):
         )
         self.comboBoxUpdateInterval.setCurrentIndex(closest_key)
 
+        self._udpdate_cli_tool_button()
+
         # populate about section
         year = time.localtime().tm_year
         self.labelVersion.setText(self.labelVersion.text().format(__version__))
         self.labelUrl.setText(self.labelUrl.text().format(__url__))
         self.labelCopyright.setText(self.labelCopyright.text().format(year, __author__))
+
+    def _udpdate_cli_tool_button(self):
+        if osp.islink(self._macos_cli_tool_path):
+            self.pushButtonCommandLineTool.setEnabled(True)
+            self.pushButtonCommandLineTool.setText('Uninstall')
+        elif osp.exists(self._macos_cli_tool_path):
+            self.pushButtonCommandLineTool.setEnabled(False)
+            self.pushButtonCommandLineTool.setText('Install...')
+        else:
+            self.pushButtonCommandLineTool.setEnabled(True)
+            self.pushButtonCommandLineTool.setText('Install...')
 
     def set_profile_pic_from_cache(self):
 
@@ -230,6 +258,34 @@ class SettingsWindow(QtWidgets.QWidget):
     @QtCore.pyqtSlot(int)
     def on_start_on_login_clicked(self, state):
         self.autostart.enabled = state == 2
+
+    @QtCore.pyqtSlot()
+    def on_cli_tool_clicked(self):
+
+        if osp.islink(self._macos_cli_tool_path):
+            # uninstall cli tool
+            os.remove(self._macos_cli_tool_path)
+        else:
+            # install cli tool
+            msg = ('This will install the <b>maestral</b> command line tool into '
+                   f'<b>{self._macos_cli_tool_path}</b>. See <b>maestral --help</b> for '
+                   f'available commands.')
+            msg_box = UserDialog(
+                'Install command line tool?',
+                msg,
+                button_names=('Install', 'Cancel'),
+                parent=self,
+            )
+            msg_box.setWidth(445)
+            res = msg_box.exec_()  # no need to block with exec
+
+            bundle_root = osp.dirname(getattr(sys, '_MEIPASS', ''))
+            maestral_cli = osp.join(bundle_root, 'MacOS/maestral_cli')
+
+            if res == msg_box.Accepted:
+                call(['ln', '-s', maestral_cli, self._macos_cli_tool_path])
+
+        self._udpdate_cli_tool_button()
 
     @QtCore.pyqtSlot(int)
     def on_notifications_clicked(self, state):

@@ -5,6 +5,7 @@ Created on Wed Oct 31 16:23:13 2018
 
 @author: samschott
 """
+import sys
 import platform
 
 # external packages
@@ -25,6 +26,7 @@ LINE_COLOR_DARK = (70, 70, 70)
 LINE_COLOR_LIGHT = (213, 213, 213)
 
 IS_MACOS = platform.system() == 'Darwin'
+IS_MACOS_BUNDLE = hasattr(sys, 'frozen') and platform.system() == 'Darwin'
 
 
 # ========================================================================================

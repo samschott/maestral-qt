@@ -23,7 +23,7 @@ _USER_DIALOG_ICON_SIZE = 60
 class BackgroundTaskProgressDialog(QtWidgets.QDialog):
     """A progress dialog to show during long-running background tasks."""
 
-    def __init__(self, title, message="", cancel=True, parent=None, width=450):
+    def __init__(self, title, message='', cancel=True, parent=None, width=450):
         super().__init__(parent=parent)
         self.setModal(True)
         self.setWindowModality(Qt.WindowModal)
@@ -105,8 +105,6 @@ class UserDialog(QtWidgets.QDialog):
         self.setWindowFlags(Qt.WindowStaysOnTopHint | Qt.Sheet | Qt.WindowTitleHint |
                             Qt.CustomizeWindowHint)
         self.setWindowTitle('')
-        width = 700 if details else 450
-        self.setFixedWidth(width)
 
         self.gridLayout = QtWidgets.QGridLayout()
         self.setLayout(self.gridLayout)
@@ -121,7 +119,6 @@ class UserDialog(QtWidgets.QDialog):
         self.gridLayout.setVerticalSpacing(self.gridLayout.verticalSpacing()*2)
         self.titleLabel.setFont(get_scaled_font(bold=True))
         self.infoLabel.setFont(get_scaled_font(scaling=0.9))
-        self.infoLabel.setFixedWidth(width-150)
         self.infoLabel.setSizePolicy(QtWidgets.QSizePolicy.MinimumExpanding,
                                      QtWidgets.QSizePolicy.MinimumExpanding)
         self.infoLabel.setWordWrap(True)
@@ -167,12 +164,17 @@ class UserDialog(QtWidgets.QDialog):
         if len(button_names) > 3:
             ValueError('Dialog cannot have more than three buttons')
 
+        self.setWidth(700 if details else 450)
         self.adjustSize()
         center_window(self)
 
         for button in self.buttonBox.buttons():
             if button.sizeHint().width() < self.MINIMUM_BUTTON_SIZE:
                 button.setFixedWidth(self.MINIMUM_BUTTON_SIZE)
+
+    def setWidth(self, width):
+        self.setFixedWidth(width)
+        self.infoLabel.setFixedWidth(width - 150)
 
     def setAcceptButtonName(self, name):
         self.buttonBox.buttons()[0].setText(name)
