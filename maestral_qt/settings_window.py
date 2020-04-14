@@ -273,10 +273,7 @@ class SettingsWindow(QtWidgets.QWidget):
         if osp.islink(self._macos_cli_tool_path):
             os.remove(self._macos_cli_tool_path)
         else:
-            bundle_root = osp.dirname(getattr(sys, '_MEIPASS', ''))
-            maestral_cli = osp.join(bundle_root, 'MacOS/maestral_cli')
-
-            call(['ln', '-s', maestral_cli, self._macos_cli_tool_path])
+            call(['ln', '-s', sys.executable, self._macos_cli_tool_path])
 
         self._udpdate_cli_tool_button()
 
