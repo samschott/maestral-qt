@@ -192,33 +192,6 @@
        </property>
       </widget>
      </item>
-     <item row="7" column="1">
-      <widget class="QComboBox" name="comboBoxUpdateInterval">
-       <item>
-        <property name="text">
-         <string>Daily</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string>Weekly</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string>Monthly</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string>Never</string>
-        </property>
-       </item>
-      </widget>
-     </item>
-     <item row="5" column="1">
-      <widget class="QComboBox" name="comboBoxDropboxPath"/>
-     </item>
      <item row="0" column="1" colspan="2">
       <widget class="QLabel" name="labelAccountName">
        <property name="font">
@@ -312,13 +285,6 @@
        </item>
       </layout>
      </item>
-     <item row="11" column="1">
-      <widget class="QPushButton" name="pushButtonCommandLineTool">
-       <property name="text">
-        <string>Install...</string>
-       </property>
-      </widget>
-     </item>
      <item row="11" column="0">
       <widget class="QLabel" name="labelCommandLineTool">
        <property name="text">
@@ -328,6 +294,46 @@
         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
        </property>
       </widget>
+     </item>
+     <item row="11" column="1" alignment="Qt::AlignLeft">
+      <widget class="QPushButton" name="pushButtonCommandLineTool">
+       <property name="minimumSize">
+        <size>
+         <width>150</width>
+         <height>0</height>
+        </size>
+       </property>
+       <property name="text">
+        <string>Install...</string>
+       </property>
+      </widget>
+     </item>
+     <item row="7" column="1">
+      <widget class="CustomCombobox" name="comboBoxUpdateInterval">
+       <item>
+        <property name="text">
+         <string>Daily</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Weekly</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Monthly</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Never</string>
+        </property>
+       </item>
+      </widget>
+     </item>
+     <item row="5" column="1">
+      <widget class="CustomCombobox" name="comboBoxDropboxPath"/>
      </item>
     </layout>
    </item>
@@ -346,6 +352,13 @@
    </item>
   </layout>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>CustomCombobox</class>
+   <extends>QComboBox</extends>
+   <header>maestral_qt.widgets.h</header>
+  </customwidget>
+ </customwidgets>
  <tabstops>
   <tabstop>pushButtonUnlink</tabstop>
   <tabstop>pushButtonExcludedFolders</tabstop>

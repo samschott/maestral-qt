@@ -12,12 +12,16 @@ from PyQt5.QtGui import QPixmap, QPainter
 
 from maestral_qt.resources import APP_ICON_PATH
 from maestral_qt.utils import (
-    get_scaled_font, icon_to_pixmap, center_window, is_dark_window
+    get_scaled_font, icon_to_pixmap, center_window, is_dark_window, IS_MACOS
 )
 
 
 _USER_DIALOG_ICON_SIZE = 60
 
+
+# ========================================================================================
+# Dialogs
+# ========================================================================================
 
 # noinspection PyArgumentList, PyTypeChecker, PyCallByClass
 class BackgroundTaskProgressDialog(QtWidgets.QDialog):
@@ -211,6 +215,63 @@ class UserDialog(QtWidgets.QDialog):
         self._acceptButton2.setText(name)
 
 
+# dialog launch helpers
+
+def show_dialog(title, message, details=None, level='info'):
+    UserDialog(title, message, details).exec_()
+
+
+def show_stacktrace_dialog(traceback, ask_share=False):
+
+    title = 'An unexpected error occurred'
+
+    if not ask_share:
+
+        message = ('A report has been sent to the developers. '
+                   'Please restart Maestral to continue syncing.')
+
+        UserDialog(title, message, details=traceback).exec_()
+
+        return False, False
+    else:
+        message = ('You can send a report to the developers or open an issue on '
+                   'GitHub. Please restart Maestral to continue syncing.')
+
+        checkbox_text = 'Always send error reports (can be changed in Settings)'
+
+        error_dialog = UserDialog(
+            title, message, details=traceback, checkbox=checkbox_text,
+            button_names=('Send to Developers', 'Don\'t send')
+        )
+
+        share = error_dialog.exec_() == 1
+        ask_share = error_dialog.checkbox.isChecked()
+
+        return share, ask_share
+
+
+def show_update_dialog(latest_release, release_notes_md):
+
+    url_r = 'https://github.com/samschott/maestral-dropbox/releases'
+    message = (
+        'Maestral v{0} is available. Please use your package manager to '
+        'update Maestral or go to the <a href=\"{1}\">releases</span></a> '
+        'page to download the new version. '
+        '<div style="height:5px;font-size:5px;">&nbsp;<br></div>'
+        '<b>Release notes:</b>'
+    ).format(latest_release, url_r)
+    release_notes_html = markdown2.markdown(release_notes_md)
+    list_style = '<ul style="margin-top: 0px; margin-bottom: 0px; margin-left: -20px; ' \
+                 'margin-right: 0px; -qt-list-indent: 1;">'
+    styled_release_notes = release_notes_html.replace('<ul>', list_style)
+    update_dialog = UserDialog('Update available', message, styled_release_notes)
+    update_dialog.exec_()
+
+
+# ========================================================================================
+# Animation widgets
+# ========================================================================================
+
 # noinspection PyArgumentList
 class FaderWidget(QtWidgets.QWidget):
 
@@ -365,6 +426,10 @@ class AnimatedStackedWidget(QtWidgets.QStackedWidget):
         self.setCurrentIndex(index)
 
 
+# ========================================================================================
+# Misc
+# ========================================================================================
+
 # noinspection PyArgumentList
 class QProgressIndicator(QtWidgets.QWidget):
     """
@@ -492,54 +557,18 @@ class QProgressIndicator(QtWidgets.QWidget):
             self.setColor(self.m_dark_color)
 
 
-# dialog launch helpers
+class CustomCombobox(QtWidgets.QComboBox):
 
-def show_dialog(title, message, details=None, level='info'):
-    UserDialog(title, message, details).exec_()
+    def paintEvent(self, e):
+        painter = QtWidgets.QStylePainter(self)
+        painter.setPen(self.palette().color(QtGui.QPalette.Text))
 
+        opt = QtWidgets.QStyleOptionComboBox()
+        self.initStyleOption(opt)
 
-def show_stacktrace_dialog(traceback, ask_share=False):
+        if IS_MACOS:
+            # see QTBUG-78727 and QTBUG-78727
+            opt.rect.adjust(-2, 0, 2, 0)
 
-    title = 'An unexpected error occurred'
-
-    if not ask_share:
-
-        message = ('A report has been sent to the developers. '
-                   'Please restart Maestral to continue syncing.')
-
-        UserDialog(title, message, details=traceback).exec_()
-
-        return False, False
-    else:
-        message = ('You can send a report to the developers or open an issue on '
-                   'GitHub. Please restart Maestral to continue syncing.')
-
-        checkbox_text = 'Always send error reports (can be changed in Settings)'
-
-        error_dialog = UserDialog(
-            title, message, details=traceback, checkbox=checkbox_text,
-            button_names=('Send to Developers', 'Don\'t send')
-        )
-
-        share = error_dialog.exec_() == 1
-        ask_share = error_dialog.checkbox.isChecked()
-
-        return share, ask_share
-
-
-def show_update_dialog(latest_release, release_notes_md):
-
-    url_r = 'https://github.com/samschott/maestral-dropbox/releases'
-    message = (
-        'Maestral v{0} is available. Please use your package manager to '
-        'update Maestral or go to the <a href=\"{1}\">releases</span></a> '
-        'page to download the new version. '
-        '<div style="height:5px;font-size:5px;">&nbsp;<br></div>'
-        '<b>Release notes:</b>'
-    ).format(latest_release, url_r)
-    release_notes_html = markdown2.markdown(release_notes_md)
-    list_style = '<ul style="margin-top: 0px; margin-bottom: 0px; margin-left: -20px; ' \
-                 'margin-right: 0px; -qt-list-indent: 1;">'
-    styled_release_notes = release_notes_html.replace('<ul>', list_style)
-    update_dialog = UserDialog('Update available', message, styled_release_notes)
-    update_dialog.exec_()
+        painter.drawComplexControl(QtWidgets.QStyle.CC_ComboBox, opt)
+        painter.drawControl(QtWidgets.QStyle.CE_ComboBoxLabel, opt)
