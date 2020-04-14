@@ -25,7 +25,6 @@ from maestral.constants import (
     IDLE, SYNCING, PAUSED, STOPPED, DISCONNECTED, SYNC_ERROR, ERROR, IS_BUNDLE,
 )
 from maestral.daemon import (
-    start_maestral_daemon_process,
     start_maestral_daemon_thread,
     stop_maestral_daemon_process,
     stop_maestral_daemon_thread,
@@ -188,10 +187,8 @@ class MaestralGuiApp(QtWidgets.QSystemTrayIcon):
         if pid:
             self._started = False
         else:
-            if IS_BUNDLE:
-                res = start_maestral_daemon_thread(self.config_name)
-            else:
-                res = start_maestral_daemon_process(self.config_name)
+            res = start_maestral_daemon_thread(self.config_name)
+
             if res == Start.Failed:
                 title = 'Could not start Maestral'
                 message = ('Could not start or connect to sync daemon. Please try again '
