@@ -22,8 +22,7 @@ from PyQt5 import QtCore, QtWidgets, QtGui
 from maestral import __version__
 from maestral.utils.autostart import AutoStart
 from maestral.constants import (
-    IDLE, SYNCING, PAUSED, STOPPED, DISCONNECTED, SYNC_ERROR, ERROR,
-    IS_MACOS_BUNDLE, IS_LINUX_BUNDLE
+    IDLE, SYNCING, PAUSED, STOPPED, DISCONNECTED, SYNC_ERROR, ERROR, IS_BUNDLE,
 )
 from maestral.daemon import (
     start_maestral_daemon_process,
@@ -189,7 +188,7 @@ class MaestralGuiApp(QtWidgets.QSystemTrayIcon):
         if pid:
             self._started = False
         else:
-            if IS_MACOS_BUNDLE or IS_LINUX_BUNDLE:
+            if IS_BUNDLE:
                 res = start_maestral_daemon_thread(self.config_name)
             else:
                 res = start_maestral_daemon_process(self.config_name)
@@ -605,16 +604,18 @@ class MaestralGuiApp(QtWidgets.QSystemTrayIcon):
         """Restarts the Maestral GUI and sync daemon."""
 
         pid = os.getpid()  # get ID of current process
-        if IS_MACOS_BUNDLE:
-            # noinspection PyUnresolvedReferences
-            launch_command = os.path.join(sys._MEIPASS, 'main')
-            Popen('lsof -p {0} +r 1 &>/dev/null; {0}'.format(launch_command), shell=True)
-        elif IS_MACOS:
-            Popen('lsof -p {0} +r 1 &>/dev/null; maestral gui --config-name=\'{1}\''.format(
-                pid, self.config_name), shell=True)
-        elif platform.system() == 'Linux':
-            Popen('tail --pid={0} -f /dev/null; maestral gui --config-name=\'{1}\''.format(
-                pid, self.config_name), shell=True)
+
+        if IS_MACOS:
+            restart_cmd = 'lsof -p {0} +r 1 &>/dev/null; {1} -c \'{2}\''
+        else:
+            restart_cmd = 'tail --pid={0} -f /dev/null; {1} -c \'{2}\''
+
+        if IS_BUNDLE:
+            launch_command = sys.executable
+        else:
+            launch_command = 'maestral gui'
+
+        Popen(restart_cmd.format(pid, launch_command, self.config_name), shell=True)
 
         # quit Maestral
         self.quit(stop_daemon=True)
