@@ -85,8 +85,7 @@ class SettingsWindow(QtWidgets.QWidget):
             self.setWindowFlags(self.windowFlags() | QtCore.Qt.WindowStaysOnTopHint)
 
         if not IS_MACOS_BUNDLE:
-            self.labelCommandLineTool.hide()
-            self.pushButtonCommandLineTool.hide()
+            self.widgetCLI.hide()
 
         self._parent = parent
         self.update_dark_mode()
@@ -179,12 +178,21 @@ class SettingsWindow(QtWidgets.QWidget):
         if osp.islink(self._macos_cli_tool_path):
             self.pushButtonCommandLineTool.setEnabled(True)
             self.pushButtonCommandLineTool.setText('Uninstall')
+            self.labelCommandLineToolInfo.setText(
+                'CLI installed. See <b>maestral --help</b> for available commands.'
+            )
         elif osp.exists(self._macos_cli_tool_path):
             self.pushButtonCommandLineTool.setEnabled(False)
-            self.pushButtonCommandLineTool.setText('Install...')
+            self.pushButtonCommandLineTool.setText('Install')
+            self.labelCommandLineToolInfo.setText(
+                'CLI already installed from Python package.'
+            )
         else:
             self.pushButtonCommandLineTool.setEnabled(True)
-            self.pushButtonCommandLineTool.setText('Install...')
+            self.pushButtonCommandLineTool.setText('Install')
+            self.labelCommandLineToolInfo.setText(
+                'Install the <b>maestral</b> command line tool to <b>/usr/local/bin.</b>'
+            )
 
     def set_profile_pic_from_cache(self):
 
@@ -263,27 +271,12 @@ class SettingsWindow(QtWidgets.QWidget):
     def on_cli_tool_clicked(self):
 
         if osp.islink(self._macos_cli_tool_path):
-            # uninstall cli tool
             os.remove(self._macos_cli_tool_path)
         else:
-            # install cli tool
-            msg = ('This will install the <b>maestral</b> command line tool into '
-                   f'<b>{self._macos_cli_tool_path}</b>. See <b>maestral --help</b> for '
-                   f'available commands.')
-            msg_box = UserDialog(
-                'Install command line tool?',
-                msg,
-                button_names=('Install', 'Cancel'),
-                parent=self,
-            )
-            msg_box.setWidth(445)
-            res = msg_box.exec_()  # no need to block with exec
-
             bundle_root = osp.dirname(getattr(sys, '_MEIPASS', ''))
             maestral_cli = osp.join(bundle_root, 'MacOS/maestral_cli')
 
-            if res == msg_box.Accepted:
-                call(['ln', '-s', maestral_cli, self._macos_cli_tool_path])
+            call(['ln', '-s', maestral_cli, self._macos_cli_tool_path])
 
         self._udpdate_cli_tool_button()
 
