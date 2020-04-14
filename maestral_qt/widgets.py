@@ -532,8 +532,7 @@ def show_update_dialog(latest_release, release_notes_md):
     url_r = 'https://github.com/samschott/maestral-dropbox/releases'
     message = (
         'Maestral v{0} is available. Please use your package manager to '
-        'update Maestral or go to the <a href=\"{1}\"><span '
-        'style="text-decoration: underline; color:#2874e1;">releases</span></a> '
+        'update Maestral or go to the <a href=\"{1}\">releases</span></a> '
         'page to download the new version. '
         '<div style="height:5px;font-size:5px;">&nbsp;<br></div>'
         '<b>Release notes:</b>'

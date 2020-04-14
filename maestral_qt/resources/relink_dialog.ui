@@ -47,7 +47,7 @@
       </size>
      </property>
      <property name="text">
-      <string>Your Dropbox access {0}. To continue syncing, please click &lt;a href=&quot;{1}&quot; style=&quot;color: rgb(68, 121, 251)&quot;&gt;here&lt;/a&gt; to retrieve a new authorization token from Dropbox and enter it below.</string>
+      <string>Your Dropbox access {0}. To continue syncing, please click &lt;a href=&quot;{1}&quot;&gt;here&lt;/a&gt; to retrieve a new authorization token from Dropbox and enter it below.</string>
      </property>
      <property name="wordWrap">
       <bool>true</bool>
