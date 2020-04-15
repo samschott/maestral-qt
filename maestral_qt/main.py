@@ -651,7 +651,13 @@ def run_cli():
     import argparse
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('-c', '--config-name', help='config name', default='maestral')
-    args = parser.parse_args()
+    parser.add_argument('-c', '--config-name', help='Configuration name', default='maestral')
+    parser.add_argument('--cli', action='store_true', help='Forward calls to CLI.')
+    parsed_args, remaining = parser.parse_known_args()
 
-    run(args.config_name)
+    if parsed_args.cli:
+        sys.argv = ['maestral'] + remaining
+        from maestral.cli import main
+        main()
+    else:
+        run(parsed_args.config_name)
