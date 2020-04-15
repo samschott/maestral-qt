@@ -634,6 +634,11 @@ def _is_pyqt_obj(obj):
 
 # noinspection PyArgumentList
 def run(config_name='maestral'):
+    """
+    This is the main interactive entry point which starts the PyQt5 GUI.
+
+    :param str config_name: Name of Maestral config to run.
+    """
 
     QtCore.QCoreApplication.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling)
     QtCore.QCoreApplication.setAttribute(QtCore.Qt.AA_UseHighDpiPixmaps)
@@ -648,16 +653,28 @@ def run(config_name='maestral'):
 
 
 def run_cli():
+    """
+    This is the main entry point for frozen executables.
+    If only the --config-name option is given, it starts the GUI with the given config.
+    If the --cli option is given, all following arguments will be passed to the CLI.
+    If the --frozen-daemon option is given, an idle maestral daemon is started. This is to
+    support launching the daemon from frozen executables as produced for instance by
+    PyInstaller.
+    """
     import argparse
 
     parser = argparse.ArgumentParser()
     parser.add_argument('-c', '--config-name', help='Configuration name', default='maestral')
     parser.add_argument('--cli', action='store_true', help='Forward calls to CLI.')
+    parser.add_argument('--frozen-daemon', action='store_true', help='Start daemon only')
     parsed_args, remaining = parser.parse_known_args()
 
     if parsed_args.cli:
         sys.argv = ['maestral'] + remaining
         from maestral.cli import main
         main()
+    elif parsed_args.frozen_daemon:
+        from maestral.daemon import start_maestral_daemon
+        start_maestral_daemon(parsed_args.config_name)
     else:
         run(parsed_args.config_name)
