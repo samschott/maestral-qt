@@ -108,6 +108,7 @@ class MaestralGuiApp(QtWidgets.QSystemTrayIcon):
 
         self.update_ui_timer = QtCore.QTimer()
         self.update_ui_timer.timeout.connect(self.update_ui)
+        self.update_ui_timer.start(2000)
 
         self.check_for_updates_timer = QtCore.QTimer()
         self.check_for_updates_timer.timeout.connect(self.auto_check_for_updates)
@@ -174,13 +175,16 @@ class MaestralGuiApp(QtWidgets.QSystemTrayIcon):
 
         if self.mdbx.pending_link or self.mdbx.pending_dropbox_folder:
 
-            done = SetupDialog.configureMaestral(self.mdbx)
+            self.loading_done = SetupDialog.configureMaestral(self.mdbx)
 
-            if not done:
-                self.quit()
+        else:
+            self.loading_done = True
 
-        self.setup_ui_linked()
-        self.mdbx.start_sync()
+        if self.loading_done:
+            self.setup_ui_linked()
+            self.mdbx.start_sync()
+        else:
+            self.quit()
 
     def get_or_start_maestral_daemon(self):
 
