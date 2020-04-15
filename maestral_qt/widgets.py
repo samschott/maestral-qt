@@ -10,8 +10,9 @@ from PyQt5 import QtWidgets, QtGui, QtCore
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QPixmap, QPainter
 
-from maestral_qt.resources import APP_ICON_PATH
-from maestral_qt.utils import (
+# local imports
+from .resources import APP_ICON_PATH
+from .utils import (
     get_scaled_font, icon_to_pixmap, center_window, is_dark_window, IS_MACOS
 )
 

@@ -25,8 +25,11 @@ THEME_LIGHT = 'light'
 LINE_COLOR_DARK = (70, 70, 70)
 LINE_COLOR_LIGHT = (213, 213, 213)
 
+IS_BUNDLE = getattr(sys, 'frozen', False)
 IS_MACOS = platform.system() == 'Darwin'
-IS_MACOS_BUNDLE = hasattr(sys, 'frozen') and platform.system() == 'Darwin'
+IS_LINUX = platform.system() == 'Linux'
+IS_MACOS_BUNDLE = IS_BUNDLE and IS_MACOS
+IS_LINUX_BUNDLE = IS_BUNDLE and IS_LINUX
 
 
 # ========================================================================================

@@ -22,7 +22,7 @@ from PyQt5 import QtCore, QtWidgets, QtGui
 from maestral import __version__
 from maestral.utils.autostart import AutoStart
 from maestral.constants import (
-    IDLE, SYNCING, PAUSED, STOPPED, DISCONNECTED, SYNC_ERROR, ERROR, IS_BUNDLE,
+    IDLE, SYNCING, PAUSED, STOPPED, DISCONNECTED, SYNC_ERROR, ERROR,
 )
 from maestral.daemon import (
     start_maestral_daemon_thread,
@@ -42,7 +42,7 @@ from maestral_qt.resources import system_tray_icon, DESKTOP, APP_ICON_PATH
 from maestral_qt.utils import (
     MaestralBackgroundTask,
     elide_string,
-    IS_MACOS,
+    IS_MACOS, IS_BUNDLE,
 )
 from maestral_qt.widgets import (
     BackgroundTaskProgressDialog, UserDialog,
