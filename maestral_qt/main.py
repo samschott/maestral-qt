@@ -13,6 +13,7 @@ import platform
 import time
 from subprocess import Popen
 from datetime import timedelta, datetime
+from shlex import quote
 
 # external packages
 import click
@@ -603,16 +604,17 @@ class MaestralGuiApp(QtWidgets.QSystemTrayIcon):
         pid = os.getpid()  # get ID of current process
 
         if IS_MACOS:
-            restart_cmd = 'lsof -p {0} +r 1 &>/dev/null; {1} -c \'{2}\''
+            restart_cmd = 'lsof -p {0} +r 1 &>/dev/null; {1} -c {2}'
         else:
-            restart_cmd = 'tail --pid={0} -f /dev/null; {1} -c \'{2}\''
+            restart_cmd = 'tail --pid={0} -f /dev/null; {1} -c {2}'
 
         if IS_BUNDLE:
             launch_command = sys.executable
         else:
             launch_command = 'maestral gui'
 
-        Popen(restart_cmd.format(pid, launch_command, self.config_name), shell=True)
+        Popen(restart_cmd.format(pid, launch_command,
+                                 quote(self.config_name)), shell=True)
 
         # quit Maestral
         self.quit(stop_daemon=True)
