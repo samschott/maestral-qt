@@ -174,9 +174,7 @@ class MaestralGuiApp(QtWidgets.QSystemTrayIcon):
         self.mdbx = self.get_or_start_maestral_daemon()
 
         if self.mdbx.pending_link or self.mdbx.pending_dropbox_folder:
-
             self.loading_done = SetupDialog.configureMaestral(self.mdbx)
-
         else:
             self.loading_done = True
 
