@@ -263,7 +263,7 @@ class MaestralGuiApp(QtWidgets.QSystemTrayIcon):
 
         self.statusAction = self.menu.addAction(IDLE)
         self.statusAction.setEnabled(False)
-        self.pauseAction = self.menu.addAction(self.PAUSE_TEXT if self.mdbx.syncing else self.RESUME_TEXT)
+        self.pauseAction = self.menu.addAction(self.RESUME_TEXT if self.mdbx.paused else self.PAUSE_TEXT)
         self.pauseAction.triggered.connect(self.on_start_stop_clicked)
 
         self.recentFilesMenu = self.menu.addMenu('Recently Changed Files')
@@ -460,7 +460,7 @@ class MaestralGuiApp(QtWidgets.QSystemTrayIcon):
         n_sync_errors = len(self.mdbx.sync_errors)
         status = self.mdbx.status
         is_paused = self.mdbx.paused
-        is_stopped = self.mdbx.stopped
+        is_stopped = not self.mdbx.running
 
         # update icon
         if is_paused:
@@ -499,12 +499,12 @@ class MaestralGuiApp(QtWidgets.QSystemTrayIcon):
         self._n_sync_errors = n_sync_errors
 
     def update_error(self):
-        errs = self.mdbx.maestral_errors
+        errs = self.mdbx.fatal_errors
 
         if not errs:
             return
         else:
-            self.mdbx.clear_maestral_errors()
+            self.mdbx.clear_fatal_errors()
 
         self.setIcon(ERROR)
         self.pauseAction.setText(self.RESUME_TEXT)
@@ -515,7 +515,7 @@ class MaestralGuiApp(QtWidgets.QSystemTrayIcon):
 
         if err['type'] == 'NoDropboxDirError':
             self.restart()  # will launch into setup dialog
-        elif err['type'] == 'DropboxAuthError':
+        elif err['type'] == 'TokenRevokedError':
             from maestral_qt.relink_dialog import RelinkDialog
             self._stop_and_exec_relink_dialog(RelinkDialog.REVOKED)
         elif err['type'] == 'TokenExpiredError':
