@@ -37,6 +37,7 @@ from maestral.daemon import (
 
 # local imports
 from maestral_qt.setup_dialog import SetupDialog
+from maestral_qt.relink_dialog import RelinkDialog
 from maestral_qt.settings_window import SettingsWindow
 from maestral_qt.sync_issues_window import SyncIssueWindow
 from maestral_qt.resources import system_tray_icon, DESKTOP, APP_ICON_PATH
@@ -511,38 +512,31 @@ class MaestralGuiApp(QtWidgets.QSystemTrayIcon):
         self.pauseAction.setEnabled(False)
         self.statusAction.setText(self.mdbx.status)
 
+        self.mdbx.stop_sync()
+
         err = errs[-1]
 
         if err['type'] == 'NoDropboxDirError':
             self.restart()  # will launch into setup dialog
         elif err['type'] == 'TokenRevokedError':
             from maestral_qt.relink_dialog import RelinkDialog
-            self._stop_and_exec_relink_dialog(RelinkDialog.REVOKED)
+            self._exec_relink_dialog(RelinkDialog.REVOKED)
         elif err['type'] == 'TokenExpiredError':
             from maestral_qt.relink_dialog import RelinkDialog
-            self._stop_and_exec_relink_dialog(RelinkDialog.EXPIRED)
+            self._exec_relink_dialog(RelinkDialog.EXPIRED)
         elif 'MaestralApiError' in err['inherits'] or 'SyncError' in err['inherits']:
-            self.mdbx.stop_sync()
             show_dialog(err['title'], err['message'], level='error')
         else:
-            self._stop_and_exec_stacktrace_dialog(err)
+            self._exec_stacktrace_dialog(err)
 
-    def _stop_and_exec_relink_dialog(self, reason):
-
-        self.mdbx.stop_sync()
-
-        from maestral_qt.relink_dialog import RelinkDialog
+    def _exec_relink_dialog(self, reason):
 
         relink_dialog = RelinkDialog(self, reason)
 
-        # Call both show and exec: this works around a bug where
-        # the dialog does not stay on top on macOS unless show is called.
         relink_dialog.show()
         relink_dialog.exec_()
 
-    def _stop_and_exec_stacktrace_dialog(self, err):
-
-        self.mdbx.stop_sync()
+    def _exec_stacktrace_dialog(self, err):
 
         share, auto_share = show_stacktrace_dialog(
             err['traceback'],
