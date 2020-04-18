@@ -63,7 +63,7 @@ class RelinkDialog(QtWidgets.QDialog):
 
         # connect callbacks
         self.lineEditAuthCode.textChanged.connect(self._update_appearance)
-        self.pushButtonCancel.clicked.connect(self._parent.quit)
+        self.pushButtonCancel.clicked.connect(self.quit)
         self.pushButtonUnlink.clicked.connect(self.delete_creds_and_quit)
         self.pushButtonLink.clicked.connect(self.on_link_clicked)
 
@@ -72,7 +72,13 @@ class RelinkDialog(QtWidgets.QDialog):
         self.adjustSize()
 
     @QtCore.pyqtSlot()
+    def quit(self):
+        self.set_ui_busy()
+        self._parent.quit(stop_daemon=True)
+
+    @QtCore.pyqtSlot()
     def delete_creds_and_quit(self):
+        self.set_ui_busy()
         self.mdbx.unlink()
         self._parent.quit(stop_daemon=True)
 

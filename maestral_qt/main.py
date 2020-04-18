@@ -42,7 +42,7 @@ from maestral_qt.settings_window import SettingsWindow
 from maestral_qt.sync_issues_window import SyncIssueWindow
 from maestral_qt.resources import system_tray_icon, DESKTOP, APP_ICON_PATH
 from maestral_qt.utils import (
-    MaestralBackgroundTask,
+    BackgroundTask, MaestralBackgroundTask,
     elide_string,
     IS_MACOS, IS_BUNDLE,
 )
@@ -580,19 +580,28 @@ class MaestralGuiApp(QtWidgets.QSystemTrayIcon):
 
         # stop update timer to stop communication with daemon
         self.update_ui_timer.stop()
+        self.setIcon(DISCONNECTED)
 
         threaded = os.getpid() == get_maestral_pid(self.config_name)
 
         # stop sync daemon if we started it or ``stop_daemon`` is ``True``
         # never stop the daemon if it runs in a thread of the current process
         if threaded:
-            stop_maestral_daemon_thread(self.config_name)
+            task = BackgroundTask(
+                parent=self,
+                target=stop_maestral_daemon_thread,
+                args=(self.config_name,)
+            )
+            task.sig_done.connect(QtWidgets.QApplication.instance().quit)
         elif stop_daemon or self._started:
-            stop_maestral_daemon_process(self.config_name)
-
-        # quit
-        QtWidgets.QApplication.instance().quit()
-        sys.exit()
+            task = BackgroundTask(
+                parent=self,
+                target=stop_maestral_daemon_process,
+                args=(self.config_name,)
+            )
+            task.sig_done.connect(QtWidgets.QApplication.instance().quit)
+        else:
+            QtWidgets.QApplication.instance().quit()
 
     def restart(self):
         """Restarts the Maestral GUI and sync daemon."""
