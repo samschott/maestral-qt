@@ -14,7 +14,7 @@ from PyQt5.QtCore import QAbstractItemModel, QModelIndex, Qt, QVariant
 
 # maestral modules
 from maestral.daemon import Proxy
-from maestral.errors import NotAFolderError
+from maestral.errors import NotAFolderError, NotFoundError
 from maestral.utils.path import is_child
 
 # local imports
@@ -399,7 +399,7 @@ class AsyncListFolder(QtCore.QObject):
                 try:
                     entries = m.list_folder(path, recursive=False)
                     entries.sort(key=lambda e: e['name'].lower())
-                except NotAFolderError:
+                except (NotAFolderError, NotFoundError):
                     entries = []
                 except ConnectionError:
                     entries = False
