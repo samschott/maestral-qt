@@ -73,7 +73,6 @@ class SettingsWindow(QtWidgets.QWidget):
     """A widget showing all of Maestral's settings."""
 
     _update_interval_mapping = {0: 60*60*24, 1: 60*60*24*7, 2: 60*60*24*30, 3: 0}
-
     _macos_cli_tool_path = '/usr/local/bin/maestral'
 
     def __init__(self, parent, mdbx):

@@ -580,7 +580,6 @@ class MaestralGuiApp(QtWidgets.QSystemTrayIcon):
 
         # stop update timer to stop communication with daemon
         self.update_ui_timer.stop()
-        self.setIcon(DISCONNECTED)
 
         threaded = os.getpid() == get_maestral_pid(self.config_name)
 
