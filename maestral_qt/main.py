@@ -26,9 +26,9 @@ from maestral.constants import (
     IDLE, SYNCING, PAUSED, STOPPED, DISCONNECTED, SYNC_ERROR, ERROR,
 )
 from maestral.daemon import (
-    start_maestral_daemon_thread,
+    start_maestral_daemon_process,
+    start_maestral_daemon,
     stop_maestral_daemon_process,
-    stop_maestral_daemon_thread,
     get_maestral_pid,
     get_maestral_proxy,
     Start,
@@ -191,7 +191,7 @@ class MaestralGuiApp(QtWidgets.QSystemTrayIcon):
         if pid:
             self._started = False
         else:
-            res = start_maestral_daemon_thread(self.config_name)
+            res = start_maestral_daemon_process(self.config_name)
 
             if res == Start.Failed:
                 title = 'Could not start Maestral'
@@ -581,18 +581,8 @@ class MaestralGuiApp(QtWidgets.QSystemTrayIcon):
         # stop update timer to stop communication with daemon
         self.update_ui_timer.stop()
 
-        threaded = os.getpid() == get_maestral_pid(self.config_name)
-
         # stop sync daemon if we started it or ``stop_daemon`` is ``True``
-        # never stop the daemon if it runs in a thread of the current process
-        if threaded:
-            task = BackgroundTask(
-                parent=self,
-                target=stop_maestral_daemon_thread,
-                args=(self.config_name,)
-            )
-            task.sig_done.connect(QtWidgets.QApplication.instance().quit)
-        elif stop_daemon or self._started:
+        if stop_daemon or self._started:
             task = BackgroundTask(
                 parent=self,
                 target=stop_maestral_daemon_process,
@@ -678,7 +668,6 @@ def run_cli():
         from maestral.cli import main
         main()
     elif parsed_args.frozen_daemon:
-        from maestral.daemon import start_maestral_daemon
         start_maestral_daemon(parsed_args.config_name)
     else:
         run(parsed_args.config_name)
