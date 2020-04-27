@@ -120,8 +120,9 @@ class MaestralGuiApp(QtWidgets.QSystemTrayIcon):
 
     def setIcon(self, icon_name):
         icon = self.icons.get(icon_name, self.icons[SYNCING])
-        self._current_icon = icon_name
-        QtWidgets.QSystemTrayIcon.setIcon(self, icon)
+        if self._current_icon != icon_name:
+            self._current_icon = icon_name
+            super().setIcon(icon)
 
     @QtCore.pyqtSlot()
     def _onContextMenuAboutToShow(self):
@@ -129,16 +130,10 @@ class MaestralGuiApp(QtWidgets.QSystemTrayIcon):
         if self.loading_done:
             self.update_status()
         self.update_ui_timer.setInterval(500)
-        if IS_MACOS:
-            self.icons = self.load_tray_icons('light')
-            self.setIcon(self._current_icon)
 
     @QtCore.pyqtSlot()
     def _onContextMenuAboutToHide(self):
         self._context_menu_visible = False
-        if IS_MACOS:
-            self.icons = self.load_tray_icons()
-            self.setIcon(self._current_icon)
 
     def update_ui(self):
 
@@ -156,17 +151,17 @@ class MaestralGuiApp(QtWidgets.QSystemTrayIcon):
         # If available, show icon, otherwise, set a timer to check back later.
         # This is a workaround for https://bugreports.qt.io/browse/QTBUG-61898
         if self.isSystemTrayAvailable():
-            self.setIcon(self._current_icon)  # reload icon
+            super().setIcon(self.icon())  # reload icon
             self.show()
         else:
             QtCore.QTimer.singleShot(1000, self.show_when_systray_available)
 
-    def load_tray_icons(self, color=None):
+    def load_tray_icons(self):
 
         icons = dict()
 
         for key in self.icon_mapping:
-            icons[key] = system_tray_icon(self.icon_mapping[key], color=color)
+            icons[key] = system_tray_icon(self.icon_mapping[key], self.geometry())
 
         return icons
 
