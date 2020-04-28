@@ -16,4 +16,3 @@ __url__ = 'https://github.com/SamSchott/maestral'
 XDG_DATA_DIRS = os.environ.get('XDG_DATA_DIRS', '')
 XDG_DATA_DIRS += ':' + os.path.expanduser('~/.local/share')
 os.environ['XDG_DATA_DIRS'] = XDG_DATA_DIRS.strip(':')
-
