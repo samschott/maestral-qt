@@ -129,14 +129,14 @@ def system_tray_icon(status, geometry=None):
     will be used:
 
     1) macOS: Black SVG icons with transparent background. macOS will adapt the appearance
-       as necessary.
-    3) Gnome 3: SVG icons that follow the Gnome 3 'symbolic' icon specification.
-    3) KDE Plasma with PtQt 5.13 and higher: SVG icons with a color contrasting the
-       system tray background.
-    4) Other: PNG icons with a color contrasting the system tray background.
+       as necessary. This only works reliably in Qt >= 5.15 which is not yet released.
+    2) Linux: Any icons installed in the system theme. Maestral will prefer "symbolic"
+       icons named "maestral-status-{status}-symbolic" over regular icons named
+       "maestral-status-{status}". It will fall back to manually setting the icon in a
+       color which contrasts the background color of the status bar.
 
     :param str status: Maestral status. Must be 'idle', 'syncing', 'paused',
-        'disconnected' or 'error'.
+        'disconnected' 'info' or 'error'.
     :param geometry: Tray icon geometry on screen. If given, this location will be used to
         to determine the system tray background color. This argument is ignored on macOS.
     """
@@ -151,28 +151,28 @@ def system_tray_icon(status, geometry=None):
 
     else:
 
-        if DESKTOP == 'gnome':
-            # use SVG icon with specified or contrasting color
-            icon_color = 'light' if is_dark_status_bar(geometry) else 'dark'
-            fallback_icon = QtGui.QIcon(TRAY_ICON_PATH_SVG.format(status, icon_color))
+        icon_color = 'light' if is_dark_status_bar(geometry) else 'dark'
 
-        elif DESKTOP == 'kde' and Version(QtCore.QT_VERSION_STR) >= Version('5.13.0'):
-            # use SVG icon with specified or contrasting color
-            icon_color = 'light' if is_dark_status_bar(geometry) else 'dark'
-            fallback_icon = QtGui.QIcon(TRAY_ICON_PATH_SVG.format(status, icon_color))
-
-        else:
-            # use PNG icon with specified or contrasting color
-            icon_color = 'light' if is_dark_status_bar(geometry) else 'dark'
+        if Version(QtCore.QT_VERSION_STR) < Version('5.13.0'):
+            # use PNG icon with contrasting color (see issue #46)
             fallback_icon = QtGui.QIcon(TRAY_ICON_PATH_PNG.format(status, icon_color))
+        else:
+            # use SVG icon with contrasting color
+            fallback_icon = QtGui.QIcon(TRAY_ICON_PATH_SVG.format(status, icon_color))
 
         theme_icon_name = THEME_ICON_NAME.format(status)
         theme_icon_name_symbolic = THEME_ICON_NAME_SYMBOLIC.format(status)
 
+        # Prefer "symbolic" icons where the appearance is adapted by the platform
+        # automatically. Specs for symbolic icons and their use in the system tray
+        # vary between plaforms.
+
         if QtGui.QIcon.hasThemeIcon(theme_icon_name_symbolic):
             icon = QtGui.QIcon.fromTheme(theme_icon_name_symbolic, fallback_icon)
-        else:
+        elif QtGui.QIcon.hasThemeIcon(theme_icon_name):
             icon = QtGui.QIcon.fromTheme(theme_icon_name, fallback_icon)
+        else:
+            icon = QtGui.QIcon(fallback_icon)
 
     return icon
 
