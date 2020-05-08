@@ -9,11 +9,11 @@ Created on Wed Oct 31 16:23:13 2018
 # system imports
 import sys
 import os
-import logging
 import platform
 import time
 from subprocess import Popen
 from datetime import timedelta, datetime
+from shlex import quote
 
 # external packages
 import click
@@ -21,17 +21,14 @@ from PyQt5 import QtCore, QtWidgets, QtGui
 
 # maestral modules
 from maestral import __version__
-from maestral.utils.backend import pending_link, pending_dropbox_folder
 from maestral.utils.autostart import AutoStart
 from maestral.constants import (
     IDLE, SYNCING, PAUSED, STOPPED, DISCONNECTED, SYNC_ERROR, ERROR,
-    IS_MACOS_BUNDLE, IS_LINUX_BUNDLE, APP_NAME
 )
 from maestral.daemon import (
     start_maestral_daemon_process,
-    start_maestral_daemon_thread,
+    start_maestral_daemon,
     stop_maestral_daemon_process,
-    stop_maestral_daemon_thread,
     get_maestral_pid,
     get_maestral_proxy,
     Start,
@@ -39,21 +36,20 @@ from maestral.daemon import (
 )
 
 # local imports
+from maestral_qt.setup_dialog import SetupDialog
+from maestral_qt.relink_dialog import RelinkDialog
 from maestral_qt.settings_window import SettingsWindow
 from maestral_qt.sync_issues_window import SyncIssueWindow
-from maestral_qt.resources import get_system_tray_icon, DESKTOP, APP_ICON_PATH
+from maestral_qt.resources import system_tray_icon, DESKTOP, APP_ICON_PATH
 from maestral_qt.utils import (
-    MaestralBackgroundTask,
-    BackgroundTaskProgressDialog,
-    UserDialog,
+    BackgroundTask, MaestralBackgroundTask,
     elide_string,
-    IS_MACOS,
-    show_stacktrace_dialog,
-    show_update_dialog,
-    show_dialog,
+    IS_MACOS, IS_BUNDLE,
 )
-
-logger = logging.getLogger(__name__)
+from maestral_qt.widgets import (
+    BackgroundTaskProgressDialog, UserDialog,
+    show_dialog, show_stacktrace_dialog, show_update_dialog
+)
 
 
 # noinspection PyTypeChecker,PyArgumentList
@@ -98,6 +94,8 @@ class MaestralGuiApp(QtWidgets.QSystemTrayIcon):
         self.pauseAction = None
         self.recentFilesMenu = None
 
+        self.loading_done = False
+
         self.autostart = AutoStart(self.config_name, gui=True)
 
         self.icons = self.load_tray_icons()
@@ -111,7 +109,7 @@ class MaestralGuiApp(QtWidgets.QSystemTrayIcon):
 
         self.update_ui_timer = QtCore.QTimer()
         self.update_ui_timer.timeout.connect(self.update_ui)
-        self.update_ui_timer.start(2000)  # every 2 sec
+        self.update_ui_timer.start(2000)
 
         self.check_for_updates_timer = QtCore.QTimer()
         self.check_for_updates_timer.timeout.connect(self.auto_check_for_updates)
@@ -122,33 +120,30 @@ class MaestralGuiApp(QtWidgets.QSystemTrayIcon):
 
     def setIcon(self, icon_name):
         icon = self.icons.get(icon_name, self.icons[SYNCING])
-        self._current_icon = icon_name
-        QtWidgets.QSystemTrayIcon.setIcon(self, icon)
+        if self._current_icon != icon_name:
+            self._current_icon = icon_name
+            super().setIcon(icon)
 
     @QtCore.pyqtSlot()
     def _onContextMenuAboutToShow(self):
         self._context_menu_visible = True
-        if self.mdbx:
+        if self.loading_done:
             self.update_status()
         self.update_ui_timer.setInterval(500)
-        if IS_MACOS:
-            self.icons = self.load_tray_icons('light')
-            self.setIcon(self._current_icon)
 
     @QtCore.pyqtSlot()
     def _onContextMenuAboutToHide(self):
         self._context_menu_visible = False
-        if IS_MACOS:
-            self.icons = self.load_tray_icons()
-            self.setIcon(self._current_icon)
 
     def update_ui(self):
-        if self.mdbx:
+
+        if self.loading_done:
             try:
                 self.update_status()
                 self.update_error()
             except Pyro5.errors.CommunicationError:
                 self.quit()
+
         if not self.contextMenuVisible():
             self.update_ui_timer.setInterval(2000)
 
@@ -156,51 +151,43 @@ class MaestralGuiApp(QtWidgets.QSystemTrayIcon):
         # If available, show icon, otherwise, set a timer to check back later.
         # This is a workaround for https://bugreports.qt.io/browse/QTBUG-61898
         if self.isSystemTrayAvailable():
-            self.setIcon(self._current_icon)  # reload icon
+            super().setIcon(self.icon())  # reload icon
             self.show()
         else:
             QtCore.QTimer.singleShot(1000, self.show_when_systray_available)
 
-    def load_tray_icons(self, color=None):
+    def load_tray_icons(self):
 
         icons = dict()
 
         for key in self.icon_mapping:
-            icons[key] = get_system_tray_icon(self.icon_mapping[key], color=color)
+            icons[key] = system_tray_icon(self.icon_mapping[key], self.geometry())
 
         return icons
 
     def load_maestral(self):
 
-        not_linked = pending_link(self.config_name)
+        self.mdbx = self.get_or_start_maestral_daemon()
 
-        if not_linked or pending_dropbox_folder(self.config_name):
-            from maestral_qt.setup_dialog import SetupDialog
-            logger.info('Setting up Maestral...')
-            done = SetupDialog.configureMaestral(self.config_name, not_linked)
-            self._started = True
-            if done:
-                logger.info('Successfully set up Maestral')
-                self.mdbx = get_maestral_proxy(self.config_name)
-                self.mdbx.run()
-                self.setup_ui_linked()
-            else:
-                logger.info('Setup aborted.')
-                self.quit()
+        if self.mdbx.pending_link or self.mdbx.pending_dropbox_folder:
+            self.loading_done = SetupDialog.configureMaestral(self.mdbx)
         else:
-            self.mdbx = self._get_or_start_maestral_daemon()
-            self.setup_ui_linked()
+            self.loading_done = True
 
-    def _get_or_start_maestral_daemon(self):
+        if self.loading_done:
+            self.setup_ui_linked()
+            self.mdbx.start_sync()
+        else:
+            self.quit()
+
+    def get_or_start_maestral_daemon(self):
 
         pid = get_maestral_pid(self.config_name)
         if pid:
             self._started = False
         else:
-            if IS_MACOS_BUNDLE or IS_LINUX_BUNDLE:
-                res = start_maestral_daemon_thread(self.config_name)
-            else:
-                res = start_maestral_daemon_process(self.config_name)
+            res = start_maestral_daemon_process(self.config_name)
+
             if res == Start.Failed:
                 title = 'Could not start Maestral'
                 message = ('Could not start or connect to sync daemon. Please try again '
@@ -246,9 +233,6 @@ class MaestralGuiApp(QtWidgets.QSystemTrayIcon):
 
     def setup_ui_linked(self):
 
-        if not self.mdbx:
-            return
-
         self.autostart = None
         self.settings_window = SettingsWindow(self, self.mdbx)
 
@@ -275,7 +259,7 @@ class MaestralGuiApp(QtWidgets.QSystemTrayIcon):
 
         self.statusAction = self.menu.addAction(IDLE)
         self.statusAction.setEnabled(False)
-        self.pauseAction = self.menu.addAction(self.PAUSE_TEXT if self.mdbx.syncing else self.RESUME_TEXT)
+        self.pauseAction = self.menu.addAction(self.RESUME_TEXT if self.mdbx.paused else self.PAUSE_TEXT)
         self.pauseAction.triggered.connect(self.on_start_stop_clicked)
 
         self.recentFilesMenu = self.menu.addMenu('Recently Changed Files')
@@ -360,7 +344,7 @@ class MaestralGuiApp(QtWidgets.QSystemTrayIcon):
             show_update_dialog(res['latest_release'], res['release_notes'])
         elif not res['update_available']:
             message = 'Maestral v{} is the newest version available.'.format(res['latest_release'])
-            show_dialog('You’re up-to-date!', message, level='info')
+            show_dialog('You’re up-to-date!', message)
 
     @QtCore.pyqtSlot(dict)
     def _notify_updates_auto(self, res):
@@ -398,21 +382,6 @@ class MaestralGuiApp(QtWidgets.QSystemTrayIcon):
             self.pauseAction.setText(self.PAUSE_TEXT)
 
     @QtCore.pyqtSlot()
-    def update_snoozed(self):
-        minutes = self.mdbx.notification_snooze
-
-        if minutes > 0:
-            eta = datetime.now() + timedelta(minutes=minutes)
-
-            self.snoozeMenu.setTitle('Notifications snoozed until %s' % eta.strftime('%H:%M'))
-            self.snoozeMenu.insertAction(self.snooze30, self.resumeNotificationsAction)
-            self.snoozeMenu.insertAction(self.snooze30, self.snoozeSeparator)
-        else:
-            self.snoozeMenu.removeAction(self.resumeNotificationsAction)
-            self.snoozeMenu.removeAction(self.snoozeSeparator)
-            self.snoozeMenu.setTitle('Snooze Notifications')
-
-    @QtCore.pyqtSlot()
     def on_settings_clicked(self):
         self.settings_window.show()
         self.settings_window.raise_()
@@ -442,7 +411,28 @@ class MaestralGuiApp(QtWidgets.QSystemTrayIcon):
         if res == UserDialog.Accepted:
             self.mdbx.rebuild_index()
 
+    @QtCore.pyqtSlot()
+    def on_recent_file_clicked(self):
+        sender = self.sender()
+        local_path = sender.data()
+        click.launch(local_path, locate=True)
+
     # callbacks to update GUI
+
+    @QtCore.pyqtSlot()
+    def update_snoozed(self):
+        minutes = self.mdbx.notification_snooze
+
+        if minutes > 0:
+            eta = datetime.now() + timedelta(minutes=minutes)
+
+            self.snoozeMenu.setTitle('Notifications snoozed until %s' % eta.strftime('%H:%M'))
+            self.snoozeMenu.insertAction(self.snooze30, self.resumeNotificationsAction)
+            self.snoozeMenu.insertAction(self.snooze30, self.snoozeSeparator)
+        else:
+            self.snoozeMenu.removeAction(self.resumeNotificationsAction)
+            self.snoozeMenu.removeAction(self.snoozeSeparator)
+            self.snoozeMenu.setTitle('Snooze Notifications')
 
     @QtCore.pyqtSlot()
     def update_recent_files(self):
@@ -460,19 +450,13 @@ class MaestralGuiApp(QtWidgets.QSystemTrayIcon):
             action.setData(local_path)
             action.triggered.connect(self.on_recent_file_clicked)
 
-    @QtCore.pyqtSlot()
-    def on_recent_file_clicked(self):
-        sender = self.sender()
-        local_path = sender.data()
-        click.launch(local_path, locate=True)
-
     def update_status(self):
         """Change icon according to status."""
 
         n_sync_errors = len(self.mdbx.sync_errors)
         status = self.mdbx.status
         is_paused = self.mdbx.paused
-        is_stopped = self.mdbx.stopped
+        is_stopped = not self.mdbx.running
 
         # update icon
         if is_paused:
@@ -511,51 +495,43 @@ class MaestralGuiApp(QtWidgets.QSystemTrayIcon):
         self._n_sync_errors = n_sync_errors
 
     def update_error(self):
-        errs = self.mdbx.maestral_errors
+        errs = self.mdbx.fatal_errors
 
         if not errs:
             return
         else:
-            self.mdbx.clear_maestral_errors()
+            self.mdbx.clear_fatal_errors()
 
         self.setIcon(ERROR)
         self.pauseAction.setText(self.RESUME_TEXT)
         self.pauseAction.setEnabled(False)
         self.statusAction.setText(self.mdbx.status)
 
-        err = errs[-1]
-
-        if err['type'] in ('RevFileError', 'BadInputError', 'CursorResetError',
-                           'InotifyError', 'OutOfMemoryError'):
-            self.mdbx.stop_sync()
-            show_dialog(err['title'], err['message'], level='error')
-        elif err['type'] == 'DropboxDeletedError':
-            self.restart()  # will launch into setup dialog
-        elif err['type'] == 'DropboxAuthError':
-            from maestral_qt.relink_dialog import RelinkDialog
-            self._stop_and_exec_relink_dialog(RelinkDialog.REVOKED)
-        elif err['type'] == 'TokenExpiredError':
-            from maestral_qt.relink_dialog import RelinkDialog
-            self._stop_and_exec_relink_dialog(RelinkDialog.EXPIRED)
-        else:
-            self._stop_and_exec_error_dialog(err)
-
-    def _stop_and_exec_relink_dialog(self, reason):
-
         self.mdbx.stop_sync()
 
-        from maestral_qt.relink_dialog import RelinkDialog
+        err = errs[-1]
+
+        if err['type'] == 'NoDropboxDirError':
+            self.restart()  # will launch into setup dialog
+        elif err['type'] == 'TokenRevokedError':
+            from maestral_qt.relink_dialog import RelinkDialog
+            self._exec_relink_dialog(RelinkDialog.REVOKED)
+        elif err['type'] == 'TokenExpiredError':
+            from maestral_qt.relink_dialog import RelinkDialog
+            self._exec_relink_dialog(RelinkDialog.EXPIRED)
+        elif 'MaestralApiError' in err['inherits'] or 'SyncError' in err['inherits']:
+            show_dialog(err['title'], err['message'], level='error')
+        else:
+            self._exec_stacktrace_dialog(err)
+
+    def _exec_relink_dialog(self, reason):
 
         relink_dialog = RelinkDialog(self, reason)
 
-        # Call both show and exec: this works around a bug where
-        # the dialog does not stay on top on macOS unless show is called.
         relink_dialog.show()
         relink_dialog.exec_()
 
-    def _stop_and_exec_error_dialog(self, err):
-
-        self.mdbx.stop_sync()
+    def _exec_stacktrace_dialog(self, err):
 
         share, auto_share = show_stacktrace_dialog(
             err['traceback'],
@@ -589,10 +565,6 @@ class MaestralGuiApp(QtWidgets.QSystemTrayIcon):
     def contextMenuVisible(self):
         return self._context_menu_visible
 
-    def setToolTip(self, text):
-        # tray icons in macOS should not have tooltips
-        QtWidgets.QSystemTrayIcon.setToolTip(self, text)
-
     def quit(self, *args, stop_daemon=None):
         """Quits Maestral.
 
@@ -600,40 +572,38 @@ class MaestralGuiApp(QtWidgets.QSystemTrayIcon):
             quitting the GUI, if ``False``, it will be kept alive. If ``None``, the daemon
             will only be stopped if it was started by the GUI (default).
         """
-        logger.info('Quitting...')
 
         # stop update timer to stop communication with daemon
         self.update_ui_timer.stop()
 
-        threaded = os.getpid() == get_maestral_pid(self.config_name)
-
         # stop sync daemon if we started it or ``stop_daemon`` is ``True``
-        # never stop the daemon if it runs in a thread of the current process
-        if threaded:
-            stop_maestral_daemon_thread(self.config_name)
-        elif stop_daemon or self._started:
-            stop_maestral_daemon_process(self.config_name)
-
-        # quit
-        QtWidgets.QApplication.instance().quit()
+        if stop_daemon or self._started:
+            task = BackgroundTask(
+                parent=self,
+                target=stop_maestral_daemon_process,
+                args=(self.config_name,)
+            )
+            task.sig_done.connect(QtWidgets.QApplication.instance().quit)
+        else:
+            QtWidgets.QApplication.instance().quit()
 
     def restart(self):
         """Restarts the Maestral GUI and sync daemon."""
 
-        logger.info('Restarting...')
-
-        # schedule restart after current process has quit
         pid = os.getpid()  # get ID of current process
-        if IS_MACOS_BUNDLE:
-            # noinspection PyUnresolvedReferences
-            launch_command = os.path.join(sys._MEIPASS, 'main')
-            Popen('lsof -p {0} +r 1 &>/dev/null; {0}'.format(launch_command), shell=True)
-        elif IS_MACOS:
-            Popen('lsof -p {0} +r 1 &>/dev/null; maestral gui --config-name=\'{1}\''.format(
-                pid, self.config_name), shell=True)
-        elif platform.system() == 'Linux':
-            Popen('tail --pid={0} -f /dev/null; maestral gui --config-name=\'{1}\''.format(
-                pid, self.config_name), shell=True)
+
+        if IS_MACOS:
+            restart_cmd = 'lsof -p {0} +r 1 &>/dev/null; {1} -c {2}'
+        else:
+            restart_cmd = 'tail --pid={0} -f /dev/null; {1} -c {2}'
+
+        if IS_BUNDLE:
+            launch_command = sys.executable
+        else:
+            launch_command = 'maestral gui'
+
+        Popen(restart_cmd.format(pid, launch_command,
+                                 quote(self.config_name)), shell=True)
 
         # quit Maestral
         self.quit(stop_daemon=True)
@@ -653,28 +623,46 @@ def _is_pyqt_obj(obj):
 
 # noinspection PyArgumentList
 def run(config_name='maestral'):
-    from maestral.utils.housekeeping import run_housekeeping
+    """
+    This is the main interactive entry point which starts the PyQt5 GUI.
 
-    run_housekeeping()
+    :param str config_name: Name of Maestral config to run.
+    """
 
     QtCore.QCoreApplication.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling)
     QtCore.QCoreApplication.setAttribute(QtCore.Qt.AA_UseHighDpiPixmaps)
 
-    app = QtWidgets.QApplication([APP_NAME])
+    app = QtWidgets.QApplication(['Maestral'])
     app.setWindowIcon(QtGui.QIcon(APP_ICON_PATH))
     app.setQuitOnLastWindowClosed(False)
 
     maestral_gui = MaestralGuiApp(config_name)
-    # delay loading until event loop has started
-    QtCore.QTimer.singleShot(0, maestral_gui.load_maestral)
+    maestral_gui.load_maestral()
     sys.exit(app.exec())
 
 
 def run_cli():
+    """
+    This is the main entry point for frozen executables.
+    If only the --config-name option is given, it starts the GUI with the given config.
+    If the --cli option is given, all following arguments will be passed to the CLI.
+    If the --frozen-daemon option is given, an idle maestral daemon is started. This is to
+    support launching the daemon from frozen executables as produced for instance by
+    PyInstaller.
+    """
     import argparse
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('-c', '--config-name', help='config name', default='maestral')
-    args = parser.parse_args()
+    parser.add_argument('-c', '--config-name', help='Configuration name', default='maestral')
+    parser.add_argument('--cli', action='store_true', help='Forward calls to CLI.')
+    parser.add_argument('--frozen-daemon', action='store_true', help='Start daemon only')
+    parsed_args, remaining = parser.parse_known_args()
 
-    run(args.config_name)
+    if parsed_args.cli:
+        sys.argv = ['maestral'] + remaining + ['-c', parsed_args.config_name]
+        from maestral.cli import main
+        main()
+    elif parsed_args.frozen_daemon:
+        start_maestral_daemon(parsed_args.config_name)
+    else:
+        run(parsed_args.config_name)

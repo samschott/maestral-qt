@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from setuptools import setup, find_packages
 from maestral_qt import __author__, __version__
 
@@ -27,9 +28,9 @@ setup(
         },
     setup_requires=['wheel'],
     install_requires=[
-        'bugsnag',
+        'bugsnag>=3.4.0',
         'click>=7.1.1',
-        'maestral==0.6.4',
+        'maestral>=1.0.0',
         'markdown2',
         'packaging',
         'PyQt5>=5.9',
@@ -50,14 +51,6 @@ setup(
         'Programming Language :: Python :: 3 :: Only',
     ],
     data_files=[
-        ('share/icons/hicolor/scalable/status', [
-            'maestral_qt/resources/tray-icons-gnome/maestral-icon-disconnected-symbolic.svg',
-            'maestral_qt/resources/tray-icons-gnome/maestral-icon-error-symbolic.svg',
-            'maestral_qt/resources/tray-icons-gnome/maestral-icon-idle-symbolic.svg',
-            'maestral_qt/resources/tray-icons-gnome/maestral-icon-info-symbolic.svg',
-            'maestral_qt/resources/tray-icons-gnome/maestral-icon-paused-symbolic.svg',
-            'maestral_qt/resources/tray-icons-gnome/maestral-icon-syncing-symbolic.svg',
-        ]),
-        ('share/applications', ['maestral_qt/resources/maestral.desktop']),
-    ],
+        ('share/applications', ['maestral_qt/resources/maestral.desktop'])
+    ]
 )

@@ -24,14 +24,14 @@ def resource_path(name):
 def _get_gnome_version():
     # this may not work in restricted environments such as snap, docker, etc
 
-    gnome3_config_path = "/usr/share/gnome/gnome-version.xml"
-    gnome2_config_path = "/usr/share/gnome-about/gnome-version.xml"
+    gnome3_config_path = '/usr/share/gnome/gnome-version.xml'
+    gnome2_config_path = '/usr/share/gnome-about/gnome-version.xml'
 
     xml = None
 
     for path in (gnome2_config_path, gnome3_config_path):
         try:
-            with open(path, 'r') as f:
+            with open(path) as f:
                 xml = f.read()
         except OSError:
             pass
@@ -42,19 +42,19 @@ def _get_gnome_version():
         m = p.search(xml)
         version = '{0}.{1}.{2}'.format(m.group('maj'), m.group('min'), m.group('mic'))
 
-        return tuple(int(v) for v in version.split('.'))
+        return version
     else:
-        return None
+        return '0.0.0'
 
 
 APP_ICON_PATH = resource_path('maestral.png')
 TRAY_ICON_DIR_SVG = resource_path('tray-icons-svg')
-TRAY_ICON_DIR_GNOME = resource_path('tray-icons-gnome')
-TRAY_ICON_DIR_KDE = resource_path('tray-icons-kde')
 TRAY_ICON_DIR_PNG = resource_path('tray-icons-png')
 TRAY_ICON_PATH_SVG = osp.join(TRAY_ICON_DIR_SVG, 'maestral-icon-{0}-{1}.svg')
-TRAY_ICON_PATH_GNOME = osp.join(TRAY_ICON_DIR_GNOME, 'maestral-icon-{0}-symbolic.svg')
 TRAY_ICON_PATH_PNG = osp.join(TRAY_ICON_DIR_PNG, 'maestral-icon-{0}-{1}.png')
+
+THEME_ICON_NAME = 'maestral-icon-{}'
+THEME_ICON_NAME_SYMBOLIC = 'maestral-icon-{}-symbolic'
 
 FACEHOLDER_PATH = resource_path('faceholder.png')
 
@@ -72,7 +72,7 @@ THEME_LIGHT = 'light'
 GNOME_VERSION = _get_gnome_version()
 
 
-def get_desktop():
+def _get_desktop():
     """
     Determines the current desktop environment. This is used for instance to decide
     which keyring backend is preferred to store the auth token.
@@ -96,91 +96,95 @@ def get_desktop():
         return 'cocoa'
 
 
-DESKTOP = get_desktop()
-LEGACY_GNOME = DESKTOP == 'gnome' and GNOME_VERSION and GNOME_VERSION[0] < 3
+DESKTOP = _get_desktop()
 
 
-def get_native_item_icon(item_path):
+def native_item_icon(item_path):
     """Returns the system icon for the given file or folder. If there is no item at the
     given path, the systems default file icon will be returned.
 
     :param str item_path: Path to local item.
     """
     if not osp.exists(item_path):
-        return get_native_file_icon()
+        return native_file_icon()
     else:
         return _icon_provider.icon(QtCore.QFileInfo(item_path))
 
 
-def get_native_folder_icon():
+def native_folder_icon():
     """Returns the system's default folder icon."""
     # use a real folder here because Qt may otherwise
     # return the wrong folder icon in some cases
     return _icon_provider.icon(QtCore.QFileInfo('/usr'))
 
 
-def get_native_file_icon():
+def native_file_icon():
     """Returns the system's default file icon."""
     return _icon_provider.icon(_icon_provider.File)
 
 
 # noinspection PyCallByClass,PyArgumentList
-def get_system_tray_icon(status, color=None, geometry=None):
-    """Returns the system tray icon for the given status and color. The following icons
+def system_tray_icon(status, geometry=None):
+    """Returns the system tray icon for the given status. The following icons
     will be used:
 
     1) macOS: Black SVG icons with transparent background. macOS will adapt the appearance
-       as necessary.
-    3) Gnome 3: SVG icons that follow the Gnome 3 'symbolic' icon specification.
-    3) KDE Plasma with PtQt 5.13 and higher: SVG icons with a color contrasting the
-       system tray background.
-    4) Other: PNG icons with a color contrasting the system tray background.
+       as necessary. This only works reliably in Qt >= 5.15 which is not yet released.
+    2) Linux: Any icons installed in the system theme. Maestral will prefer "symbolic"
+       icons named "maestral-status-{status}-symbolic" over regular icons named
+       "maestral-status-{status}". It will fall back to manually setting the icon in a
+       color which contrasts the background color of the status bar.
 
     :param str status: Maestral status. Must be 'idle', 'syncing', 'paused',
-        'disconnected' or 'error'.
-    :param str color: Must be 'dark' or 'light'. If not given, the color will be chosen
-        automatically to contrast the system tray background.
+        'disconnected' 'info' or 'error'.
     :param geometry: Tray icon geometry on screen. If given, this location will be used to
-        to determine the system tray background color.
+        to determine the system tray background color. This argument is ignored on macOS.
     """
     allowed_status = ('idle', 'syncing', 'paused', 'disconnected', 'info', 'error')
     if status not in allowed_status:
         raise ValueError(f'status must be in {allowed_status}')
 
-    if DESKTOP == 'cocoa':
-        # use SVG icon with specified or automatic color
-        icon_color = color or 'dark'
-        icon = QtGui.QIcon(TRAY_ICON_PATH_SVG.format(status, icon_color))
-        icon.setIsMask(not color)
-
-    elif DESKTOP == 'gnome' and not LEGACY_GNOME:
-        # use 'symbolic' icons: try to use SVG icon from theme, fall back to our own
-        icon = QtGui.QIcon.fromTheme('maestral-icon-{}-symbolic'.format(status))
-        if not icon.name():
-            icon_color = color or 'light' if isDarkStatusBar(geometry) else 'dark'
-            icon = QtGui.QIcon(TRAY_ICON_PATH_SVG.format(status, icon_color))
-
-    elif DESKTOP == 'kde' and Version(QtCore.QT_VERSION_STR) >= Version('5.13.0'):
-        # use SVG icon with specified or contrasting color
-        icon_color = color or 'light' if isDarkStatusBar(geometry) else 'dark'
-        icon = QtGui.QIcon(TRAY_ICON_PATH_SVG.format(status, icon_color))
+    if platform.system() == 'Darwin':
+        # use SVG icon with automatic color
+        icon = QtGui.QIcon(TRAY_ICON_PATH_SVG.format(status, 'dark'))
+        icon.setIsMask(True)
 
     else:
-        # use PNG icon with specified or contrasting color
-        icon_color = color or 'light' if isDarkStatusBar(geometry) else 'dark'
-        icon = QtGui.QIcon(TRAY_ICON_PATH_PNG.format(status, icon_color))
+
+        icon_color = 'light' if is_dark_status_bar(geometry) else 'dark'
+
+        if Version(QtCore.QT_VERSION_STR) < Version('5.13.0'):
+            # use PNG icon with contrasting color (see issue #46)
+            fallback_icon = QtGui.QIcon(TRAY_ICON_PATH_PNG.format(status, icon_color))
+        else:
+            # use SVG icon with contrasting color
+            fallback_icon = QtGui.QIcon(TRAY_ICON_PATH_SVG.format(status, icon_color))
+
+        theme_icon_name = THEME_ICON_NAME.format(status)
+        theme_icon_name_symbolic = THEME_ICON_NAME_SYMBOLIC.format(status)
+
+        # Prefer "symbolic" icons where the appearance is adapted by the platform
+        # automatically. Specs for symbolic icons and their use in the system tray
+        # vary between plaforms.
+
+        if QtGui.QIcon.hasThemeIcon(theme_icon_name_symbolic):
+            icon = QtGui.QIcon.fromTheme(theme_icon_name_symbolic, fallback_icon)
+        elif QtGui.QIcon.hasThemeIcon(theme_icon_name):
+            icon = QtGui.QIcon.fromTheme(theme_icon_name, fallback_icon)
+        else:
+            icon = QtGui.QIcon(fallback_icon)
 
     return icon
 
 
 # noinspection PyArgumentList
-def statusBarTheme(icon_geometry=None):
+def systray_theme(icon_geometry=None):
     """
-    Returns one of gui.utils.THEME_LIGHT or gui.utils.THEME_DARK, corresponding to the
-    current status bar theme.
+    Returns one of THEME_LIGHT or THEME_DARK, corresponding to the current status bar
+    color.
 
-    `icon_geometry` provides the geometry (location and dimensions) of the tray
-    icon. If not given, we try to guess the location of the system tray.
+    ``icon_geometry`` provides the geometry (location and dimensions) of the tray icon.
+    If not given, we try to guess the location of the system tray.
     """
 
     # --------------------- check for the status bar color -------------------------
@@ -230,11 +234,11 @@ def statusBarTheme(icon_geometry=None):
         return THEME_DARK
 
 
-def isDarkStatusBar(icon_geometry=None):
+def is_dark_status_bar(icon_geometry=None):
     """Detects the current status bar brightness and returns ``True`` for a dark status
-    bar. `icon_geometry` provides the geometry (location and dimensions) of the tray
+    bar. ``icon_geometry`` provides the geometry (location and dimensions) of the tray
     icon. If not given, we try to guess the location of the system tray."""
-    return statusBarTheme(icon_geometry) == THEME_DARK
+    return systray_theme(icon_geometry) == THEME_DARK
 
 
 def rgb_to_luminance(r, g, b, base=256):

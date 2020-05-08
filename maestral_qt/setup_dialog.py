@@ -12,15 +12,13 @@ from PyQt5 import QtGui, QtCore, QtWidgets, uic
 from PyQt5.QtCore import QModelIndex, Qt
 
 # maestral modules
-from maestral.config import MaestralConfig, MaestralState
-from maestral.daemon import start_maestral_daemon_thread, get_maestral_proxy
 from maestral.utils.appdirs import get_home_dir
 from maestral.utils.path import delete
-from maestral.oauth import OAuth2Session
 
 # local imports
-from .resources import APP_ICON_PATH, SETUP_DIALOG_PATH, get_native_item_icon
-from .utils import IS_MACOS, UserDialog, icon_to_pixmap, BackgroundTask
+from .resources import APP_ICON_PATH, SETUP_DIALOG_PATH, native_item_icon
+from .utils import IS_MACOS, MaestralBackgroundTask, icon_to_pixmap
+from .widgets import UserDialog
 from .selective_sync_dialog import AsyncListFolder, TreeModel, DropboxPathModel
 
 
@@ -28,12 +26,9 @@ from .selective_sync_dialog import AsyncListFolder, TreeModel, DropboxPathModel
 class SetupDialog(QtWidgets.QDialog):
     """A dialog to link and set up a new Dropbox account."""
 
-    auth_session = ''
-    auth_url = ''
-
     accepted = False
 
-    def __init__(self, config_name='maestral', pending_link=True, parent=None):
+    def __init__(self, mdbx, parent=None):
         super().__init__(parent=parent)
         # load user interface layout from .ui file
         uic.loadUi(SETUP_DIALOG_PATH, self)
@@ -41,9 +36,12 @@ class SetupDialog(QtWidgets.QDialog):
         if IS_MACOS:
             self.setWindowFlags(Qt.WindowStaysOnTopHint)
 
-        self._config_name = config_name
-        self._conf = MaestralConfig(config_name)
-        self._state = MaestralState(config_name)
+        self.mdbx = mdbx
+        self.dbx_model = None
+        self.dropbox_location = ''
+        self.excluded_items = []
+        self.dropbox_location = osp.dirname(
+            self.mdbx.get_conf('main', 'path')) or get_home_dir()
 
         self.app_icon = QtGui.QIcon(APP_ICON_PATH)
 
@@ -52,12 +50,26 @@ class SetupDialog(QtWidgets.QDialog):
         self.labelIcon_2.setPixmap(icon_to_pixmap(self.app_icon, 70))
         self.labelIcon_3.setPixmap(icon_to_pixmap(self.app_icon, 120))
 
-        self.mdbx = None
-        self.dbx_model = None
-        self.excluded_items = []
+        # prepare auth session
+        self.auth_url = self.mdbx.get_auth_url()
+        prompt = self.labelAuthLink.text().format(self.auth_url)
+        self.labelAuthLink.setText(prompt)
+
+        # set up Dropbox location info text
+        default_dir_name = self.mdbx.get_conf('main', 'default_dir_name')
+        new_label = self.labelDropboxPath.text().format(default_dir_name)
+        self.labelDropboxPath.setText(new_label)
+
+        # set up Dropbox location combobox
+        folder_icon = native_item_icon(self.dropbox_location)
+        relative_path = self.rel_path(self.dropbox_location)
+        self.comboBoxDropboxPath.addItem(folder_icon, relative_path)
+        self.comboBoxDropboxPath.insertSeparator(1)
+        self.comboBoxDropboxPath.addItem(QtGui.QIcon(), 'Other...')
+        self.comboBoxDropboxPath.currentIndexChanged.connect(self.on_combobox)
 
         # resize dialog buttons
-        width = self.pushButtonAuthPageCancel.width()*1.1
+        width = self.pushButtonAuthPageCancel.width() * 1.1
         for b in (self.pushButtonAuthPageLink, self.pushButtonDropboxPathUnlink,
                   self.pushButtonDropboxPathSelect, self.pushButtonFolderSelectionBack,
                   self.pushButtonFolderSelectionSelect, self.pushButtonAuthPageCancel,
@@ -65,16 +77,6 @@ class SetupDialog(QtWidgets.QDialog):
             b.setMinimumWidth(width)
             b.setMaximumWidth(width)
 
-        # set up combobox
-        self.dropbox_location = osp.dirname(self._conf.get('main', 'path')) or get_home_dir()
-        relative_path = self.rel_path(self.dropbox_location)
-
-        folder_icon = get_native_item_icon(self.dropbox_location)
-        self.comboBoxDropboxPath.addItem(folder_icon, relative_path)
-
-        self.comboBoxDropboxPath.insertSeparator(1)
-        self.comboBoxDropboxPath.addItem(QtGui.QIcon(), 'Other...')
-        self.comboBoxDropboxPath.currentIndexChanged.connect(self.on_combobox)
         self.dropbox_folder_dialog = QtWidgets.QFileDialog(self)
         self.dropbox_folder_dialog.setAcceptMode(QtWidgets.QFileDialog.AcceptOpen)
         self.dropbox_folder_dialog.setFileMode(QtWidgets.QFileDialog.Directory)
@@ -85,7 +87,7 @@ class SetupDialog(QtWidgets.QDialog):
 
         # connect buttons to callbacks
         self.setAttribute(Qt.WA_DeleteOnClose)
-        self.pushButtonLink.clicked.connect(self.on_link)
+        self.pushButtonLink.clicked.connect(self.on_link_clicked)
         self.pushButtonAuthPageCancel.clicked.connect(self.on_reject_requested)
         self.pushButtonAuthPageLink.clicked.connect(self.on_auth_clicked)
         self.pushButtonDropboxPathCalcel.clicked.connect(self.on_reject_requested)
@@ -96,15 +98,8 @@ class SetupDialog(QtWidgets.QDialog):
         self.pushButtonClose.clicked.connect(self.on_accept_requested)
         self.selectAllCheckBox.clicked.connect(self.on_select_all_clicked)
 
-        default_dir_name = self._conf.get('main', 'default_dir_name')
-
-        self.labelDropboxPath.setText(self.labelDropboxPath.text().format(default_dir_name))
-
         # check if we are already authenticated, skip authentication if yes
-        if not pending_link:
-            start_maestral_daemon_thread(self._config_name, run=False)
-            self.mdbx = get_maestral_proxy(self._config_name)
-            self.mdbx.get_account_info()
+        if not self.mdbx.pending_link:
             self.labelDropboxPath.setText("""
             <html><head/><body>
             <p align="left">
@@ -122,10 +117,12 @@ class SetupDialog(QtWidgets.QDialog):
             <p align="left">
             To unlink your Dropbox account from Maestral, click "Unlink" below.</p>
             </body></html>
-            """.format(self._conf.get('main', 'path'), default_dir_name))
+            """.format(self.mdbx.get_conf('main', 'path'),
+                       self.mdbx.get_conf('main', 'default_dir_name')))
             self.pushButtonDropboxPathCalcel.setText('Quit')
             self.stackedWidget.setCurrentIndex(2)
             self.stackedWidgetButtons.setCurrentIndex(2)
+
         else:
             self.stackedWidget.setCurrentIndex(0)
             self.stackedWidgetButtons.setCurrentIndex(0)
@@ -158,11 +155,7 @@ class SetupDialog(QtWidgets.QDialog):
         self.stackedWidget.slideInIdx(0)
 
     @QtCore.pyqtSlot()
-    def on_link(self):
-        self.auth_session = OAuth2Session(self._config_name)
-        self.auth_url = self.auth_session.get_auth_url()
-        prompt = self.labelAuthLink.text().format(self.auth_url)
-        self.labelAuthLink.setText(prompt)
+    def on_link_clicked(self):
 
         self.stackedWidget.fadeInIdx(1)
         self.pushButtonAuthPageLink.setFocus()
@@ -179,39 +172,33 @@ class SetupDialog(QtWidgets.QDialog):
             self.pushButtonAuthPageLink.setEnabled(False)
             self.lineEditAuthCode.setEnabled(False)
 
-            self.verify_token_async()
+            self.link_async()
 
-    def verify_token_async(self):
+    def link_async(self):
 
         token = self.lineEditAuthCode.text()
 
-        self.auth_task = BackgroundTask(
+        self.auth_task = MaestralBackgroundTask(
             parent=self,
-            target=self.auth_session.verify_auth_token,
+            config_name=self.mdbx.config_name,
+            target='link',
             args=(token,)
         )
-        self.auth_task.sig_done.connect(self.on_verify_token_finished)
+        self.auth_task.sig_done.connect(self.on_link_done)
 
-    def on_verify_token_finished(self, res):
+    def on_link_done(self, res):
 
-        if res == OAuth2Session.Success:
-            self.auth_session.save_creds()
-
+        if res == 0:
             # switch to next page
             self.stackedWidget.slideInIdx(2)
             self.pushButtonDropboxPathSelect.setFocus()
             self.lineEditAuthCode.clear()  # clear since we might come back on unlink
 
-            # start Maestral after linking to Dropbox account
-            start_maestral_daemon_thread(self._config_name, run=False)
-            self.mdbx = get_maestral_proxy(self._config_name)
-            self.mdbx.reset_sync_state()
-            self.mdbx.get_account_info()
-        elif res == OAuth2Session.InvalidToken:
+        elif res == 1:
             msg = 'Please make sure that you entered the correct authentication token.'
             msg_box = UserDialog('Authentication failed.', msg, parent=self)
             msg_box.open()
-        elif res == OAuth2Session.ConnectionFailed:
+        elif res == 2:
             msg = 'Please make sure that you are connected to the internet and try again.'
             msg_box = UserDialog('Connection failed.', msg, parent=self)
             msg_box.open()
@@ -233,9 +220,9 @@ class SetupDialog(QtWidgets.QDialog):
             if osp.isdir(dropbox_path):
                 msg_box = UserDialog(
                     title='Folder already exists',
-                    message=(f'The folder "{dropbox_path}" already exists. Would '
-                             'you like to keep using it?'),
-                    button_names=('Replace', 'Cancel', 'Keep'),
+                    message=(f'The folder "{dropbox_path}" already exists. Would you  '
+                             f'like to replace it or merge its contents with Dropbox?'),
+                    button_names=('Replace', 'Cancel', 'Merge'),
                     parent=self,
                 )
                 msg_box.setAcceptButtonIcon('edit-clear')
@@ -318,13 +305,13 @@ class SetupDialog(QtWidgets.QDialog):
         self.comboBoxDropboxPath.setCurrentIndex(0)
         if not new_location == '':
             self.comboBoxDropboxPath.setItemText(0, self.rel_path(new_location))
-            self.comboBoxDropboxPath.setItemIcon(0, get_native_item_icon(new_location))
+            self.comboBoxDropboxPath.setItemIcon(0, native_item_icon(new_location))
 
         self.dropbox_location = new_location
 
     def populate_folders_list(self):
         self.async_loader = AsyncListFolder(self.mdbx, self)
-        self.dbx_root = DropboxPathModel(self.mdbx, self.async_loader, '/')
+        self.dbx_root = DropboxPathModel(self.mdbx, self.async_loader)
         self.dbx_model = TreeModel(self.dbx_root)
         self.dbx_model.dataChanged.connect(self.update_select_all_checkbox)
         self.treeViewFolders.setModel(self.dbx_model)
@@ -397,8 +384,8 @@ class SetupDialog(QtWidgets.QDialog):
 
     # static method to create the dialog and return Maestral instance on success
     @staticmethod
-    def configureMaestral(config_name='maestral', pending_link=True, parent=None):
-        fsd = SetupDialog(config_name, pending_link, parent)
+    def configureMaestral(mdbx, parent=None):
+        fsd = SetupDialog(mdbx, parent)
         fsd.show()
         fsd.exec_()
 

@@ -15,10 +15,13 @@ import click
 from PyQt5 import QtCore, QtGui, QtWidgets, uic
 
 # local imports
-from .resources import (SYNC_ISSUES_WINDOW_PATH, SYNC_ISSUE_WIDGET_PATH,
-                        get_native_item_icon)
-from .utils import (elide_string, icon_to_pixmap, get_scaled_font, center_window,
-                    isDarkWindow, LINE_COLOR_DARK, LINE_COLOR_LIGHT)
+from .resources import (
+    SYNC_ISSUES_WINDOW_PATH, SYNC_ISSUE_WIDGET_PATH, native_item_icon
+)
+from .utils import (
+    elide_string, icon_to_pixmap, get_scaled_font, center_window,
+    is_dark_window, LINE_COLOR_DARK, LINE_COLOR_LIGHT
+)
 
 
 # noinspection PyArgumentList
@@ -78,7 +81,7 @@ class SyncIssueWidget(QtWidgets.QWidget):
 
     def update_dark_mode(self):
         # update style sheet with new colors
-        line_rgb = LINE_COLOR_DARK if isDarkWindow() else LINE_COLOR_LIGHT
+        line_rgb = LINE_COLOR_DARK if is_dark_window() else LINE_COLOR_LIGHT
         bg_color = self.palette().color(QtGui.QPalette.Base)
         bg_color_rgb = [bg_color.red(), bg_color.green(), bg_color.blue()]
         self.frame.setStyleSheet("""
@@ -89,7 +92,7 @@ class SyncIssueWidget(QtWidgets.QWidget):
         }}""".format(*line_rgb, *bg_color_rgb))
 
         # update item icons (the system may supply different icons in dark mode)
-        icon = get_native_item_icon(self.sync_err['local_path'])
+        icon = native_item_icon(self.sync_err['local_path'])
         pixmap = icon_to_pixmap(icon, self.iconLabel.width(), self.iconLabel.height())
         self.iconLabel.setPixmap(pixmap)
 

@@ -6,7 +6,6 @@ Created on Wed Oct 31 16:23:13 2018
 @author: samschott
 """
 import os
-import logging
 import threading
 
 # external packages
@@ -15,16 +14,15 @@ from PyQt5.QtCore import QAbstractItemModel, QModelIndex, Qt, QVariant
 
 # maestral modules
 from maestral.daemon import Proxy
-from maestral.errors import NotAFolderError
+from maestral.errors import NotAFolderError, NotFoundError
 from maestral.utils.path import is_child
 
 # local imports
-from .resources import FOLDERS_DIALOG_PATH, get_native_folder_icon, get_native_file_icon
+from .resources import FOLDERS_DIALOG_PATH, native_folder_icon, native_file_icon
 from .utils import BackgroundTask
 
-logger = logging.getLogger(__name__)
 
-
+# noinspection PyTypeChecker
 class TreeModel(QAbstractItemModel):
     """A QAbstractItemModel which loads items and their children on-demand and
     asynchronously. It is useful for displaying a item hierarchy from a source which is
@@ -189,9 +187,6 @@ class AbstractTreeItem(QtCore.QObject):
         return self._parent
 
     def _async_loading_done(self, result):
-        # subclass this to set the children, depending on the `result` of the async call
-        # self.loading_done.emit()
-        # self.loading_failed.emit()
         raise NotImplementedError(self._async_loading_done)
 
     def _create_children_async(self):
@@ -257,9 +252,9 @@ class DropboxPathModel(AbstractTreeItem):
     def __init__(self, mdbx, async_loader, path='/', is_folder=True, parent=None):
         super().__init__(parent=parent)
         if is_folder:
-            self.icon = get_native_folder_icon()
+            self.icon = native_folder_icon()
         else:
-            self.icon = get_native_file_icon()
+            self.icon = native_file_icon()
         self._path = path
         self._mdbx = mdbx
         self._async_loader = async_loader
@@ -403,11 +398,11 @@ class AsyncListFolder(QtCore.QObject):
             with Proxy(self.m._pyroUri) as m:
                 try:
                     entries = m.list_folder(path, recursive=False)
-                except NotAFolderError:
+                    entries.sort(key=lambda e: e['name'].lower())
+                except (NotAFolderError, NotFoundError):
                     entries = []
-
-            if isinstance(entries, list):
-                entries.sort(key=lambda e: e['name'].lower())
+                except ConnectionError:
+                    entries = False
 
             return entries
 
@@ -481,10 +476,8 @@ class SelectiveSyncDialog(QtWidgets.QDialog):
             # Remove items which have been unchecked.
             # The list will be cleaned up later.
             if item.checkState == 0:
-                logger.debug('Excluding: %s' % item_dbx_path)
                 self.excluded_items.append(item_dbx_path)
             elif item.checkState in (1, 2):
-                logger.debug('Including: %s' % item_dbx_path)
                 self.excluded_items = [f for f in self.excluded_items
                                        if not f == item_dbx_path]
         else:
