@@ -17,12 +17,13 @@ from distutils.version import LooseVersion
 from PyQt5 import QtGui, QtCore, QtWidgets, uic
 
 # maestral modules
-from maestral import __version__, __author__, __url__
+from maestral import __version__ as __daemon_version__
 from maestral.utils.appdirs import get_home_dir
 from maestral.utils.notify import FILECHANGE, SYNCISSUE
 from maestral.utils.autostart import AutoStart
 
 # local imports
+from . import __version__, __author__, __url__
 from .selective_sync_dialog import SelectiveSyncDialog
 from .resources import (
     native_item_icon, UNLINK_DIALOG_PATH,
@@ -169,7 +170,7 @@ class SettingsWindow(QtWidgets.QWidget):
 
         # populate about section
         year = time.localtime().tm_year
-        self.labelVersion.setText(self.labelVersion.text().format(__version__))
+        self.labelVersion.setText(self.labelVersion.text().format(__version__, __daemon_version__))
         self.labelUrl.setText(self.labelUrl.text().format(__url__))
         self.labelCopyright.setText(self.labelCopyright.text().format(year, __author__))
 
