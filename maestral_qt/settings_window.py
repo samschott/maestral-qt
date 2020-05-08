@@ -6,10 +6,7 @@ Created on Wed Oct 31 16:23:13 2018
 @author: samschott
 """
 # system imports
-import sys
-import os
 import os.path as osp
-from subprocess import call
 import time
 from distutils.version import LooseVersion
 
@@ -30,7 +27,7 @@ from .resources import (
     SETTINGS_WINDOW_PATH, APP_ICON_PATH, FACEHOLDER_PATH
 )
 from .utils import (
-    IS_MACOS, IS_MACOS_BUNDLE, LINE_COLOR_DARK, LINE_COLOR_LIGHT,
+    IS_MACOS, LINE_COLOR_DARK, LINE_COLOR_LIGHT,
     get_scaled_font, is_dark_window, center_window,
     icon_to_pixmap, get_masked_image, MaestralBackgroundTask
 )
@@ -74,7 +71,6 @@ class SettingsWindow(QtWidgets.QWidget):
     """A widget showing all of Maestral's settings."""
 
     _update_interval_mapping = {0: 60*60*24, 1: 60*60*24*7, 2: 60*60*24*30, 3: 0}
-    _macos_cli_tool_path = '/usr/local/bin/maestral'
 
     def __init__(self, parent, mdbx):
         super().__init__()
@@ -83,9 +79,6 @@ class SettingsWindow(QtWidgets.QWidget):
         if IS_MACOS:
             # noinspection PyTypeChecker
             self.setWindowFlags(self.windowFlags() | QtCore.Qt.WindowStaysOnTopHint)
-
-        if not IS_MACOS_BUNDLE:
-            self.widgetCLI.hide()
 
         self._parent = parent
         self.update_dark_mode()
@@ -134,8 +127,6 @@ class SettingsWindow(QtWidgets.QWidget):
         self.dropbox_folder_dialog.rejected.connect(
                 lambda: self.comboBoxDropboxPath.setCurrentIndex(0))
 
-        self.pushButtonCommandLineTool.clicked.connect(self.on_cli_tool_clicked)
-
         center_window(self)
 
     @QtCore.pyqtSlot()
@@ -166,33 +157,11 @@ class SettingsWindow(QtWidgets.QWidget):
         )
         self.comboBoxUpdateInterval.setCurrentIndex(closest_key)
 
-        self._udpdate_cli_tool_button()
-
         # populate about section
         year = time.localtime().tm_year
         self.labelVersion.setText(self.labelVersion.text().format(__version__, __daemon_version__))
         self.labelUrl.setText(self.labelUrl.text().format(__url__))
         self.labelCopyright.setText(self.labelCopyright.text().format(year, __author__))
-
-    def _udpdate_cli_tool_button(self):
-        if osp.islink(self._macos_cli_tool_path):
-            self.pushButtonCommandLineTool.setEnabled(True)
-            self.pushButtonCommandLineTool.setText('Uninstall')
-            self.labelCommandLineToolInfo.setText(
-                'CLI installed. See <b>maestral --help</b> for available commands.'
-            )
-        elif osp.exists(self._macos_cli_tool_path):
-            self.pushButtonCommandLineTool.setEnabled(False)
-            self.pushButtonCommandLineTool.setText('Install')
-            self.labelCommandLineToolInfo.setText(
-                'CLI already installed from Python package.'
-            )
-        else:
-            self.pushButtonCommandLineTool.setEnabled(True)
-            self.pushButtonCommandLineTool.setText('Install')
-            self.labelCommandLineToolInfo.setText(
-                'Install the <b>maestral</b> command line tool to <b>/usr/local/bin.</b>'
-            )
 
     def set_profile_pic_from_cache(self):
 
@@ -266,17 +235,6 @@ class SettingsWindow(QtWidgets.QWidget):
     @QtCore.pyqtSlot(int)
     def on_start_on_login_clicked(self, state):
         self.autostart.enabled = state == 2
-
-    @QtCore.pyqtSlot()
-    def on_cli_tool_clicked(self):
-
-        if osp.islink(self._macos_cli_tool_path):
-            os.remove(self._macos_cli_tool_path)
-        else:
-            maestral_cli = os.path.join(getattr(sys, '_MEIPASS', ''), 'maestral_cli')
-            call(['ln', '-s', maestral_cli, self._macos_cli_tool_path])
-
-        self._udpdate_cli_tool_button()
 
     @QtCore.pyqtSlot(int)
     def on_notifications_clicked(self, state):
