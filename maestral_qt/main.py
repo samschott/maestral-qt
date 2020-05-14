@@ -647,14 +647,15 @@ def run_cli():
     """
     import argparse
 
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(add_help=False)
     parser.add_argument('-c', '--config-name', help='Configuration name', default='maestral')
     parser.add_argument('--cli', action='store_true', help='Forward calls to CLI.')
     parser.add_argument('--frozen-daemon', action='store_true', help='Start daemon only')
     parsed_args, remaining = parser.parse_known_args()
 
     if parsed_args.cli:
-        sys.argv = ['maestral'] + remaining + ['-c', parsed_args.config_name]
+        sys.argv[0] = 'maestral'
+        sys.argv.remove('--cli')
         from maestral.cli import main
         main()
     elif parsed_args.frozen_daemon:
