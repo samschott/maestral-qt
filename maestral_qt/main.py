@@ -26,7 +26,6 @@ from maestral.constants import (
 )
 from maestral.daemon import (
     start_maestral_daemon_process,
-    start_maestral_daemon,
     stop_maestral_daemon_process,
     get_maestral_proxy,
     Start,
