@@ -1,4 +1,3 @@
-# !/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
 Created on Wed Oct 31 16:23:13 2018
@@ -634,31 +633,3 @@ def run(config_name='maestral'):
     maestral_gui = MaestralGuiApp(config_name)
     maestral_gui.load_maestral()
     sys.exit(app.exec())
-
-
-def run_cli():
-    """
-    This is the main entry point for frozen executables.
-    If only the --config-name option is given, it starts the GUI with the given config.
-    If the --cli option is given, all following arguments will be passed to the CLI.
-    If the --frozen-daemon option is given, an idle maestral daemon is started. This is to
-    support launching the daemon from frozen executables as produced for instance by
-    PyInstaller.
-    """
-    import argparse
-
-    parser = argparse.ArgumentParser(add_help=False)
-    parser.add_argument('-c', '--config-name', help='Configuration name', default='maestral')
-    parser.add_argument('--cli', action='store_true', help='Forward calls to CLI.')
-    parser.add_argument('--frozen-daemon', action='store_true', help='Start daemon only')
-    parsed_args, remaining = parser.parse_known_args()
-
-    if parsed_args.cli:
-        sys.argv[0] = 'maestral'
-        sys.argv.remove('--cli')
-        from maestral.cli import main
-        main()
-    elif parsed_args.frozen_daemon:
-        start_maestral_daemon(parsed_args.config_name)
-    else:
-        run(parsed_args.config_name)
