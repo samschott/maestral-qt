@@ -30,14 +30,14 @@ setup(
     install_requires=[
         'bugsnag>=3.4.0',
         'click>=7.1.1',
-        'maestral>=1.0.0',
+        'maestral>=1.0.3',
         'markdown2',
         'packaging',
         'PyQt5>=5.9',
     ],
     zip_safe=False,
     entry_points={
-      'console_scripts': ['maestral_qt=maestral_qt.main:run_cli'],
+      'console_scripts': ['maestral_qt=maestral_qt.cli:main'],
     },
     python_requires='>=3.6',
     classifiers=[
