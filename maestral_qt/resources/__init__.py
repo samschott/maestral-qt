@@ -5,6 +5,7 @@ Created on Wed Oct 31 16:23:13 2018
 
 @author: samschott
 """
+import sys
 import os
 import os.path as osp
 import platform
@@ -18,7 +19,8 @@ _icon_provider = QtWidgets.QFileIconProvider()
 
 
 def resource_path(name):
-    return pkg_resources.resource_filename('maestral_qt', f'resources/{name}')
+    folder = getattr(sys, '_MEIPASS', pkg_resources.resource_filename('maestral_qt', 'resources'))
+    return osp.join(folder, name)
 
 
 def _get_gnome_version():
