@@ -30,7 +30,7 @@ setup(
     install_requires=[
         'bugsnag>=3.4.0',
         'click>=7.1.1',
-        'maestral>=1.0.3',
+        'maestral>=1.1.0',
         'markdown2',
         'packaging',
         'PyQt5>=5.9',
