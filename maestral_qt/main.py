@@ -435,7 +435,8 @@ class MaestralGuiApp(QtWidgets.QSystemTrayIcon):
         self.recentFilesMenu.clear()
 
         # add new actions
-        for dbx_path in reversed(self.mdbx.get_state('sync', 'recent_changes')):
+        for entry in self.mdbx.get_state('sync', 'recent_changes'):
+            dbx_path = entry.get('path_display')
             file_name = os.path.basename(dbx_path)
             truncated_name = elide_string(file_name, font=self.menu.font())
             local_path = self.mdbx.to_local_path(dbx_path)
