@@ -16,7 +16,6 @@ from PyQt5 import QtGui, QtCore, QtWidgets, uic
 # maestral modules
 from maestral import __version__ as __daemon_version__
 from maestral.utils.appdirs import get_home_dir
-from maestral.utils.notify import FILECHANGE, SYNCISSUE
 from maestral.utils.autostart import AutoStart
 
 # local imports
@@ -148,7 +147,7 @@ class SettingsWindow(QtWidgets.QWidget):
 
         # populate app section
         self.checkBoxStartup.setChecked(self.autostart.enabled)
-        self.checkBoxNotifications.setChecked(self.mdbx.notification_level == FILECHANGE)
+        self.checkBoxNotifications.setChecked(self.mdbx.notification_level <= 15)
         self.checkBoxAnalytics.setChecked(self.mdbx.analytics)
         update_interval = self.mdbx.get_conf('app', 'update_notification_interval')
         closest_key = min(
@@ -238,7 +237,7 @@ class SettingsWindow(QtWidgets.QWidget):
 
     @QtCore.pyqtSlot(int)
     def on_notifications_clicked(self, state):
-        self.mdbx.notification_level = FILECHANGE if state == 2 else SYNCISSUE
+        self.mdbx.notification_level = 15 if state == 2 else 30
 
     @QtCore.pyqtSlot(int)
     def on_analytics_clicked(self, state):
