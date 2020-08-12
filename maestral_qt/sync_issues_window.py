@@ -7,7 +7,7 @@ Created on Wed Oct 31 16:23:13 2018
 """
 
 # system imports
-import os
+import os.path as osp
 import urllib
 
 # external packages
@@ -37,9 +37,10 @@ class SyncIssueWidget(QtWidgets.QWidget):
         self.sync_err = sync_err
 
         self.errorLabel.setFont(get_scaled_font(scaling=0.85))
+        self.pathLabel.setElideMode(QtCore.Qt.ElideLeft)
         self.update_dark_mode()  # set appropriate item icon and colors in style sheet
 
-        self.pathLabel.setText(self.to_display_path(self.sync_err['local_path']))
+        self.pathLabel.setText(osp.basename(self.sync_err['local_path']))
         self.errorLabel.setText(self.sync_err['title'] + ':\n' + self.sync_err['message'])
 
         def request_context_menu():
@@ -55,7 +56,7 @@ class SyncIssueWidget(QtWidgets.QWidget):
         a0 = self.actionButtonContextMenu.addAction('View in folder')
         a1 = self.actionButtonContextMenu.addAction('View on dropbox.com')
 
-        a0.setEnabled(os.path.exists(self.sync_err['local_path']))
+        a0.setEnabled(osp.exists(self.sync_err['local_path']))
 
         a0.triggered.connect(self._go_to_local_path)
         a1.triggered.connect(self._go_to_online)
@@ -70,10 +71,6 @@ class SyncIssueWidget(QtWidgets.QWidget):
         dbx_address = 'https://www.dropbox.com/preview'
         file_address = urllib.parse.quote(self.sync_err['dbx_path'])
         click.launch(dbx_address + file_address)
-
-    def to_display_path(self, local_path):
-        return elide_string(os.path.basename(local_path), font=self.pathLabel.font(),
-                            pixels=300, side='left')
 
     def changeEvent(self, QEvent):
         if QEvent.type() == QtCore.QEvent.PaletteChange:
@@ -111,15 +108,19 @@ class SyncIssueWindow(QtWidgets.QWidget):
         self.mdbx = mdbx
         self.sync_issue_widgets = []
 
-        self.reload()
+        self.refresh_gui()
 
         center_window(self)
 
-    def reload(self):
+        self.update_timer = QtCore.QTimer()
+        self.update_timer.timeout.connect(self.refresh_gui)
+        self.update_timer.start(1000)  # every 1 sec
 
-        self.clear()
+    def refresh_gui(self):
 
         sync_errors_list = self.mdbx.sync_errors  # get a new copy
+
+        self.clear()
 
         if len(sync_errors_list) == 0:
             no_issues_label = QtWidgets.QLabel('No sync issues :)')
@@ -127,9 +128,9 @@ class SyncIssueWindow(QtWidgets.QWidget):
             self.sync_issue_widgets.append(no_issues_label)
 
         for issue in sync_errors_list:
-            self.addIssue(issue)
+            self.add_issue(issue)
 
-    def addIssue(self, sync_issue):
+    def add_issue(self, sync_issue):
 
         issue_widget = SyncIssueWidget(sync_issue)
         self.sync_issue_widgets.append(issue_widget)
@@ -144,3 +145,11 @@ class SyncIssueWindow(QtWidgets.QWidget):
                 w.deleteLater()
 
         self.sync_issue_widgets.clear()
+
+    def show(self):
+        self.update_timer.start()
+        return super().show()
+
+    def close(self):
+        self.update_timer.stop()
+        return super().close()
