@@ -36,6 +36,7 @@ from maestral.daemon import (
 from maestral_qt.setup_dialog import SetupDialog
 from maestral_qt.relink_dialog import RelinkDialog
 from maestral_qt.settings_window import SettingsWindow
+from maestral_qt.activity_window import ActivityWindow
 from maestral_qt.sync_issues_window import SyncIssueWindow
 from maestral_qt.resources import system_tray_icon, DESKTOP, APP_ICON_PATH
 from maestral_qt.utils import (
@@ -89,7 +90,7 @@ class MaestralGuiApp(QtWidgets.QSystemTrayIcon):
         self.accountUsageAction = None
         self.syncIssuesAction = None
         self.pauseAction = None
-        self.recentFilesMenu = None
+        self.activityAction = None
 
         self.loading_done = False
 
@@ -255,9 +256,9 @@ class MaestralGuiApp(QtWidgets.QSystemTrayIcon):
         self.pauseAction = self.menu.addAction(self.RESUME_TEXT if self.mdbx.paused else self.PAUSE_TEXT)
         self.pauseAction.triggered.connect(self.on_start_stop_clicked)
 
-        self.recentFilesMenu = self.menu.addMenu('Recently Changed Files')
+        self.activityAction = self.menu.addAction('Show Recent Changes...')
+        self.activityAction.triggered.connect(self.on_activity_clicked)
 
-        self.menu.aboutToShow.connect(self.update_recent_files)
         self.menu.aboutToShow.connect(self.update_snoozed)
 
         self.menu.addSeparator()
@@ -389,6 +390,14 @@ class MaestralGuiApp(QtWidgets.QSystemTrayIcon):
         self.sync_issues_window.setAttribute(QtCore.Qt.WA_DeleteOnClose)
 
     @QtCore.pyqtSlot()
+    def on_activity_clicked(self):
+        self.activity_window = ActivityWindow(self.mdbx)
+        self.activity_window.show()
+        self.activity_window.raise_()
+        self.activity_window.activateWindow()
+        self.activity_window.setAttribute(QtCore.Qt.WA_DeleteOnClose)
+
+    @QtCore.pyqtSlot()
     def on_rebuild_clicked(self):
         self.rebuild_dialog = UserDialog(
             title='Rebuilt Maestral\'s sync index?',
@@ -403,12 +412,6 @@ class MaestralGuiApp(QtWidgets.QSystemTrayIcon):
         res = self.rebuild_dialog.exec_()
         if res == UserDialog.Accepted:
             self.mdbx.rebuild_index()
-
-    @QtCore.pyqtSlot()
-    def on_recent_file_clicked(self):
-        sender = self.sender()
-        local_path = sender.data()
-        click.launch(local_path, locate=True)
 
     # callbacks to update GUI
 
@@ -426,23 +429,6 @@ class MaestralGuiApp(QtWidgets.QSystemTrayIcon):
             self.snoozeMenu.removeAction(self.resumeNotificationsAction)
             self.snoozeMenu.removeAction(self.snoozeSeparator)
             self.snoozeMenu.setTitle('Snooze Notifications')
-
-    @QtCore.pyqtSlot()
-    def update_recent_files(self):
-        """Update menu with list of recently changed files."""
-
-        # remove old actions
-        self.recentFilesMenu.clear()
-
-        # add new actions
-        for entry in self.mdbx.get_state('sync', 'recent_changes'):
-            dbx_path = entry.get('path_display')
-            file_name = os.path.basename(dbx_path)
-            truncated_name = elide_string(file_name, font=self.menu.font())
-            local_path = self.mdbx.to_local_path(dbx_path)
-            action = self.recentFilesMenu.addAction(truncated_name)
-            action.setData(local_path)
-            action.triggered.connect(self.on_recent_file_clicked)
 
     def update_status(self):
         """Change icon according to status."""
@@ -477,10 +463,6 @@ class MaestralGuiApp(QtWidgets.QSystemTrayIcon):
 
             status_short = elide_string(status)
             self.statusAction.setText(status_short)
-
-        # update sync issues window
-        if n_sync_errors != self._n_sync_errors and _is_pyqt_obj(self.sync_issues_window):
-            self.sync_issues_window.reload()
 
         # update tooltip
         self.setToolTip(status)
@@ -601,18 +583,6 @@ class MaestralGuiApp(QtWidgets.QSystemTrayIcon):
 
         # quit Maestral
         self.quit(stop_daemon=True)
-
-
-def _is_pyqt_obj(obj):
-    """Checks if ``obj`` wraps an underlying C/C++ object."""
-    if isinstance(obj, QtCore.QObject):
-        try:
-            obj.parent()
-            return True
-        except RuntimeError:
-            return False
-    else:
-        return False
 
 
 # noinspection PyArgumentList
