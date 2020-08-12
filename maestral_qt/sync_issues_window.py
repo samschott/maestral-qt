@@ -37,7 +37,6 @@ class SyncIssueWidget(QtWidgets.QWidget):
         self.sync_err = sync_err
 
         self.errorLabel.setFont(get_scaled_font(scaling=0.85))
-        self.pathLabel.setElideMode(QtCore.Qt.ElideLeft)
         self.update_dark_mode()  # set appropriate item icon and colors in style sheet
 
         self.pathLabel.setText(osp.basename(self.sync_err['local_path']))

@@ -40,7 +40,6 @@ class SyncEventWidget(QtWidgets.QWidget):
         self.update_dark_mode()  # set appropriate item icon and colors in style sheet
         self.filenameLabel.setFont(get_scaled_font(0.9))
         self.infoLabel.setFont(get_scaled_font(0.9))
-        self.filenameLabel.setElideMode(QtCore.Qt.ElideLeft)
 
         dirname, filename = osp.split(self.sync_event['local_path'])
         parent_dir = osp.basename(dirname)
