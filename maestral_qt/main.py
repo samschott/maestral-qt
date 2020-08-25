@@ -29,7 +29,7 @@ from maestral.daemon import (
     stop_maestral_daemon_process,
     get_maestral_proxy,
     Start,
-    Pyro5
+    CommunicationError
 )
 
 # local imports
@@ -139,7 +139,7 @@ class MaestralGuiApp(QtWidgets.QSystemTrayIcon):
             try:
                 self.update_status()
                 self.update_error()
-            except Pyro5.errors.CommunicationError:
+            except CommunicationError:
                 self.quit()
 
         if not self.contextMenuVisible():
