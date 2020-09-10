@@ -19,7 +19,7 @@ from .resources import (
     SYNC_ISSUES_WINDOW_PATH, SYNC_ISSUE_WIDGET_PATH, native_item_icon
 )
 from .utils import (
-    elide_string, icon_to_pixmap, get_scaled_font, center_window,
+    icon_to_pixmap, get_scaled_font, center_window,
     is_dark_window, LINE_COLOR_DARK, LINE_COLOR_LIGHT
 )
 
