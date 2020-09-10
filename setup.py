@@ -26,6 +26,7 @@ setup(
             'resources/tray-icons-png/*.png',
             ],
         },
+    python_requires='>=3.6',
     setup_requires=['wheel'],
     install_requires=[
         'bugsnag>=3.4.0',
@@ -38,8 +39,8 @@ setup(
     zip_safe=False,
     entry_points={
       'console_scripts': ['maestral_qt=maestral_qt.cli:main'],
+      'maestral_gui': ['maestral_qt=maestral_qt.main:run'],
     },
-    python_requires='>=3.6',
     classifiers=[
         'License :: OSI Approved :: MIT License',
         'Operating System :: Unix',
