@@ -16,6 +16,7 @@ from packaging.version import Version
 from PyQt5 import QtWidgets, QtCore, QtGui
 
 _icon_provider = QtWidgets.QFileIconProvider()
+_tmp_file_for_ext = dict()
 
 
 def resource_path(name):
@@ -67,6 +68,7 @@ UNLINK_DIALOG_PATH = resource_path('unlink_dialog.ui')
 RELINK_DIALOG_PATH = resource_path('relink_dialog.ui')
 SYNC_ISSUES_WINDOW_PATH = resource_path('sync_issues_window.ui')
 SYNC_ISSUE_WIDGET_PATH = resource_path('sync_issue_widget.ui')
+SYNC_EVENT_WIDGET_PATH = resource_path('sync_event_widget.ui')
 
 THEME_DARK = 'dark'
 THEME_LIGHT = 'light'
@@ -107,10 +109,25 @@ def native_item_icon(item_path):
 
     :param str item_path: Path to local item.
     """
-    if not osp.exists(item_path):
-        return native_file_icon()
-    else:
-        return _icon_provider.icon(QtCore.QFileInfo(item_path))
+    while not osp.exists(item_path):
+        # We create a temporary file with the given extension to get the correct icon
+        # this is necessary because QFileIconProvider has no API to get an icon for a
+        # file extension.
+        _, extension = osp.splitext(item_path)
+        try:
+            item_path = _tmp_file_for_ext[extension]
+        except KeyError:
+            tmp_file = QtCore.QTemporaryFile(osp.join(QtCore.QDir.tempPath(),
+                                                      f'XXXXXX{extension}'))
+            tmp_file.setAutoRemove(False)
+            # open and close to create
+            tmp_file.open()
+            tmp_file.close()
+
+            item_path = tmp_file.fileName()
+            _tmp_file_for_ext[extension] = item_path
+
+    return _icon_provider.icon(QtCore.QFileInfo(item_path))
 
 
 def native_folder_icon():

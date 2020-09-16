@@ -9,6 +9,7 @@ Created on Wed Oct 31 16:23:13 2018
 # system imports
 import os.path as osp
 import urllib
+from datetime import datetime
 
 # external packages
 import click
@@ -16,31 +17,39 @@ from PyQt5 import QtCore, QtGui, QtWidgets, uic
 
 # local imports
 from .resources import (
-    SYNC_ISSUES_WINDOW_PATH, SYNC_ISSUE_WIDGET_PATH, native_item_icon
+    SYNC_ISSUES_WINDOW_PATH, SYNC_EVENT_WIDGET_PATH, native_item_icon, native_folder_icon
 )
 from .utils import (
-    icon_to_pixmap, get_scaled_font, center_window,
+    icon_to_pixmap, center_window, get_scaled_font,
     is_dark_window, LINE_COLOR_DARK, LINE_COLOR_LIGHT
 )
 
 
 # noinspection PyArgumentList
-class SyncIssueWidget(QtWidgets.QWidget):
+class SyncEventWidget(QtWidgets.QWidget):
     """
-    A widget to graphically display a Maestral sync issue.
+    A widget to graphically display a Maestral sync event.
     """
 
-    def __init__(self, sync_err, parent=None):
+    def __init__(self, sync_event, parent=None):
         super().__init__(parent=parent)
-        uic.loadUi(SYNC_ISSUE_WIDGET_PATH, self)
+        uic.loadUi(SYNC_EVENT_WIDGET_PATH, self)
 
-        self.sync_err = sync_err
+        self.sync_event = sync_event
 
-        self.errorLabel.setFont(get_scaled_font(scaling=0.85))
         self.update_dark_mode()  # set appropriate item icon and colors in style sheet
+        self.filenameLabel.setFont(get_scaled_font(0.9))
+        self.infoLabel.setFont(get_scaled_font(0.9))
 
-        self.pathLabel.setText(osp.basename(self.sync_err['local_path']))
-        self.errorLabel.setText(self.sync_err['title'] + ':\n' + self.sync_err['message'])
+        dirname, filename = osp.split(self.sync_event['local_path'])
+        parent_dir = osp.basename(dirname)
+        change_type = self.sync_event['change_type'].capitalize()
+
+        dt = datetime.fromtimestamp(self.sync_event['change_time'] or self.sync_event['sync_time'])
+        change_time = dt.strftime('%d %b %Y %H:%M')
+
+        self.filenameLabel.setText(filename)
+        self.infoLabel.setText(f'{change_type} {change_time} • {parent_dir}')
 
         def request_context_menu():
             self.actionButton.customContextMenuRequested.emit(self.actionButton.pos())
@@ -55,7 +64,9 @@ class SyncIssueWidget(QtWidgets.QWidget):
         a0 = self.actionButtonContextMenu.addAction('View in folder')
         a1 = self.actionButtonContextMenu.addAction('View on dropbox.com')
 
-        a0.setEnabled(osp.exists(self.sync_err['local_path']))
+        exists = osp.exists(self.sync_event['local_path'])
+        a0.setEnabled(exists)
+        a1.setEnabled(exists)
 
         a0.triggered.connect(self._go_to_local_path)
         a1.triggered.connect(self._go_to_online)
@@ -63,12 +74,12 @@ class SyncIssueWidget(QtWidgets.QWidget):
 
     @QtCore.pyqtSlot()
     def _go_to_local_path(self):
-        click.launch(self.sync_err['local_path'], locate=True)
+        click.launch(self.sync_event['local_path'], locate=True)
 
     @QtCore.pyqtSlot()
     def _go_to_online(self):
         dbx_address = 'https://www.dropbox.com/preview'
-        file_address = urllib.parse.quote(self.sync_err['dbx_path'])
+        file_address = urllib.parse.quote(self.sync_event['dbx_path'])
         click.launch(dbx_address + file_address)
 
     def changeEvent(self, QEvent):
@@ -88,24 +99,28 @@ class SyncIssueWidget(QtWidgets.QWidget):
         }}""".format(*line_rgb, *bg_color_rgb))
 
         # update item icons (the system may supply different icons in dark mode)
-        icon = native_item_icon(self.sync_err['local_path'])
+        if self.sync_event['item_type'] == 'file':
+            icon = native_item_icon(self.sync_event['local_path'])
+        else:
+            icon = native_folder_icon()
         pixmap = icon_to_pixmap(icon, self.iconLabel.width(), self.iconLabel.height())
         self.iconLabel.setPixmap(pixmap)
 
 
 # noinspection PyArgumentList
-class SyncIssueWindow(QtWidgets.QWidget):
+class ActivityWindow(QtWidgets.QWidget):
     """
-    A widget to graphically display all Maestral sync issues.
+    A widget to graphically display all Maestral sync history.
     """
 
     def __init__(self, mdbx, parent=None):
         super().__init__(parent=parent)
         uic.loadUi(SYNC_ISSUES_WINDOW_PATH, self)
         self.setWindowFlags(QtCore.Qt.WindowStaysOnTopHint)
+        self.setWindowTitle('Maestral Activity')
 
         self.mdbx = mdbx
-        self.sync_issue_widgets = []
+        self._ids = set()
 
         self.refresh_gui()
 
@@ -115,35 +130,14 @@ class SyncIssueWindow(QtWidgets.QWidget):
         self.update_timer.timeout.connect(self.refresh_gui)
         self.update_timer.start(1000)  # every 1 sec
 
+    @QtCore.pyqtSlot()
     def refresh_gui(self):
 
-        sync_errors_list = self.mdbx.sync_errors  # get a new copy
-
-        self.clear()
-
-        if len(sync_errors_list) == 0:
-            no_issues_label = QtWidgets.QLabel('No sync issues :)')
-            self.verticalLayout.addWidget(no_issues_label)
-            self.sync_issue_widgets.append(no_issues_label)
-
-        for issue in sync_errors_list:
-            self.add_issue(issue)
-
-    def add_issue(self, sync_issue):
-
-        issue_widget = SyncIssueWidget(sync_issue)
-        self.sync_issue_widgets.append(issue_widget)
-        self.verticalLayout.addWidget(issue_widget)
-
-    def clear(self):
-
-        while self.verticalLayout.itemAt(0):
-            item = self.verticalLayout.takeAt(0)
-            w = item.widget()
-            if w:
-                w.deleteLater()
-
-        self.sync_issue_widgets.clear()
+        for event in self.mdbx.get_history():
+            if event['id'] not in self._ids:
+                event_widget = SyncEventWidget(event)
+                self.verticalLayout.insertWidget(0, event_widget)
+                self._ids.add(event['id'])
 
     def show(self):
         self.update_timer.start()

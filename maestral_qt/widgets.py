@@ -573,3 +573,67 @@ class CustomCombobox(QtWidgets.QComboBox):
 
         painter.drawComplexControl(QtWidgets.QStyle.CC_ComboBox, opt)
         painter.drawControl(QtWidgets.QStyle.CE_ComboBoxLabel, opt)
+
+
+class QElidedLabel(QtWidgets.QLabel):
+
+    """A QLabel with elided text
+
+    Eliding is loosely based on
+    http://gedgedev.blogspot.ch/2010/12/elided-labels-in-qt.html
+
+    """
+
+    def __init__(self, parent=None, elidemode=Qt.ElideRight):
+        super().__init__(parent)
+        self.setSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Minimum)
+        self._elidemode = elidemode
+        self._elided_text = ''
+
+    def _update_elided_text(self, width):
+        """Update the elided text when necessary.
+
+        Args:
+            width: The maximal width the text should take.
+        """
+        if self.text():
+            self._elided_text = self.fontMetrics().elidedText(
+                self.text(), self._elidemode, width, Qt.TextShowMnemonic)
+        else:
+            self._elided_text = ''
+
+    def elideMode(self):
+        """Returns the current elide mode."""
+        return self._elidemode
+
+    def setElideMode(self, elidemode):
+        """Sets the elide mode and updates the appearance."""
+        self._elidemode = elidemode
+        self._update_elided_text(self.geometry().width())
+
+    def setText(self, txt):
+        """Extend QLabel::setText to update the elided text afterwards.
+
+        Args:
+            txt: The text to set (string).
+        """
+        super().setText(txt)
+        if self._elidemode != Qt.ElideNone:
+            self._update_elided_text(self.geometry().width())
+
+    def resizeEvent(self, e):
+        """Extend QLabel::resizeEvent to update the elided text afterwards."""
+        super().resizeEvent(e)
+        size = e.size()
+        self._update_elided_text(size.width())
+
+    def paintEvent(self, e):
+        """Override QLabel::paintEvent to draw elided text."""
+        if self._elidemode == Qt.ElideNone:
+            super().paintEvent(e)
+        else:
+            e.accept()
+            painter = QPainter(self)
+            geom = self.geometry()
+            painter.drawText(0, 0, geom.width(), geom.height(),
+                             int(self.alignment()), self._elided_text)
