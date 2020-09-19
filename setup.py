@@ -1,15 +1,14 @@
 # -*- coding: utf-8 -*-
 from setuptools import setup, find_packages
-from maestral_qt import __author__, __version__
 
 
 setup(
     name='maestral-qt',
-    version=__version__,
+    author='Sam Schott',
+    author_email='ss2151@cam.ac.uk',
+    version='v1.2.1.dev0',
     description='A Qt GUI for the Maestral daemon',
     url='https://github.com/SamSchott/maestral',
-    author=__author__,
-    author_email='ss2151@cam.ac.uk',
     license='MIT',
     long_description=open('README.md').read(),
     long_description_content_type='text/markdown',
