@@ -34,7 +34,7 @@ class TreeModel(QAbstractItemModel):
     def __init__(self, root, parent=None):
         super().__init__(parent=parent)
         self._root_item = root
-        self.display_message('Loading your folders...')
+        self.display_message("Loading your folders...")
         self._root_item.loading_done.connect(self.reloadData)
         self._root_item.loading_failed.connect(self.on_loading_failed)
         self._header = self._root_item.header()
@@ -43,8 +43,9 @@ class TreeModel(QAbstractItemModel):
     @QtCore.pyqtSlot()
     def on_loading_failed(self):
 
-        self.display_message('Could not connect to Dropbox. Please check '
-                             'your internet connection.')
+        self.display_message(
+            "Could not connect to Dropbox. Please check " "your internet connection."
+        )
 
     def display_message(self, message):
 
@@ -220,7 +221,7 @@ class AbstractTreeItem(QtCore.QObject):
 class MessageTreeItem(AbstractTreeItem):
     """A tree item to display a message instead of contents."""
 
-    def __init__(self, parent=None, message=''):
+    def __init__(self, parent=None, message=""):
         AbstractTreeItem.__init__(self, parent=parent)
         self._parent = parent
         self._message = message
@@ -239,7 +240,7 @@ class MessageTreeItem(AbstractTreeItem):
         return self._message
 
     def header(self):
-        return ['name']
+        return ["name"]
 
     def column_count(self):
         return 1
@@ -249,7 +250,7 @@ class DropboxPathModel(AbstractTreeItem):
     """A Dropbox folder item. It lists its children asynchronously, only when asked to by
     `TreeModel`."""
 
-    def __init__(self, mdbx, async_loader, path='/', is_folder=True, parent=None):
+    def __init__(self, mdbx, async_loader, path="/", is_folder=True, parent=None):
         super().__init__(parent=parent)
         if is_folder:
             self.icon = native_folder_icon()
@@ -277,8 +278,11 @@ class DropboxPathModel(AbstractTreeItem):
             self._originalCheckState = 2
 
         # overwrite original state if the parent was modified
-        if self._parent and self._parent._checkStateChanged and not \
-                self._parent.checkState == 1:
+        if (
+            self._parent
+            and self._parent._checkStateChanged
+            and not self._parent.checkState == 1
+        ):
             # inherit from parent
             self._checkState = self._parent.checkState
             self._checkStateChanged = self._parent._checkStateChanged
@@ -298,10 +302,11 @@ class DropboxPathModel(AbstractTreeItem):
                 self.__class__(
                     self._mdbx,
                     self._async_loader,
-                    path=e['path_display'],
-                    is_folder=e['type'] == 'FolderMetadata',
-                    parent=self
-                ) for e in results
+                    path=e["path_display"],
+                    is_folder=e["type"] == "FolderMetadata",
+                    parent=self,
+                )
+                for e in results
             ]
             self.loading_done.emit()
 
@@ -309,7 +314,7 @@ class DropboxPathModel(AbstractTreeItem):
         return os.path.basename(self._path)
 
     def header(self):
-        return ['name']
+        return ["name"]
 
     def column_count(self):
         return 1
@@ -340,7 +345,9 @@ class DropboxPathModel(AbstractTreeItem):
         if self._parent:
             self._parent._checkStateChanged = True
             # get minimum of all other children's check state
-            checkstate_other_children = min(c.checkState for c in self._parent._children)
+            checkstate_other_children = min(
+                c.checkState for c in self._parent._children
+            )
             # set parent's state to that minimum, if it >= 1 (there always could be
             # included files)
             new_parent_state = max([checkstate_other_children, 1])
@@ -358,7 +365,9 @@ class DropboxPathModel(AbstractTreeItem):
 
 class AsyncListFolder(QtCore.QObject):
 
-    _lock = threading.BoundedSemaphore(10)  # do not list more than 10 folders in parallel
+    _lock = threading.BoundedSemaphore(
+        10
+    )  # do not list more than 10 folders in parallel
 
     def __init__(self, m, parent=None):
         """
@@ -380,11 +389,7 @@ class AsyncListFolder(QtCore.QObject):
         :rtype: :class:`maestral.gui.utils.BackgroundTask`
         """
 
-        new_job = BackgroundTask(
-            parent=self,
-            target=self._listChildren,
-            args=(path, )
-        )
+        new_job = BackgroundTask(parent=self, target=self._listChildren, args=(path,))
 
         return new_job
 
@@ -398,7 +403,7 @@ class AsyncListFolder(QtCore.QObject):
             with Proxy(self.m._pyroUri) as m:
                 try:
                     entries = m.list_folder(path, recursive=False)
-                    entries.sort(key=lambda e: e['name'].lower())
+                    entries.sort(key=lambda e: e["name"].lower())
                 except (NotAFolderError, NotFoundError):
                     entries = []
                 except ConnectionError:
@@ -409,8 +414,7 @@ class AsyncListFolder(QtCore.QObject):
 
 # noinspection PyArgumentList
 class SelectiveSyncDialog(QtWidgets.QDialog):
-
-    def __init__(self, mdbx,  parent=None):
+    def __init__(self, mdbx, parent=None):
         super().__init__(parent=parent)
         uic.loadUi(FOLDERS_DIALOG_PATH, self)
         self.setModal(True)
@@ -418,7 +422,7 @@ class SelectiveSyncDialog(QtWidgets.QDialog):
         self.mdbx = mdbx
         self.dbx_model = None
         self.accept_button = self.buttonBox.buttons()[0]
-        self.accept_button.setText('Update')
+        self.accept_button.setText("Update")
 
         self.ui_failed()
 
@@ -478,8 +482,9 @@ class SelectiveSyncDialog(QtWidgets.QDialog):
             if item.checkState == 0:
                 self.excluded_items.append(item_dbx_path)
             elif item.checkState in (1, 2):
-                self.excluded_items = [f for f in self.excluded_items
-                                       if not f == item_dbx_path]
+                self.excluded_items = [
+                    f for f in self.excluded_items if not f == item_dbx_path
+                ]
         else:
             item = self.dbx_model._root_item
 

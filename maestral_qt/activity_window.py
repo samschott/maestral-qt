@@ -17,11 +17,18 @@ from PyQt5 import QtCore, QtGui, QtWidgets, uic
 
 # local imports
 from .resources import (
-    SYNC_ISSUES_WINDOW_PATH, SYNC_EVENT_WIDGET_PATH, native_item_icon, native_folder_icon
+    SYNC_ISSUES_WINDOW_PATH,
+    SYNC_EVENT_WIDGET_PATH,
+    native_item_icon,
+    native_folder_icon,
 )
 from .utils import (
-    icon_to_pixmap, center_window, get_scaled_font,
-    is_dark_window, LINE_COLOR_DARK, LINE_COLOR_LIGHT
+    icon_to_pixmap,
+    center_window,
+    get_scaled_font,
+    is_dark_window,
+    LINE_COLOR_DARK,
+    LINE_COLOR_LIGHT,
 )
 
 
@@ -41,15 +48,17 @@ class SyncEventWidget(QtWidgets.QWidget):
         self.filenameLabel.setFont(get_scaled_font(0.9))
         self.infoLabel.setFont(get_scaled_font(0.9))
 
-        dirname, filename = osp.split(self.sync_event['local_path'])
+        dirname, filename = osp.split(self.sync_event["local_path"])
         parent_dir = osp.basename(dirname)
-        change_type = self.sync_event['change_type'].capitalize()
+        change_type = self.sync_event["change_type"].capitalize()
 
-        dt = datetime.fromtimestamp(self.sync_event['change_time'] or self.sync_event['sync_time'])
-        change_time = dt.strftime('%d %b %Y %H:%M')
+        dt = datetime.fromtimestamp(
+            self.sync_event["change_time"] or self.sync_event["sync_time"]
+        )
+        change_time = dt.strftime("%d %b %Y %H:%M")
 
         self.filenameLabel.setText(filename)
-        self.infoLabel.setText(f'{change_type} {change_time} • {parent_dir}')
+        self.infoLabel.setText(f"{change_type} {change_time} • {parent_dir}")
 
         def request_context_menu():
             self.actionButton.customContextMenuRequested.emit(self.actionButton.pos())
@@ -61,10 +70,10 @@ class SyncEventWidget(QtWidgets.QWidget):
     def showContextMenu(self, pos):
 
         self.actionButtonContextMenu = QtWidgets.QMenu()
-        a0 = self.actionButtonContextMenu.addAction('View in folder')
-        a1 = self.actionButtonContextMenu.addAction('View on dropbox.com')
+        a0 = self.actionButtonContextMenu.addAction("View in folder")
+        a1 = self.actionButtonContextMenu.addAction("View on dropbox.com")
 
-        exists = osp.exists(self.sync_event['local_path'])
+        exists = osp.exists(self.sync_event["local_path"])
         a0.setEnabled(exists)
         a1.setEnabled(exists)
 
@@ -74,12 +83,12 @@ class SyncEventWidget(QtWidgets.QWidget):
 
     @QtCore.pyqtSlot()
     def _go_to_local_path(self):
-        click.launch(self.sync_event['local_path'], locate=True)
+        click.launch(self.sync_event["local_path"], locate=True)
 
     @QtCore.pyqtSlot()
     def _go_to_online(self):
-        dbx_address = 'https://www.dropbox.com/preview'
-        file_address = urllib.parse.quote(self.sync_event['dbx_path'])
+        dbx_address = "https://www.dropbox.com/preview"
+        file_address = urllib.parse.quote(self.sync_event["dbx_path"])
         click.launch(dbx_address + file_address)
 
     def changeEvent(self, QEvent):
@@ -91,16 +100,20 @@ class SyncEventWidget(QtWidgets.QWidget):
         line_rgb = LINE_COLOR_DARK if is_dark_window() else LINE_COLOR_LIGHT
         bg_color = self.palette().color(QtGui.QPalette.Base)
         bg_color_rgb = [bg_color.red(), bg_color.green(), bg_color.blue()]
-        self.frame.setStyleSheet("""
+        self.frame.setStyleSheet(
+            """
         .QFrame {{
             border: 1px solid rgb({0},{1},{2});
             background-color: rgb({3},{4},{5});
             border-radius: 7px;
-        }}""".format(*line_rgb, *bg_color_rgb))
+        }}""".format(
+                *line_rgb, *bg_color_rgb
+            )
+        )
 
         # update item icons (the system may supply different icons in dark mode)
-        if self.sync_event['item_type'] == 'file':
-            icon = native_item_icon(self.sync_event['local_path'])
+        if self.sync_event["item_type"] == "file":
+            icon = native_item_icon(self.sync_event["local_path"])
         else:
             icon = native_folder_icon()
         pixmap = icon_to_pixmap(icon, self.iconLabel.width(), self.iconLabel.height())
@@ -117,7 +130,7 @@ class ActivityWindow(QtWidgets.QWidget):
         super().__init__(parent=parent)
         uic.loadUi(SYNC_ISSUES_WINDOW_PATH, self)
         self.setWindowFlags(QtCore.Qt.WindowStaysOnTopHint)
-        self.setWindowTitle('Maestral Activity')
+        self.setWindowTitle("Maestral Activity")
 
         self.mdbx = mdbx
         self._ids = set()
@@ -134,10 +147,10 @@ class ActivityWindow(QtWidgets.QWidget):
     def refresh_gui(self):
 
         for event in self.mdbx.get_history():
-            if event['id'] not in self._ids:
+            if event["id"] not in self._ids:
                 event_widget = SyncEventWidget(event)
                 self.verticalLayout.insertWidget(0, event_widget)
-                self._ids.add(event['id'])
+                self._ids.add(event["id"])
 
     def show(self):
         self.update_timer.start()
