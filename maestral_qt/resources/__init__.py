@@ -11,7 +11,6 @@ import os.path as osp
 import platform
 import re
 import pkg_resources
-from packaging.version import Version
 
 from PyQt5 import QtWidgets, QtCore, QtGui
 
@@ -175,28 +174,28 @@ def system_tray_icon(status, geometry=None):
 
     else:
 
-        icon_color = "light" if is_dark_status_bar(geometry) else "dark"
-
-        if Version(QtCore.QT_VERSION_STR) < Version("5.13.0"):
-            # use PNG icon with contrasting color (see issue #46)
-            fallback_icon = QtGui.QIcon(TRAY_ICON_PATH_PNG.format(status, icon_color))
-        else:
-            # use SVG icon with contrasting color
-            fallback_icon = QtGui.QIcon(TRAY_ICON_PATH_SVG.format(status, icon_color))
-
         theme_icon_name = THEME_ICON_NAME.format(status)
         theme_icon_name_symbolic = THEME_ICON_NAME_SYMBOLIC.format(status)
 
         # Prefer "symbolic" icons where the appearance is adapted by the platform
         # automatically. Specs for symbolic icons and their use in the system tray
-        # vary between plaforms.
+        # vary between platforms.
 
         if QtGui.QIcon.hasThemeIcon(theme_icon_name_symbolic):
-            icon = QtGui.QIcon.fromTheme(theme_icon_name_symbolic, fallback_icon)
+            icon = QtGui.QIcon.fromTheme(theme_icon_name_symbolic)
         elif QtGui.QIcon.hasThemeIcon(theme_icon_name):
-            icon = QtGui.QIcon.fromTheme(theme_icon_name, fallback_icon)
+            icon = QtGui.QIcon.fromTheme(theme_icon_name)
         else:
-            icon = QtGui.QIcon(fallback_icon)
+            icon = QtGui.QIcon()
+
+        if icon.isNull():
+
+            icon_color = "light" if is_dark_status_bar(geometry) else "dark"
+
+            # we create our icon from a pixmap instead of the SVG directly, this works
+            # around https://bugreports.qt.io/browse/QTBUG-53550
+            pixmap = QtGui.QPixmap(TRAY_ICON_PATH_SVG.format(status, icon_color))
+            icon = QtGui.QIcon(pixmap)
 
     return icon
 
