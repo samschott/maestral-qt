@@ -179,7 +179,7 @@ def systray_theme(icon_geometry=None):
     If not given, we try to guess the location of the system tray.
     """
 
-    # --------------------- check for the status bar color -------------------------
+    # ---- check for the status bar color ------------------------------------------------
 
     # see if we can trust returned pixel colors
     # (work around for a bug in Qt with KDE where all screenshots return black)
@@ -191,7 +191,7 @@ def systray_theme(icon_geometry=None):
     if not c0 == c1 == c2 == (0, 0, 0):  # we can trust pixel colors from screenshots
 
         if not icon_geometry or icon_geometry.isEmpty():
-            # guess the location of the status bar
+            # ---- guess the location of the status bar ----------------------------------
 
             rec_screen = QtWidgets.QDesktopWidget().screenGeometry()
             rec_available = QtWidgets.QDesktopWidget().availableGeometry()
@@ -222,7 +222,7 @@ def systray_theme(icon_geometry=None):
         return THEME_LIGHT if lum >= 0.4 else THEME_DARK
 
     else:
-        # -------------------- give up, default to dark ----------------------------------
+        # ---- give up, default to dark --------------------------------------------------
         return THEME_DARK
 
 
