@@ -57,11 +57,11 @@ def _get_gnome_version():
 APP_ICON_PATH = resource_path("maestral.png")
 TRAY_ICON_DIR_SVG = resource_path("tray-icons-svg")
 TRAY_ICON_DIR_PNG = resource_path("tray-icons-png")
-TRAY_ICON_PATH_SVG = osp.join(TRAY_ICON_DIR_SVG, "maestral-icon-{0}-{1}.svg")
-TRAY_ICON_PATH_PNG = osp.join(TRAY_ICON_DIR_PNG, "maestral-icon-{0}-{1}.png")
+TRAY_ICON_PATH_SVG = osp.join(TRAY_ICON_DIR_SVG, "maestral_tray-{0}-{1}.svg")
+TRAY_ICON_PATH_PNG = osp.join(TRAY_ICON_DIR_PNG, "maestral_tray-{0}-{1}.png")
 
-THEME_ICON_NAME = "maestral-icon-{}"
-THEME_ICON_NAME_SYMBOLIC = "maestral-icon-{}-symbolic"
+THEME_ICON_NAME = "maestral_tray-{}"
+THEME_ICON_NAME_SYMBOLIC = "maestral_tray-{}-symbolic"
 
 FACEHOLDER_PATH = resource_path("faceholder.png")
 
