@@ -9,7 +9,6 @@ import sys
 import os
 import os.path as osp
 import platform
-import re
 import pkg_resources
 
 from PyQt5 import QtWidgets, QtCore, QtGui
@@ -23,34 +22,6 @@ def resource_path(name):
         sys, "_MEIPASS", pkg_resources.resource_filename("maestral_qt", "resources")
     )
     return osp.join(folder, name)
-
-
-def _get_gnome_version():
-    # this may not work in restricted environments such as snap, docker, etc
-
-    gnome3_config_path = "/usr/share/gnome/gnome-version.xml"
-    gnome2_config_path = "/usr/share/gnome-about/gnome-version.xml"
-
-    xml = None
-
-    for path in (gnome2_config_path, gnome3_config_path):
-        try:
-            with open(path) as f:
-                xml = f.read()
-        except OSError:
-            pass
-
-    if xml:
-        p = re.compile(
-            r"<platform>(?P<maj>\d+)</platform>\s+<minor>"
-            r"(?P<min>\d+)</minor>\s+<micro>(?P<mic>\d+)</micro>"
-        )
-        m = p.search(xml)
-        version = "{0}.{1}.{2}".format(m.group("maj"), m.group("min"), m.group("mic"))
-
-        return version
-    else:
-        return "0.0.0"
 
 
 APP_ICON_PATH = resource_path("maestral.png")
@@ -75,8 +46,6 @@ SYNC_EVENT_WIDGET_PATH = resource_path("sync_event_widget.ui")
 
 THEME_DARK = "dark"
 THEME_LIGHT = "light"
-
-GNOME_VERSION = _get_gnome_version()
 
 
 def _get_desktop():
