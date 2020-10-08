@@ -19,15 +19,15 @@ from maestral.daemon import MaestralProxy
 # local imports
 from .resources import rgb_to_luminance
 
-THEME_DARK = 'dark'
-THEME_LIGHT = 'light'
+THEME_DARK = "dark"
+THEME_LIGHT = "light"
 
 LINE_COLOR_DARK = (70, 70, 70)
 LINE_COLOR_LIGHT = (213, 213, 213)
 
-IS_BUNDLE = getattr(sys, 'frozen', False)
-IS_MACOS = platform.system() == 'Darwin'
-IS_LINUX = platform.system() == 'Linux'
+IS_BUNDLE = getattr(sys, "frozen", False)
+IS_MACOS = platform.system() == "Darwin"
+IS_LINUX = platform.system() == "Linux"
 IS_MACOS_BUNDLE = IS_BUNDLE and IS_MACOS
 IS_LINUX_BUNDLE = IS_BUNDLE and IS_LINUX
 
@@ -36,7 +36,8 @@ IS_LINUX_BUNDLE = IS_BUNDLE and IS_LINUX
 # Helper functions
 # ========================================================================================
 
-def elide_string(string, font=None, pixels=200, side='right'):
+
+def elide_string(string, font=None, pixels=200, side="right"):
     """
     Elides a string to fit into the given width.
 
@@ -53,7 +54,7 @@ def elide_string(string, font=None, pixels=200, side='right'):
         font = QtWidgets.QLabel().font()
 
     metrics = QtGui.QFontMetrics(font)
-    mode = Qt.ElideRight if side == 'right' else Qt.ElideLeft
+    mode = Qt.ElideRight if side == "right" else Qt.ElideLeft
 
     return metrics.elidedText(string, mode, pixels)
 
@@ -72,7 +73,7 @@ def get_scaled_font(scaling=1.0, bold=False, italic=False):
     font = label.font()
     font.setBold(bold)
     font.setItalic(italic)
-    font_size = round(font.pointSize()*scaling)
+    font_size = round(font.pointSize() * scaling)
     # noinspection PyTypeChecker
     font.setPointSize(font_size)
 
@@ -94,8 +95,8 @@ def icon_to_pixmap(icon, width, height=None):
     pr = QtWidgets.QApplication.instance().devicePixelRatio()
 
     if not is_hidpi:
-        width = width*pr
-        height = height*pr
+        width = width * pr
+        height = height * pr
     pixmap = icon.pixmap(width, height)
     if not is_hidpi:
         pixmap.setDevicePixelRatio(pr)
@@ -120,7 +121,7 @@ def center_window(widget):
 
 
 # noinspection PyArgumentList, PyTypeChecker, PyCallByClass
-def get_masked_image(path, size=64, overlay_text=''):
+def get_masked_image(path, size=64, overlay_text=""):
     """
     Returns a pixmap from an image file masked with a smooth circle.
     The returned pixmap will have a size of *size* × *size* pixels.
@@ -133,10 +134,10 @@ def get_masked_image(path, size=64, overlay_text=''):
     :rtype: QPixmap
     """
 
-    with open(path, 'rb') as f:
+    with open(path, "rb") as f:
         imgdata = f.read()
 
-    imgtype = path.split('.')[-1]
+    imgtype = path.split(".")[-1]
 
     # Load image and convert to 32-bit ARGB (adds an alpha channel):
     image = QImage.fromData(imgdata, imgtype)
@@ -159,22 +160,22 @@ def get_masked_image(path, size=64, overlay_text=''):
 
     # Create a texture brush and paint a circle with the original image onto
     # the output image:
-    brush = QBrush(image)        # Create texture brush
+    brush = QBrush(image)  # Create texture brush
     painter = QPainter(out_img)  # Paint the output image
-    painter.setBrush(brush)      # Use the image texture brush
-    painter.setPen(Qt.NoPen)     # Don't draw an outline
+    painter.setBrush(brush)  # Use the image texture brush
+    painter.setPen(Qt.NoPen)  # Don't draw an outline
     painter.setRenderHint(QPainter.Antialiasing, True)  # Use AA
     painter.drawEllipse(0, 0, imgsize, imgsize)  # Actually draw the circle
 
     if overlay_text:
         # draw text
-        font = QtGui.QFont('Arial Rounded MT Bold')
+        font = QtGui.QFont("Arial Rounded MT Bold")
         font.setPointSize(imgsize * 0.4)
         painter.setFont(font)
         painter.setPen(Qt.white)
         painter.drawText(QRect(0, 0, imgsize, imgsize), Qt.AlignCenter, overlay_text)
 
-    painter.end()                # We are done (segfault if you forget this)
+    painter.end()  # We are done (segfault if you forget this)
 
     # Convert the image to a pixmap and rescale it.  Take pixel ratio into
     # account to get a sharp image on retina displays:
@@ -210,6 +211,7 @@ def is_dark_window():
 # Threading
 # ========================================================================================
 
+
 class Worker(QtCore.QObject):
     """A worker object. To be used in QThreads."""
 
@@ -230,7 +232,7 @@ class MaestralWorker(Worker):
     """A worker object for Maestral. It uses a separate Maestral proxy to prevent
     the main connection from blocking."""
 
-    def __init__(self, config_name='maestral', target=None, args=None, kwargs=None):
+    def __init__(self, config_name="maestral", target=None, args=None, kwargs=None):
         self.config_name = config_name
         Worker.__init__(self, target, args, kwargs)
 
@@ -246,7 +248,9 @@ class BackgroundTask(QtCore.QObject):
 
     sig_done = QtCore.pyqtSignal(object)
 
-    def __init__(self, parent=None, target=None, args=None, kwargs=None, autostart=True):
+    def __init__(
+        self, parent=None, target=None, args=None, kwargs=None, autostart=True
+    ):
         QtCore.QObject.__init__(self, parent)
         self._target = target
         self._args = args or ()
@@ -276,8 +280,15 @@ class MaestralBackgroundTask(BackgroundTask):
     """A utility class to manage a worker thread. It uses a separate Maestral proxy
     to prevent the main connection from blocking."""
 
-    def __init__(self, parent=None, config_name='maestral', target=None, args=None,
-                 kwargs=None, autostart=True):
+    def __init__(
+        self,
+        parent=None,
+        config_name="maestral",
+        target=None,
+        args=None,
+        kwargs=None,
+        autostart=True,
+    ):
         self.config_name = config_name
         BackgroundTask.__init__(self, parent, target, args, kwargs, autostart)
 
@@ -288,7 +299,7 @@ class MaestralBackgroundTask(BackgroundTask):
             config_name=self.config_name,
             target=self._target,
             args=self._args,
-            kwargs=self._kwargs
+            kwargs=self._kwargs,
         )
 
         self.worker.sig_done.connect(self.thread.quit)

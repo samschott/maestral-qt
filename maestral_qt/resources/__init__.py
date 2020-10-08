@@ -9,9 +9,7 @@ import sys
 import os
 import os.path as osp
 import platform
-import re
 import pkg_resources
-from packaging.version import Version
 
 from PyQt5 import QtWidgets, QtCore, QtGui
 
@@ -20,60 +18,32 @@ _tmp_file_for_ext = dict()
 
 
 def resource_path(name):
-    folder = getattr(sys, '_MEIPASS', pkg_resources.resource_filename('maestral_qt', 'resources'))
+    folder = getattr(
+        sys, "_MEIPASS", pkg_resources.resource_filename("maestral_qt", "resources")
+    )
     return osp.join(folder, name)
 
 
-def _get_gnome_version():
-    # this may not work in restricted environments such as snap, docker, etc
+APP_ICON_PATH = resource_path("maestral.png")
+TRAY_ICON_PATH_SVG = resource_path("maestral_tray-{0}-{1}.svg")
+TRAY_ICON_PATH_PNG = resource_path("maestral_tray-{0}-{1}.png")
 
-    gnome3_config_path = '/usr/share/gnome/gnome-version.xml'
-    gnome2_config_path = '/usr/share/gnome-about/gnome-version.xml'
+THEME_ICON_NAME = "maestral_tray-{}"
+THEME_ICON_NAME_SYMBOLIC = "maestral_tray-{}-symbolic"
 
-    xml = None
+FACEHOLDER_PATH = resource_path("faceholder.png")
 
-    for path in (gnome2_config_path, gnome3_config_path):
-        try:
-            with open(path) as f:
-                xml = f.read()
-        except OSError:
-            pass
+FOLDERS_DIALOG_PATH = resource_path("folders_dialog.ui")
+SETUP_DIALOG_PATH = resource_path("setup_dialog.ui")
+SETTINGS_WINDOW_PATH = resource_path("settings_window.ui")
+UNLINK_DIALOG_PATH = resource_path("unlink_dialog.ui")
+RELINK_DIALOG_PATH = resource_path("relink_dialog.ui")
+SYNC_ISSUES_WINDOW_PATH = resource_path("sync_issues_window.ui")
+SYNC_ISSUE_WIDGET_PATH = resource_path("sync_issue_widget.ui")
+SYNC_EVENT_WIDGET_PATH = resource_path("sync_event_widget.ui")
 
-    if xml:
-        p = re.compile(r'<platform>(?P<maj>\d+)</platform>\s+<minor>'
-                       r'(?P<min>\d+)</minor>\s+<micro>(?P<mic>\d+)</micro>')
-        m = p.search(xml)
-        version = '{0}.{1}.{2}'.format(m.group('maj'), m.group('min'), m.group('mic'))
-
-        return version
-    else:
-        return '0.0.0'
-
-
-APP_ICON_PATH = resource_path('maestral.png')
-TRAY_ICON_DIR_SVG = resource_path('tray-icons-svg')
-TRAY_ICON_DIR_PNG = resource_path('tray-icons-png')
-TRAY_ICON_PATH_SVG = osp.join(TRAY_ICON_DIR_SVG, 'maestral-icon-{0}-{1}.svg')
-TRAY_ICON_PATH_PNG = osp.join(TRAY_ICON_DIR_PNG, 'maestral-icon-{0}-{1}.png')
-
-THEME_ICON_NAME = 'maestral-icon-{}'
-THEME_ICON_NAME_SYMBOLIC = 'maestral-icon-{}-symbolic'
-
-FACEHOLDER_PATH = resource_path('faceholder.png')
-
-FOLDERS_DIALOG_PATH = resource_path('folders_dialog.ui')
-SETUP_DIALOG_PATH = resource_path('setup_dialog.ui')
-SETTINGS_WINDOW_PATH = resource_path('settings_window.ui')
-UNLINK_DIALOG_PATH = resource_path('unlink_dialog.ui')
-RELINK_DIALOG_PATH = resource_path('relink_dialog.ui')
-SYNC_ISSUES_WINDOW_PATH = resource_path('sync_issues_window.ui')
-SYNC_ISSUE_WIDGET_PATH = resource_path('sync_issue_widget.ui')
-SYNC_EVENT_WIDGET_PATH = resource_path('sync_event_widget.ui')
-
-THEME_DARK = 'dark'
-THEME_LIGHT = 'light'
-
-GNOME_VERSION = _get_gnome_version()
+THEME_DARK = "dark"
+THEME_LIGHT = "light"
 
 
 def _get_desktop():
@@ -86,18 +56,18 @@ def _get_desktop():
     :rtype: str
     """
 
-    if platform.system() == 'Linux':
-        current_desktop = os.environ.get('XDG_CURRENT_DESKTOP', '').lower()
-        desktop_session = os.environ.get('GDMSESSION', '').lower()
+    if platform.system() == "Linux":
+        current_desktop = os.environ.get("XDG_CURRENT_DESKTOP", "").lower()
+        desktop_session = os.environ.get("GDMSESSION", "").lower()
 
-        for desktop in ('gnome', 'kde', 'xfce', 'mate'):
+        for desktop in ("gnome", "kde", "xfce", "mate"):
             if desktop in current_desktop or desktop in desktop_session:
                 return desktop
 
-        return 'unknown'
+        return "unknown"
 
-    elif platform.system() == 'Darwin':
-        return 'cocoa'
+    elif platform.system() == "Darwin":
+        return "cocoa"
 
 
 DESKTOP = _get_desktop()
@@ -117,8 +87,9 @@ def native_item_icon(item_path):
         try:
             item_path = _tmp_file_for_ext[extension]
         except KeyError:
-            tmp_file = QtCore.QTemporaryFile(osp.join(QtCore.QDir.tempPath(),
-                                                      f'XXXXXX{extension}'))
+            tmp_file = QtCore.QTemporaryFile(
+                osp.join(QtCore.QDir.tempPath(), f"XXXXXX{extension}")
+            )
             tmp_file.setAutoRemove(False)
             # open and close to create
             tmp_file.open()
@@ -134,7 +105,7 @@ def native_folder_icon():
     """Returns the system's default folder icon."""
     # use a real folder here because Qt may otherwise
     # return the wrong folder icon in some cases
-    return _icon_provider.icon(QtCore.QFileInfo('/usr'))
+    return _icon_provider.icon(QtCore.QFileInfo("/usr"))
 
 
 def native_file_icon():
@@ -159,39 +130,39 @@ def system_tray_icon(status, geometry=None):
     :param geometry: Tray icon geometry on screen. If given, this location will be used to
         to determine the system tray background color. This argument is ignored on macOS.
     """
-    allowed_status = ('idle', 'syncing', 'paused', 'disconnected', 'info', 'error')
+    allowed_status = ("idle", "syncing", "paused", "disconnected", "info", "error")
     if status not in allowed_status:
-        raise ValueError(f'status must be in {allowed_status}')
+        raise ValueError(f"status must be in {allowed_status}")
 
-    if platform.system() == 'Darwin':
+    if platform.system() == "Darwin":
         # use SVG icon with automatic color
-        icon = QtGui.QIcon(TRAY_ICON_PATH_SVG.format(status, 'dark'))
+        icon = QtGui.QIcon(TRAY_ICON_PATH_SVG.format(status, "dark"))
         icon.setIsMask(True)
 
     else:
-
-        icon_color = 'light' if is_dark_status_bar(geometry) else 'dark'
-
-        if Version(QtCore.QT_VERSION_STR) < Version('5.13.0'):
-            # use PNG icon with contrasting color (see issue #46)
-            fallback_icon = QtGui.QIcon(TRAY_ICON_PATH_PNG.format(status, icon_color))
-        else:
-            # use SVG icon with contrasting color
-            fallback_icon = QtGui.QIcon(TRAY_ICON_PATH_SVG.format(status, icon_color))
 
         theme_icon_name = THEME_ICON_NAME.format(status)
         theme_icon_name_symbolic = THEME_ICON_NAME_SYMBOLIC.format(status)
 
         # Prefer "symbolic" icons where the appearance is adapted by the platform
         # automatically. Specs for symbolic icons and their use in the system tray
-        # vary between plaforms.
+        # vary between platforms.
 
         if QtGui.QIcon.hasThemeIcon(theme_icon_name_symbolic):
-            icon = QtGui.QIcon.fromTheme(theme_icon_name_symbolic, fallback_icon)
+            icon = QtGui.QIcon.fromTheme(theme_icon_name_symbolic)
         elif QtGui.QIcon.hasThemeIcon(theme_icon_name):
-            icon = QtGui.QIcon.fromTheme(theme_icon_name, fallback_icon)
+            icon = QtGui.QIcon.fromTheme(theme_icon_name)
         else:
-            icon = QtGui.QIcon(fallback_icon)
+            icon = QtGui.QIcon()
+
+        if icon.isNull():
+
+            icon_color = "light" if is_dark_status_bar(geometry) else "dark"
+
+            # we create our icon from a pixmap instead of the SVG directly, this works
+            # around https://bugreports.qt.io/browse/QTBUG-53550
+            pixmap = QtGui.QPixmap(TRAY_ICON_PATH_SVG.format(status, icon_color))
+            icon = QtGui.QIcon(pixmap)
 
     return icon
 
@@ -206,7 +177,7 @@ def systray_theme(icon_geometry=None):
     If not given, we try to guess the location of the system tray.
     """
 
-    # --------------------- check for the status bar color -------------------------
+    # ---- check for the status bar color ------------------------------------------------
 
     # see if we can trust returned pixel colors
     # (work around for a bug in Qt with KDE where all screenshots return black)
@@ -218,7 +189,7 @@ def systray_theme(icon_geometry=None):
     if not c0 == c1 == c2 == (0, 0, 0):  # we can trust pixel colors from screenshots
 
         if not icon_geometry or icon_geometry.isEmpty():
-            # guess the location of the status bar
+            # ---- guess the location of the status bar ----------------------------------
 
             rec_screen = QtWidgets.QDesktopWidget().screenGeometry()
             rec_available = QtWidgets.QDesktopWidget().availableGeometry()
@@ -249,7 +220,7 @@ def systray_theme(icon_geometry=None):
         return THEME_LIGHT if lum >= 0.4 else THEME_DARK
 
     else:
-        # -------------------- give up, default to dark ----------------------------------
+        # ---- give up, default to dark --------------------------------------------------
         return THEME_DARK
 
 
@@ -266,7 +237,7 @@ def rgb_to_luminance(r, g, b, base=256):
     highest luminance. r, g, b arguments values should be in 0..256 limits, or base
     argument should define the upper limit otherwise.
     """
-    return (0.2126*r + 0.7152*g + 0.0722*b)/base
+    return (0.2126 * r + 0.7152 * g + 0.0722 * b) / base
 
 
 # noinspection PyArgumentList
@@ -280,4 +251,4 @@ def _pixel_at(x, y):
     screen = QtWidgets.QApplication.primaryScreen()
     color = screen.grabWindow(desktop_id, x, y, 1, 1).toImage().pixel(0, 0)
 
-    return ((color >> 16) & 0xff), ((color >> 8) & 0xff), (color & 0xff)
+    return ((color >> 16) & 0xFF), ((color >> 8) & 0xFF), (color & 0xFF)

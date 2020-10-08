@@ -15,12 +15,14 @@ import click
 from PyQt5 import QtCore, QtGui, QtWidgets, uic
 
 # local imports
-from .resources import (
-    SYNC_ISSUES_WINDOW_PATH, SYNC_ISSUE_WIDGET_PATH, native_item_icon
-)
+from .resources import SYNC_ISSUES_WINDOW_PATH, SYNC_ISSUE_WIDGET_PATH, native_item_icon
 from .utils import (
-    icon_to_pixmap, get_scaled_font, center_window,
-    is_dark_window, LINE_COLOR_DARK, LINE_COLOR_LIGHT
+    icon_to_pixmap,
+    get_scaled_font,
+    center_window,
+    is_dark_window,
+    LINE_COLOR_DARK,
+    LINE_COLOR_LIGHT,
 )
 
 
@@ -39,8 +41,10 @@ class SyncIssueWidget(QtWidgets.QWidget):
         self.errorLabel.setFont(get_scaled_font(scaling=0.85))
         self.update_dark_mode()  # set appropriate item icon and colors in style sheet
 
-        self.pathLabel.setText(osp.basename(self.sync_err['local_path']))
-        self.errorLabel.setText(self.sync_err['title'] + ':\n' + self.sync_err['message'])
+        self.pathLabel.setText(osp.basename(self.sync_err["local_path"]))
+        self.errorLabel.setText(
+            self.sync_err["title"] + ":\n" + self.sync_err["message"]
+        )
 
         def request_context_menu():
             self.actionButton.customContextMenuRequested.emit(self.actionButton.pos())
@@ -52,10 +56,10 @@ class SyncIssueWidget(QtWidgets.QWidget):
     def showContextMenu(self, pos):
 
         self.actionButtonContextMenu = QtWidgets.QMenu()
-        a0 = self.actionButtonContextMenu.addAction('View in folder')
-        a1 = self.actionButtonContextMenu.addAction('View on dropbox.com')
+        a0 = self.actionButtonContextMenu.addAction("View in folder")
+        a1 = self.actionButtonContextMenu.addAction("View on dropbox.com")
 
-        a0.setEnabled(osp.exists(self.sync_err['local_path']))
+        a0.setEnabled(osp.exists(self.sync_err["local_path"]))
 
         a0.triggered.connect(self._go_to_local_path)
         a1.triggered.connect(self._go_to_online)
@@ -63,12 +67,12 @@ class SyncIssueWidget(QtWidgets.QWidget):
 
     @QtCore.pyqtSlot()
     def _go_to_local_path(self):
-        click.launch(self.sync_err['local_path'], locate=True)
+        click.launch(self.sync_err["local_path"], locate=True)
 
     @QtCore.pyqtSlot()
     def _go_to_online(self):
-        dbx_address = 'https://www.dropbox.com/preview'
-        file_address = urllib.parse.quote(self.sync_err['dbx_path'])
+        dbx_address = "https://www.dropbox.com/preview"
+        file_address = urllib.parse.quote(self.sync_err["dbx_path"])
         click.launch(dbx_address + file_address)
 
     def changeEvent(self, QEvent):
@@ -80,15 +84,19 @@ class SyncIssueWidget(QtWidgets.QWidget):
         line_rgb = LINE_COLOR_DARK if is_dark_window() else LINE_COLOR_LIGHT
         bg_color = self.palette().color(QtGui.QPalette.Base)
         bg_color_rgb = [bg_color.red(), bg_color.green(), bg_color.blue()]
-        self.frame.setStyleSheet("""
+        self.frame.setStyleSheet(
+            """
         .QFrame {{
             border: 1px solid rgb({0},{1},{2});
             background-color: rgb({3},{4},{5});
             border-radius: 7px;
-        }}""".format(*line_rgb, *bg_color_rgb))
+        }}""".format(
+                *line_rgb, *bg_color_rgb
+            )
+        )
 
         # update item icons (the system may supply different icons in dark mode)
-        icon = native_item_icon(self.sync_err['local_path'])
+        icon = native_item_icon(self.sync_err["local_path"])
         pixmap = icon_to_pixmap(icon, self.iconLabel.width(), self.iconLabel.height())
         self.iconLabel.setPixmap(pixmap)
 
@@ -122,7 +130,7 @@ class SyncIssueWindow(QtWidgets.QWidget):
         self.clear()
 
         if len(sync_errors_list) == 0:
-            no_issues_label = QtWidgets.QLabel('No sync issues :)')
+            no_issues_label = QtWidgets.QLabel("No sync issues :)")
             self.verticalLayout.addWidget(no_issues_label)
             self.sync_issue_widgets.append(no_issues_label)
 

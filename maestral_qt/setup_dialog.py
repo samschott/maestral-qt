@@ -38,10 +38,11 @@ class SetupDialog(QtWidgets.QDialog):
 
         self.mdbx = mdbx
         self.dbx_model = None
-        self.dropbox_location = ''
+        self.dropbox_location = ""
         self.excluded_items = []
-        self.dropbox_location = osp.dirname(
-            self.mdbx.get_conf('main', 'path')) or get_home_dir()
+        self.dropbox_location = (
+            osp.dirname(self.mdbx.get_conf("main", "path")) or get_home_dir()
+        )
 
         self.app_icon = QtGui.QIcon(APP_ICON_PATH)
 
@@ -56,7 +57,7 @@ class SetupDialog(QtWidgets.QDialog):
         self.labelAuthLink.setText(prompt)
 
         # set up Dropbox location info text
-        default_dir_name = self.mdbx.get_conf('main', 'default_dir_name')
+        default_dir_name = self.mdbx.get_conf("main", "default_dir_name")
         new_label = self.labelDropboxPath.text().format(default_dir_name)
         self.labelDropboxPath.setText(new_label)
 
@@ -65,15 +66,21 @@ class SetupDialog(QtWidgets.QDialog):
         relative_path = self.rel_path(self.dropbox_location)
         self.comboBoxDropboxPath.addItem(folder_icon, relative_path)
         self.comboBoxDropboxPath.insertSeparator(1)
-        self.comboBoxDropboxPath.addItem(QtGui.QIcon(), 'Other...')
+        self.comboBoxDropboxPath.addItem(QtGui.QIcon(), "Other...")
         self.comboBoxDropboxPath.currentIndexChanged.connect(self.on_combobox)
 
         # resize dialog buttons
         width = self.pushButtonAuthPageCancel.width() * 1.1
-        for b in (self.pushButtonAuthPageLink, self.pushButtonDropboxPathUnlink,
-                  self.pushButtonDropboxPathSelect, self.pushButtonFolderSelectionBack,
-                  self.pushButtonFolderSelectionSelect, self.pushButtonAuthPageCancel,
-                  self.pushButtonDropboxPathCalcel, self.pushButtonClose):
+        for b in (
+            self.pushButtonAuthPageLink,
+            self.pushButtonDropboxPathUnlink,
+            self.pushButtonDropboxPathSelect,
+            self.pushButtonFolderSelectionBack,
+            self.pushButtonFolderSelectionSelect,
+            self.pushButtonAuthPageCancel,
+            self.pushButtonDropboxPathCalcel,
+            self.pushButtonClose,
+        ):
             b.setMinimumWidth(width)
             b.setMaximumWidth(width)
 
@@ -83,7 +90,8 @@ class SetupDialog(QtWidgets.QDialog):
         self.dropbox_folder_dialog.setOption(QtWidgets.QFileDialog.ShowDirsOnly, True)
         self.dropbox_folder_dialog.fileSelected.connect(self.on_new_dbx_folder)
         self.dropbox_folder_dialog.rejected.connect(
-                lambda: self.comboBoxDropboxPath.setCurrentIndex(0))
+            lambda: self.comboBoxDropboxPath.setCurrentIndex(0)
+        )
 
         # connect buttons to callbacks
         self.setAttribute(Qt.WA_DeleteOnClose)
@@ -91,16 +99,21 @@ class SetupDialog(QtWidgets.QDialog):
         self.pushButtonAuthPageCancel.clicked.connect(self.on_reject_requested)
         self.pushButtonAuthPageLink.clicked.connect(self.on_auth_clicked)
         self.pushButtonDropboxPathCalcel.clicked.connect(self.on_reject_requested)
-        self.pushButtonDropboxPathSelect.clicked.connect(self.on_dropbox_location_selected)
+        self.pushButtonDropboxPathSelect.clicked.connect(
+            self.on_dropbox_location_selected
+        )
         self.pushButtonDropboxPathUnlink.clicked.connect(self.unlink_and_go_to_start)
-        self.pushButtonFolderSelectionBack.clicked.connect(self.stackedWidget.slideInPrev)
+        self.pushButtonFolderSelectionBack.clicked.connect(
+            self.stackedWidget.slideInPrev
+        )
         self.pushButtonFolderSelectionSelect.clicked.connect(self.on_folders_selected)
         self.pushButtonClose.clicked.connect(self.on_accept_requested)
         self.selectAllCheckBox.clicked.connect(self.on_select_all_clicked)
 
         # check if we are already authenticated, skip authentication if yes
         if not self.mdbx.pending_link:
-            self.labelDropboxPath.setText("""
+            self.labelDropboxPath.setText(
+                """
             <html><head/><body>
             <p align="left">
             Your Dropbox folder has been moved or deleted from its original location.
@@ -117,9 +130,12 @@ class SetupDialog(QtWidgets.QDialog):
             <p align="left">
             To unlink your Dropbox account from Maestral, click "Unlink" below.</p>
             </body></html>
-            """.format(self.mdbx.get_conf('main', 'path'),
-                       self.mdbx.get_conf('main', 'default_dir_name')))
-            self.pushButtonDropboxPathCalcel.setText('Quit')
+            """.format(
+                    self.mdbx.get_conf("main", "path"),
+                    self.mdbx.get_conf("main", "default_dir_name"),
+                )
+            )
+            self.pushButtonDropboxPathCalcel.setText("Quit")
             self.stackedWidget.setCurrentIndex(2)
             self.stackedWidgetButtons.setCurrentIndex(2)
 
@@ -127,9 +143,9 @@ class SetupDialog(QtWidgets.QDialog):
             self.stackedWidget.setCurrentIndex(0)
             self.stackedWidgetButtons.setCurrentIndex(0)
 
-# =============================================================================
-# Main callbacks
-# =============================================================================
+    # =============================================================================
+    # Main callbacks
+    # =============================================================================
 
     def closeEvent(self, event):
 
@@ -163,9 +179,9 @@ class SetupDialog(QtWidgets.QDialog):
     @QtCore.pyqtSlot()
     def on_auth_clicked(self):
 
-        if self.lineEditAuthCode.text() == '':
-            msg = 'Please enter an authentication token.'
-            msg_box = UserDialog('Authentication failed.', msg, parent=self)
+        if self.lineEditAuthCode.text() == "":
+            msg = "Please enter an authentication token."
+            msg_box = UserDialog("Authentication failed.", msg, parent=self)
             msg_box.open()
         else:
             self.progressIndicator.startAnimation()
@@ -179,10 +195,7 @@ class SetupDialog(QtWidgets.QDialog):
         token = self.lineEditAuthCode.text()
 
         self.auth_task = MaestralBackgroundTask(
-            parent=self,
-            config_name=self.mdbx.config_name,
-            target='link',
-            args=(token,)
+            parent=self, config_name=self.mdbx.config_name, target="link", args=(token,)
         )
         self.auth_task.sig_done.connect(self.on_link_done)
 
@@ -195,12 +208,14 @@ class SetupDialog(QtWidgets.QDialog):
             self.lineEditAuthCode.clear()  # clear since we might come back on unlink
 
         elif res == 1:
-            msg = 'Please make sure that you entered the correct authentication token.'
-            msg_box = UserDialog('Authentication failed.', msg, parent=self)
+            msg = "Please make sure that you entered the correct authentication token."
+            msg_box = UserDialog("Authentication failed.", msg, parent=self)
             msg_box.open()
         elif res == 2:
-            msg = 'Please make sure that you are connected to the internet and try again.'
-            msg_box = UserDialog('Connection failed.', msg, parent=self)
+            msg = (
+                "Please make sure that you are connected to the internet and try again."
+            )
+            msg_box = UserDialog("Connection failed.", msg, parent=self)
             msg_box.open()
 
         self.progressIndicator.stopAnimation()
@@ -214,27 +229,33 @@ class SetupDialog(QtWidgets.QDialog):
         self.mdbx.reset_sync_state()
 
         # apply dropbox path
-        dropbox_path = osp.join(self.dropbox_location, self.mdbx.get_conf('main', 'default_dir_name'))
+        dropbox_path = osp.join(
+            self.dropbox_location, self.mdbx.get_conf("main", "default_dir_name")
+        )
 
         if osp.exists(dropbox_path):
             if osp.isdir(dropbox_path):
                 msg_box = UserDialog(
-                    title='Folder already exists',
-                    message=(f'The folder "{dropbox_path}" already exists. Would you  '
-                             f'like to replace it or merge its contents with Dropbox?'),
-                    button_names=('Replace', 'Cancel', 'Merge'),
+                    title="Folder already exists",
+                    message=(
+                        f'The folder "{dropbox_path}" already exists. Would you  '
+                        f"like to replace it or merge its contents with Dropbox?"
+                    ),
+                    button_names=("Replace", "Cancel", "Merge"),
                     parent=self,
                 )
-                msg_box.setAcceptButtonIcon('edit-clear')
+                msg_box.setAcceptButtonIcon("edit-clear")
                 res = msg_box.exec_()
 
             else:
-                dir_name = self.mdbx.get_conf('main', 'default_dir_name')
+                dir_name = self.mdbx.get_conf("main", "default_dir_name")
                 msg_box = UserDialog(
-                    title='File conflict',
-                    message=(f'There already is a file named "{dir_name}" at this '
-                             'location. Would you like to replace it?'),
-                    button_names=('Replace', 'Cancel'),
+                    title="File conflict",
+                    message=(
+                        f'There already is a file named "{dir_name}" at this '
+                        "location. Would you like to replace it?"
+                    ),
+                    button_names=("Replace", "Cancel"),
                     parent=self,
                 )
                 res = msg_box.exec_()
@@ -245,10 +266,12 @@ class SetupDialog(QtWidgets.QDialog):
                 err = delete(dropbox_path)
                 if err:
                     msg_box = UserDialog(
-                        title='Could not write to destination',
-                        message=('Please check if you have permissions to write to the '
-                                 'selected location.'),
-                        parent=self
+                        title="Could not write to destination",
+                        message=(
+                            "Please check if you have permissions to write to the "
+                            "selected location."
+                        ),
+                        parent=self,
                     )
                     msg_box.exec_()
                     return
@@ -259,16 +282,18 @@ class SetupDialog(QtWidgets.QDialog):
             self.mdbx.create_dropbox_directory(dropbox_path)
         except OSError:
             msg_box = UserDialog(
-                title='Could not create directory',
-                message=('Please check if you have permissions to write to the '
-                         'selected location.'),
-                parent=self
+                title="Could not create directory",
+                message=(
+                    "Please check if you have permissions to write to the "
+                    "selected location."
+                ),
+                parent=self,
             )
             msg_box.exec_()
             return
 
         # switch to next page
-        self.mdbx.set_conf('main', 'excluded_items', [])
+        self.mdbx.set_conf("main", "excluded_items", [])
         self.stackedWidget.slideInIdx(3)
         self.treeViewFolders.setFocus()
 
@@ -291,9 +316,9 @@ class SetupDialog(QtWidgets.QDialog):
         # switch to next page
         self.stackedWidget.slideInIdx(4)
 
-# =============================================================================
-# Helper functions
-# =============================================================================
+    # =============================================================================
+    # Helper functions
+    # =============================================================================
 
     @QtCore.pyqtSlot(int)
     def on_combobox(self, idx):
@@ -303,7 +328,7 @@ class SetupDialog(QtWidgets.QDialog):
     @QtCore.pyqtSlot(str)
     def on_new_dbx_folder(self, new_location):
         self.comboBoxDropboxPath.setCurrentIndex(0)
-        if not new_location == '':
+        if not new_location == "":
             self.comboBoxDropboxPath.setItemText(0, self.rel_path(new_location))
             self.comboBoxDropboxPath.setItemIcon(0, native_item_icon(new_location))
 
@@ -317,14 +342,18 @@ class SetupDialog(QtWidgets.QDialog):
         self.treeViewFolders.setModel(self.dbx_model)
 
         self.dbx_model.loading_done.connect(
-            lambda: self.pushButtonFolderSelectionSelect.setEnabled(True))
+            lambda: self.pushButtonFolderSelectionSelect.setEnabled(True)
+        )
         self.dbx_model.loading_failed.connect(
-            lambda: self.pushButtonFolderSelectionSelect.setEnabled(False))
+            lambda: self.pushButtonFolderSelectionSelect.setEnabled(False)
+        )
 
         self.dbx_model.loading_done.connect(
-            lambda: self.selectAllCheckBox.setEnabled(True))
+            lambda: self.selectAllCheckBox.setEnabled(True)
+        )
         self.dbx_model.loading_failed.connect(
-            lambda: self.selectAllCheckBox.setEnabled(False))
+            lambda: self.selectAllCheckBox.setEnabled(False)
+        )
 
     @QtCore.pyqtSlot()
     def update_select_all_checkbox(self):

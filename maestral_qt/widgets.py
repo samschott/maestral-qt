@@ -13,7 +13,11 @@ from PyQt5.QtGui import QPixmap, QPainter
 # local imports
 from .resources import APP_ICON_PATH
 from .utils import (
-    get_scaled_font, icon_to_pixmap, center_window, is_dark_window, IS_MACOS
+    get_scaled_font,
+    icon_to_pixmap,
+    center_window,
+    is_dark_window,
+    IS_MACOS,
 )
 
 
@@ -28,14 +32,18 @@ _USER_DIALOG_ICON_SIZE = 60
 class BackgroundTaskProgressDialog(QtWidgets.QDialog):
     """A progress dialog to show during long-running background tasks."""
 
-    def __init__(self, title, message='', cancel=True, parent=None, width=450):
+    def __init__(self, title, message="", cancel=True, parent=None, width=450):
         super().__init__(parent=parent)
         self.setModal(True)
         self.setWindowModality(Qt.WindowModal)
-        self.setWindowFlags(Qt.WindowStaysOnTopHint | Qt.Sheet
-                            | Qt.WindowTitleHint | Qt.CustomizeWindowHint)
+        self.setWindowFlags(
+            Qt.WindowStaysOnTopHint
+            | Qt.Sheet
+            | Qt.WindowTitleHint
+            | Qt.CustomizeWindowHint
+        )
         self.setAttribute(Qt.WA_DeleteOnClose)
-        self.setWindowTitle('')
+        self.setWindowTitle("")
         self.setFixedWidth(width)
 
         self.gridLayout = QtWidgets.QGridLayout()
@@ -52,9 +60,11 @@ class BackgroundTaskProgressDialog(QtWidgets.QDialog):
         self.iconLabel.setAlignment(Qt.AlignTop)
         self.titleLabel.setFont(get_scaled_font(bold=True))
         self.infoLabel.setFont(get_scaled_font(scaling=0.9))
-        self.infoLabel.setFixedWidth(width-150)
-        self.infoLabel.setSizePolicy(QtWidgets.QSizePolicy.MinimumExpanding,
-                                     QtWidgets.QSizePolicy.MinimumExpanding)
+        self.infoLabel.setFixedWidth(width - 150)
+        self.infoLabel.setSizePolicy(
+            QtWidgets.QSizePolicy.MinimumExpanding,
+            QtWidgets.QSizePolicy.MinimumExpanding,
+        )
         self.infoLabel.setWordWrap(True)
         self.infoLabel.setOpenExternalLinks(True)
 
@@ -93,8 +103,15 @@ class UserDialog(QtWidgets.QDialog):
 
     Accepted2 = 2
 
-    def __init__(self, title, message, details=None, checkbox=None, parent=None,
-                 button_names=('Ok',)):
+    def __init__(
+        self,
+        title,
+        message,
+        details=None,
+        checkbox=None,
+        parent=None,
+        button_names=("Ok",),
+    ):
         """
         A user dialog for Maestral.
 
@@ -107,9 +124,13 @@ class UserDialog(QtWidgets.QDialog):
         super().__init__(parent=parent)
         self.setModal(True)
         self.setWindowModality(Qt.WindowModal)
-        self.setWindowFlags(Qt.WindowStaysOnTopHint | Qt.Sheet | Qt.WindowTitleHint |
-                            Qt.CustomizeWindowHint)
-        self.setWindowTitle('')
+        self.setWindowFlags(
+            Qt.WindowStaysOnTopHint
+            | Qt.Sheet
+            | Qt.WindowTitleHint
+            | Qt.CustomizeWindowHint
+        )
+        self.setWindowTitle("")
 
         self.gridLayout = QtWidgets.QGridLayout()
         self.setLayout(self.gridLayout)
@@ -120,12 +141,14 @@ class UserDialog(QtWidgets.QDialog):
 
         self.iconLabel.setMinimumSize(_USER_DIALOG_ICON_SIZE, _USER_DIALOG_ICON_SIZE)
         self.iconLabel.setMaximumSize(_USER_DIALOG_ICON_SIZE, _USER_DIALOG_ICON_SIZE)
-        self.gridLayout.setHorizontalSpacing(self.gridLayout.horizontalSpacing()*2)
-        self.gridLayout.setVerticalSpacing(self.gridLayout.verticalSpacing()*2)
+        self.gridLayout.setHorizontalSpacing(self.gridLayout.horizontalSpacing() * 2)
+        self.gridLayout.setVerticalSpacing(self.gridLayout.verticalSpacing() * 2)
         self.titleLabel.setFont(get_scaled_font(bold=True))
         self.infoLabel.setFont(get_scaled_font(scaling=0.9))
-        self.infoLabel.setSizePolicy(QtWidgets.QSizePolicy.MinimumExpanding,
-                                     QtWidgets.QSizePolicy.MinimumExpanding)
+        self.infoLabel.setSizePolicy(
+            QtWidgets.QSizePolicy.MinimumExpanding,
+            QtWidgets.QSizePolicy.MinimumExpanding,
+        )
         self.infoLabel.setWordWrap(True)
         self.infoLabel.setOpenExternalLinks(True)
 
@@ -156,7 +179,7 @@ class UserDialog(QtWidgets.QDialog):
         self.gridLayout.addWidget(self.buttonBox, 4, 1, -1, -1)
 
         if len(button_names) < 1:
-            ValueError('Dialog must have at least one button')
+            ValueError("Dialog must have at least one button")
 
         self.setAcceptButtonName(button_names[0])
 
@@ -167,7 +190,7 @@ class UserDialog(QtWidgets.QDialog):
             self.addSecondAcceptButton(name=button_names[2])
 
         if len(button_names) > 3:
-            ValueError('Dialog cannot have more than three buttons')
+            ValueError("Dialog cannot have more than three buttons")
 
         self.setWidth(700 if details else 450)
         self.adjustSize()
@@ -190,7 +213,7 @@ class UserDialog(QtWidgets.QDialog):
         elif isinstance(icon, str):
             self.buttonBox.buttons()[0].setIcon(QtGui.QIcon.fromTheme(icon))
 
-    def addCancelButton(self, name='Cancel', icon=None):
+    def addCancelButton(self, name="Cancel", icon=None):
         self._cancelButton = self.buttonBox.addButton(QtWidgets.QDialogButtonBox.Cancel)
         self._cancelButton.setText(name)
         if isinstance(icon, QtGui.QIcon):
@@ -202,8 +225,10 @@ class UserDialog(QtWidgets.QDialog):
     def setCancelButtonName(self, name):
         self._cancelButton.setText(name)
 
-    def addSecondAcceptButton(self, name, icon='dialog-ok'):
-        self._acceptButton2 = self.buttonBox.addButton(QtWidgets.QDialogButtonBox.Ignore)
+    def addSecondAcceptButton(self, name, icon="dialog-ok"):
+        self._acceptButton2 = self.buttonBox.addButton(
+            QtWidgets.QDialogButtonBox.Ignore
+        )
         self._acceptButton2.setText(name)
         if isinstance(icon, QtGui.QIcon):
             self._acceptButton2.setIcon(icon)
@@ -218,31 +243,39 @@ class UserDialog(QtWidgets.QDialog):
 
 # dialog launch helpers
 
-def show_dialog(title, message, details=None, level='info'):
+
+def show_dialog(title, message, details=None, level="info"):
     UserDialog(title, message, details).exec_()
 
 
 def show_stacktrace_dialog(traceback, ask_share=False):
 
-    title = 'An unexpected error occurred'
+    title = "An unexpected error occurred"
 
     if not ask_share:
 
-        message = ('A report has been sent to the developers. '
-                   'Please restart Maestral to continue syncing.')
+        message = (
+            "A report has been sent to the developers. "
+            "Please restart Maestral to continue syncing."
+        )
 
         UserDialog(title, message, details=traceback).exec_()
 
         return False, False
     else:
-        message = ('You can send a report to the developers or open an issue on '
-                   'GitHub. Please restart Maestral to continue syncing.')
+        message = (
+            "You can send a report to the developers or open an issue on "
+            "GitHub. Please restart Maestral to continue syncing."
+        )
 
-        checkbox_text = 'Always send error reports (can be changed in Settings)'
+        checkbox_text = "Always send error reports (can be changed in Settings)"
 
         error_dialog = UserDialog(
-            title, message, details=traceback, checkbox=checkbox_text,
-            button_names=('Send to Developers', 'Don\'t send')
+            title,
+            message,
+            details=traceback,
+            checkbox=checkbox_text,
+            button_names=("Send to Developers", "Don't send"),
         )
 
         share = error_dialog.exec_() == 1
@@ -253,19 +286,21 @@ def show_stacktrace_dialog(traceback, ask_share=False):
 
 def show_update_dialog(latest_release, release_notes_md):
 
-    url_r = 'https://github.com/samschott/maestral-dropbox/releases'
+    url_r = "https://github.com/samschott/maestral-dropbox/releases"
     message = (
-        'Maestral v{0} is available. Please use your package manager to '
-        'update Maestral or go to the <a href=\"{1}\">releases</span></a> '
-        'page to download the new version. '
+        "Maestral v{0} is available. Please use your package manager to "
+        'update Maestral or go to the <a href="{1}">releases</span></a> '
+        "page to download the new version. "
         '<div style="height:5px;font-size:5px;">&nbsp;<br></div>'
-        '<b>Release notes:</b>'
+        "<b>Release notes:</b>"
     ).format(latest_release, url_r)
     release_notes_html = markdown2.markdown(release_notes_md)
-    list_style = '<ul style="margin-top: 0px; margin-bottom: 0px; margin-left: -20px; ' \
-                 'margin-right: 0px; -qt-list-indent: 1;">'
-    styled_release_notes = release_notes_html.replace('<ul>', list_style)
-    update_dialog = UserDialog('Update available', message, styled_release_notes)
+    list_style = (
+        '<ul style="margin-top: 0px; margin-bottom: 0px; margin-left: -20px; '
+        'margin-right: 0px; -qt-list-indent: 1;">'
+    )
+    styled_release_notes = release_notes_html.replace("<ul>", list_style)
+    update_dialog = UserDialog("Update available", message, styled_release_notes)
     update_dialog.exec_()
 
 
@@ -282,7 +317,7 @@ class FaderWidget(QtWidgets.QWidget):
         QtWidgets.QWidget.__init__(self, new_widget)
 
         pr = QtWidgets.QApplication.instance().devicePixelRatio()
-        self.old_pixmap = QPixmap(new_widget.size()*pr)
+        self.old_pixmap = QPixmap(new_widget.size() * pr)
         self.old_pixmap.setDevicePixelRatio(pr)
         old_widget.render(self.old_pixmap)
 
@@ -401,7 +436,7 @@ class AnimatedStackedWidget(QtWidgets.QStackedWidget):
         ):
             animation = QtCore.QPropertyAnimation(
                 self.widget(index),
-                b'pos',
+                b"pos",
                 duration=self.m_speed,
                 easingCurve=self.m_animationtype,
                 startValue=start,
@@ -422,8 +457,9 @@ class AnimatedStackedWidget(QtWidgets.QStackedWidget):
         self.m_active = False
 
     def fadeInIdx(self, index):
-        self.fader_widget = FaderWidget(self.currentWidget(), self.widget(index),
-                                        self.m_speed)
+        self.fader_widget = FaderWidget(
+            self.currentWidget(), self.widget(index), self.m_speed
+        )
         self.setCurrentIndex(index)
 
 
@@ -453,7 +489,7 @@ class QProgressIndicator(QtWidgets.QWidget):
         # Initialize instance variables
         self.m_angle = 0
         self.m_timerId = -1
-        self.m_delay = 5/60*1000
+        self.m_delay = 5 / 60 * 1000
         self.m_displayedWhenStopped = False
         self.m_color = self.m_dark_color
 
@@ -525,7 +561,7 @@ class QProgressIndicator(QtWidgets.QWidget):
         innerRadius = (width - 1) * 0.5 * 0.4375
 
         capsuleHeight = outerRadius - innerRadius
-        capsuleWidth = width * 3/32
+        capsuleWidth = width * 3 / 32
         capsuleRadius = capsuleWidth / 2
 
         for i in range(0, 12):
@@ -541,9 +577,14 @@ class QProgressIndicator(QtWidgets.QWidget):
             painter.save()
             painter.translate(self.rect().center())
             painter.rotate(self.m_angle - (i * 30.0))
-            painter.drawRoundedRect(capsuleWidth * -0.5,
-                                    (innerRadius + capsuleHeight) * -1, capsuleWidth,
-                                    capsuleHeight, capsuleRadius, capsuleRadius)
+            painter.drawRoundedRect(
+                capsuleWidth * -0.5,
+                (innerRadius + capsuleHeight) * -1,
+                capsuleWidth,
+                capsuleHeight,
+                capsuleRadius,
+                capsuleRadius,
+            )
             painter.restore()
 
     def changeEvent(self, QEvent):
@@ -559,7 +600,6 @@ class QProgressIndicator(QtWidgets.QWidget):
 
 
 class CustomCombobox(QtWidgets.QComboBox):
-
     def paintEvent(self, e):
         painter = QtWidgets.QStylePainter(self)
         painter.setPen(self.palette().color(QtGui.QPalette.Text))
@@ -586,9 +626,11 @@ class QElidedLabel(QtWidgets.QLabel):
 
     def __init__(self, parent=None, elidemode=Qt.ElideRight):
         super().__init__(parent)
-        self.setSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Minimum)
+        self.setSizePolicy(
+            QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Minimum
+        )
         self._elidemode = elidemode
-        self._elided_text = ''
+        self._elided_text = ""
 
     def _update_elided_text(self, width):
         """Update the elided text when necessary.
@@ -598,9 +640,10 @@ class QElidedLabel(QtWidgets.QLabel):
         """
         if self.text():
             self._elided_text = self.fontMetrics().elidedText(
-                self.text(), self._elidemode, width, Qt.TextShowMnemonic)
+                self.text(), self._elidemode, width, Qt.TextShowMnemonic
+            )
         else:
-            self._elided_text = ''
+            self._elided_text = ""
 
     def elideMode(self):
         """Returns the current elide mode."""
@@ -635,5 +678,11 @@ class QElidedLabel(QtWidgets.QLabel):
             e.accept()
             painter = QPainter(self)
             geom = self.geometry()
-            painter.drawText(0, 0, geom.width(), geom.height(),
-                             int(self.alignment()), self._elided_text)
+            painter.drawText(
+                0,
+                0,
+                geom.width(),
+                geom.height(),
+                int(self.alignment()),
+                self._elided_text,
+            )
