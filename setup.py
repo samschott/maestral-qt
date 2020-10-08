@@ -36,6 +36,7 @@ setup(
     entry_points={
         "console_scripts": ["maestral_qt=maestral_qt.cli:main"],
         "maestral_gui": ["maestral_qt=maestral_qt.main:run"],
+        "pyinstaller40": ["hook-dirs=maestral_qt.__pyinstaller:get_hook_dirs"],
     },
     classifiers=[
         "License :: OSI Approved :: MIT License",
