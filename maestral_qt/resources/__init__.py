@@ -9,7 +9,12 @@ import sys
 import os
 import os.path as osp
 import platform
-import pkg_resources
+
+try:
+    from importlib.resources import files
+except ImportError:
+    from importlib_resources import files
+
 
 from PyQt5 import QtWidgets, QtCore, QtGui
 
@@ -18,9 +23,7 @@ _tmp_file_for_ext = dict()
 
 
 def resource_path(name):
-    folder = getattr(
-        sys, "_MEIPASS", pkg_resources.resource_filename("maestral_qt", "resources")
-    )
+    folder = getattr(sys, "_MEIPASS", files("maestral_cocoa") / "resources")
     return osp.join(folder, name)
 
 
