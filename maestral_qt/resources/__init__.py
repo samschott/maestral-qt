@@ -23,7 +23,7 @@ _tmp_file_for_ext = dict()
 
 
 def resource_path(name):
-    folder = getattr(sys, "_MEIPASS", files("maestral_cocoa") / "resources")
+    folder = getattr(sys, "_MEIPASS", files("maestral_qt") / "resources")
     return osp.join(folder, name)
 
 
