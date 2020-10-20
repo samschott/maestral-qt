@@ -13,7 +13,7 @@ from PyQt5 import QtCore, QtWidgets, QtGui, uic
 from PyQt5.QtCore import QAbstractItemModel, QModelIndex, Qt, QVariant
 
 # maestral modules
-from maestral.daemon import Proxy
+from maestral.daemon import MaestralProxy
 from maestral.errors import NotAFolderError, NotFoundError
 from maestral.utils.path import is_child
 
@@ -365,20 +365,19 @@ class DropboxPathModel(AbstractTreeItem):
 
 class AsyncListFolder(QtCore.QObject):
 
-    _lock = threading.BoundedSemaphore(
-        10
-    )  # do not list more than 10 folders in parallel
+    # do not list contents of more than 10 folders in parallel
+    _lock = threading.BoundedSemaphore(10)
 
-    def __init__(self, m, parent=None):
+    def __init__(self, config_name, parent=None):
         """
         A helper which creates instances of :class:`BackgroundTask` to
         asynchronously list Dropbox folders
 
-        :param Maestral m: Instance of :class:`maestral.sync.main.Maestral`.
+        :param str config_name: Config name of Maestral instance
         :param parent: QObject. Defaults to None.
         """
         super().__init__(parent=parent)
-        self.m = m
+        self.config_name = config_name
 
     def listChildren(self, path):
         """
@@ -400,7 +399,7 @@ class AsyncListFolder(QtCore.QObject):
         with self._lock:
 
             # use a duplicate proxy to prevent blocking of the main connection
-            with Proxy(self.m._pyroUri) as m:
+            with MaestralProxy(self.config_name) as m:
                 try:
                     entries = m.list_folder(path, recursive=False)
                     entries.sort(key=lambda e: e["name"].lower())
@@ -432,7 +431,7 @@ class SelectiveSyncDialog(QtWidgets.QDialog):
 
     def populate_folders_list(self, overload=None):
         self.excluded_items = self.mdbx.excluded_items
-        self.async_loader = AsyncListFolder(self.mdbx, self)
+        self.async_loader = AsyncListFolder(self.mdbx.config_name, self)
         self.dbx_root = DropboxPathModel(self.mdbx, self.async_loader)
         self.dbx_model = TreeModel(self.dbx_root)
         self.dbx_model.loading_done.connect(self.ui_loaded)
