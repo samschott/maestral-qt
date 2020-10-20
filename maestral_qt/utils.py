@@ -224,8 +224,19 @@ class Worker(QtCore.QObject):
         self._kwargs = kwargs or {}
 
     def start(self):
+
         res = self._target(*self._args, **self._kwargs)
-        self.sig_done.emit(res)
+
+        try:
+            # return results iteratively if target is an iterator
+            while True:
+                try:
+                    self.sig_done.emit(next(res))
+                except StopIteration:
+                    return
+        except TypeError:
+            # return result directly otherwise
+            self.sig_done.emit(res)
 
 
 class MaestralWorker(Worker):
@@ -240,7 +251,17 @@ class MaestralWorker(Worker):
         with MaestralProxy(self.config_name) as m:
             func = m.__getattr__(self._target)
             res = func(*self._args, **self._kwargs)
-        self.sig_done.emit(res)
+
+            try:
+                # return results iteratively if target is an iterator
+                while True:
+                    try:
+                        self.sig_done.emit(next(res))
+                    except StopIteration:
+                        return
+            except TypeError:
+                # return result directly otherwise
+                self.sig_done.emit(res)
 
 
 class BackgroundTask(QtCore.QObject):
