@@ -5,7 +5,6 @@ Created on Wed Oct 31 16:23:13 2018
 
 @author: samschott
 """
-import sys
 import os
 import os.path as osp
 import platform
@@ -23,8 +22,7 @@ _tmp_file_for_ext = dict()
 
 
 def resource_path(name):
-    folder = getattr(sys, "_MEIPASS", files("maestral_qt") / "resources")
-    return osp.join(folder, name)
+    return osp.join(files("maestral_qt"), "resources", name)
 
 
 APP_ICON_PATH = resource_path("maestral.png")
