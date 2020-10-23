@@ -32,9 +32,9 @@ IS_MACOS_BUNDLE = IS_BUNDLE and IS_MACOS
 IS_LINUX_BUNDLE = IS_BUNDLE and IS_LINUX
 
 
-# ========================================================================================
+# ======================================================================================
 # Helper functions
-# ========================================================================================
+# ======================================================================================
 
 
 def elide_string(string, font=None, pixels=200, side="right"):
@@ -61,7 +61,8 @@ def elide_string(string, font=None, pixels=200, side="right"):
 
 def get_scaled_font(scaling=1.0, bold=False, italic=False):
     """
-    Returns the current style's default font for a QLabel but scaled by the given factor.
+    Returns the current style's default font for a QLabel but scaled by the given
+    factor.
 
     :param float scaling: Scaling factor.
     :param bool bold: Sets the returned font to bold (defaults to ``False``)
@@ -207,9 +208,9 @@ def is_dark_window():
     return window_theme() == THEME_DARK
 
 
-# ========================================================================================
+# ======================================================================================
 # Threading
-# ========================================================================================
+# ======================================================================================
 
 
 class Worker(QtCore.QObject):

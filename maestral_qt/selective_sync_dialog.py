@@ -150,7 +150,9 @@ class TreeModel(QAbstractItemModel):
 
 
 class AbstractTreeItem(QtCore.QObject):
-    """An abstract item for `TreeModel`. To be subclassed depending on the application."""
+    """
+    An abstract item for `TreeModel`. To be subclassed depending on the application.
+    """
 
     loading_done = QtCore.pyqtSignal()
     loading_failed = QtCore.pyqtSignal()
@@ -247,8 +249,8 @@ class MessageTreeItem(AbstractTreeItem):
 
 
 class DropboxPathModel(AbstractTreeItem):
-    """A Dropbox folder item. It lists its children asynchronously, only when asked to by
-    `TreeModel`."""
+    """A Dropbox folder item. It lists its children asynchronously, only when asked to
+    by `TreeModel`."""
 
     def __init__(self, mdbx, async_loader, path="/", is_folder=True, parent=None):
         super().__init__(parent=parent)

@@ -119,8 +119,9 @@ def system_tray_icon(status, geometry=None):
     """Returns the system tray icon for the given status. The following icons
     will be used:
 
-    1) macOS: Black SVG icons with transparent background. macOS will adapt the appearance
-       as necessary. This only works reliably in Qt >= 5.15 which is not yet released.
+    1) macOS: Black SVG icons with transparent background. macOS will adapt the
+       appearance as necessary. This only works reliably in Qt >= 5.15 which is not yet
+       released.
     2) Linux: Any icons installed in the system theme. Maestral will prefer "symbolic"
        icons named "maestral-status-{status}-symbolic" over regular icons named
        "maestral-status-{status}". It will fall back to manually setting the icon in a
@@ -128,8 +129,8 @@ def system_tray_icon(status, geometry=None):
 
     :param str status: Maestral status. Must be 'idle', 'syncing', 'paused',
         'disconnected' 'info' or 'error'.
-    :param geometry: Tray icon geometry on screen. If given, this location will be used to
-        to determine the system tray background color. This argument is ignored on macOS.
+    :param geometry: Tray icon geometry on screen. If given, this location will be used
+        to determine the system tray background color.
     """
     allowed_status = ("idle", "syncing", "paused", "disconnected", "info", "error")
     if status not in allowed_status:
@@ -178,7 +179,7 @@ def systray_theme(icon_geometry=None):
     If not given, we try to guess the location of the system tray.
     """
 
-    # ---- check for the status bar color ------------------------------------------------
+    # ---- check for the status bar color ----------------------------------------------
 
     # see if we can trust returned pixel colors
     # (work around for a bug in Qt with KDE where all screenshots return black)
@@ -190,7 +191,7 @@ def systray_theme(icon_geometry=None):
     if not c0 == c1 == c2 == (0, 0, 0):  # we can trust pixel colors from screenshots
 
         if not icon_geometry or icon_geometry.isEmpty():
-            # ---- guess the location of the status bar ----------------------------------
+            # ---- guess the location of the status bar --------------------------------
 
             rec_screen = QtWidgets.QDesktopWidget().screenGeometry()
             rec_available = QtWidgets.QDesktopWidget().availableGeometry()
@@ -221,7 +222,7 @@ def systray_theme(icon_geometry=None):
         return THEME_LIGHT if lum >= 0.4 else THEME_DARK
 
     else:
-        # ---- give up, default to dark --------------------------------------------------
+        # ---- give up, default to dark ------------------------------------------------
         return THEME_DARK
 
 

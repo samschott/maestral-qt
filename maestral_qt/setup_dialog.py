@@ -113,12 +113,12 @@ class SetupDialog(QtWidgets.QDialog):
         # check if we are already authenticated, skip authentication if yes
         if not self.mdbx.pending_link:
             self.labelDropboxPath.setText(
-                """
+            """
             <html><head/><body>
             <p align="left">
             Your Dropbox folder has been moved or deleted from its original location.
-            Maestral will not work properly until you move it back. It used to be located
-            at: </p><p align="left">{0}</p>
+            Maestral will not work properly until you move it back. It used to be 
+            located at: </p><p align="left">{0}</p>
             <p align="left">
             To move it back, click "Quit" below, move the Dropbox folder back to its
             original location, and launch Maestral again.

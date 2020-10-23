@@ -427,10 +427,10 @@ class MaestralGuiApp(QtWidgets.QSystemTrayIcon):
         self.rebuild_dialog = UserDialog(
             title="Rebuilt Maestral's sync index?",
             message=(
-                "Rebuilding the index may take several minutes, depending on the size of "
-                "your Dropbox. Any changes to local files will be synced once rebuilding "
-                "has completed. If you quit Maestral during the process, rebuilding will "
-                "be resumed on the next launch."
+                "Rebuilding the index may take several minutes, depending on the size "
+                "of your Dropbox. Any changes to local files will be synced once "
+                "rebuilding has completed. If you quit Maestral during the process, "
+                "rebuilding will  be resumed on the next launch."
             ),
             button_names=("Rebuild", "Cancel"),
         )
@@ -575,8 +575,8 @@ class MaestralGuiApp(QtWidgets.QSystemTrayIcon):
         """Quits Maestral.
 
         :param bool stop_daemon: If ``True``, the sync daemon will be stopped when
-            quitting the GUI, if ``False``, it will be kept alive. If ``None``, the daemon
-            will only be stopped if it was started by the GUI (default).
+            quitting the GUI, if ``False``, it will be kept alive. If ``None``, the
+            daemon will only be stopped if it was started by the GUI (default).
         """
 
         # stop update timer to stop communication with daemon

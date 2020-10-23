@@ -17,7 +17,9 @@ from .utils import MaestralBackgroundTask
 
 # noinspection PyArgumentList
 class RelinkDialog(QtWidgets.QDialog):
-    """A dialog to show when Maestral's Dropbox access has expired or has been revoked."""
+    """
+    A dialog to show when Maestral's Dropbox access has expired or has been revoked.
+    """
 
     VALID_MSG = "Verified. Restarting Maestral..."
     INVALID_MSG = "Invalid token"
