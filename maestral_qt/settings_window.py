@@ -16,7 +16,6 @@ from PyQt5 import QtGui, QtCore, QtWidgets, uic
 # maestral modules
 from maestral import __version__ as __daemon_version__
 from maestral.utils.appdirs import get_home_dir
-from maestral.utils.autostart import AutoStart
 
 # local imports
 from . import __version__, __author__, __url__
@@ -40,6 +39,7 @@ from .utils import (
     MaestralBackgroundTask,
 )
 from .widgets import UserDialog
+from .autostart import AutoStart
 
 NEW_QT = LooseVersion(QtCore.QT_VERSION_STR) >= LooseVersion("5.11")
 
@@ -103,7 +103,7 @@ class SettingsWindow(QtWidgets.QWidget):
         self.mdbx = mdbx
         self.selective_sync_dialog = SelectiveSyncDialog(self.mdbx, parent=self)
         self.unlink_dialog = UnlinkDialog(self.mdbx, self._parent.restart, parent=self)
-        self.autostart = AutoStart(self.mdbx.config_name, gui=True)
+        self.autostart = AutoStart(self.mdbx.config_name)
 
         self.labelAccountName.setFont(get_scaled_font(1.5))
         self.labelAccountInfo.setFont(get_scaled_font(0.9))
