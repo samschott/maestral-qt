@@ -113,7 +113,7 @@ class SetupDialog(QtWidgets.QDialog):
         # check if we are already authenticated, skip authentication if yes
         if not self.mdbx.pending_link:
             self.labelDropboxPath.setText(
-            """
+                """
             <html><head/><body>
             <p align="left">
             Your Dropbox folder has been moved or deleted from its original location.
