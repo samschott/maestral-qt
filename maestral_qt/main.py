@@ -20,7 +20,6 @@ from PyQt5 import QtCore, QtWidgets, QtGui
 
 # maestral modules
 from maestral import __version__
-from maestral.utils.autostart import AutoStart
 from maestral.constants import (
     IDLE,
     SYNCING,
@@ -59,6 +58,7 @@ from maestral_qt.widgets import (
     show_stacktrace_dialog,
     show_update_dialog,
 )
+from maestral_qt.autostart import AutoStart
 
 
 # noinspection PyTypeChecker,PyArgumentList
@@ -105,7 +105,7 @@ class MaestralGuiApp(QtWidgets.QSystemTrayIcon):
 
         self.loading_done = False
 
-        self.autostart = AutoStart(self.config_name, gui=True)
+        self.autostart = AutoStart(self.config_name)
 
         self.icons = self.load_tray_icons()
         self.setIcon(DISCONNECTED)
