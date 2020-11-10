@@ -20,7 +20,6 @@ from PyQt5 import QtCore, QtWidgets, QtGui
 
 # maestral modules
 from maestral import __version__
-from maestral.utils.autostart import AutoStart
 from maestral.constants import (
     IDLE,
     SYNCING,
@@ -33,7 +32,7 @@ from maestral.constants import (
 from maestral.daemon import (
     start_maestral_daemon_process,
     stop_maestral_daemon_process,
-    get_maestral_proxy,
+    MaestralProxy,
     Start,
     CommunicationError,
 )
@@ -59,6 +58,7 @@ from maestral_qt.widgets import (
     show_stacktrace_dialog,
     show_update_dialog,
 )
+from maestral_qt.autostart import AutoStart
 
 
 # noinspection PyTypeChecker,PyArgumentList
@@ -105,7 +105,7 @@ class MaestralGuiApp(QtWidgets.QSystemTrayIcon):
 
         self.loading_done = False
 
-        self.autostart = AutoStart(self.config_name, gui=True)
+        self.autostart = AutoStart(self.config_name)
 
         self.icons = self.load_tray_icons()
         self.setIcon(DISCONNECTED)
@@ -206,7 +206,7 @@ class MaestralGuiApp(QtWidgets.QSystemTrayIcon):
         elif res == Start.Ok:
             self._started = True
 
-        return get_maestral_proxy(self.config_name)
+        return MaestralProxy(self.config_name)
 
     def setup_ui_unlinked(self):
 
@@ -427,10 +427,10 @@ class MaestralGuiApp(QtWidgets.QSystemTrayIcon):
         self.rebuild_dialog = UserDialog(
             title="Rebuilt Maestral's sync index?",
             message=(
-                "Rebuilding the index may take several minutes, depending on the size of "
-                "your Dropbox. Any changes to local files will be synced once rebuilding "
-                "has completed. If you quit Maestral during the process, rebuilding will "
-                "be resumed on the next launch."
+                "Rebuilding the index may take several minutes, depending on the size "
+                "of your Dropbox. Any changes to local files will be synced once "
+                "rebuilding has completed. If you quit Maestral during the process, "
+                "rebuilding will  be resumed on the next launch."
             ),
             button_names=("Rebuild", "Cancel"),
         )
@@ -575,8 +575,8 @@ class MaestralGuiApp(QtWidgets.QSystemTrayIcon):
         """Quits Maestral.
 
         :param bool stop_daemon: If ``True``, the sync daemon will be stopped when
-            quitting the GUI, if ``False``, it will be kept alive. If ``None``, the daemon
-            will only be stopped if it was started by the GUI (default).
+            quitting the GUI, if ``False``, it will be kept alive. If ``None``, the
+            daemon will only be stopped if it was started by the GUI (default).
         """
 
         # stop update timer to stop communication with daemon

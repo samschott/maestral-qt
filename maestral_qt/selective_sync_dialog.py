@@ -13,7 +13,7 @@ from PyQt5 import QtCore, QtWidgets, QtGui, uic
 from PyQt5.QtCore import QAbstractItemModel, QModelIndex, Qt, QVariant
 
 # maestral modules
-from maestral.daemon import Proxy
+from maestral.daemon import MaestralProxy
 from maestral.errors import NotAFolderError, NotFoundError
 from maestral.utils.path import is_child
 
@@ -150,7 +150,9 @@ class TreeModel(QAbstractItemModel):
 
 
 class AbstractTreeItem(QtCore.QObject):
-    """An abstract item for `TreeModel`. To be subclassed depending on the application."""
+    """
+    An abstract item for `TreeModel`. To be subclassed depending on the application.
+    """
 
     loading_done = QtCore.pyqtSignal()
     loading_failed = QtCore.pyqtSignal()
@@ -247,8 +249,8 @@ class MessageTreeItem(AbstractTreeItem):
 
 
 class DropboxPathModel(AbstractTreeItem):
-    """A Dropbox folder item. It lists its children asynchronously, only when asked to by
-    `TreeModel`."""
+    """A Dropbox folder item. It lists its children asynchronously, only when asked to
+    by `TreeModel`."""
 
     def __init__(self, mdbx, async_loader, path="/", is_folder=True, parent=None):
         super().__init__(parent=parent)
@@ -256,6 +258,7 @@ class DropboxPathModel(AbstractTreeItem):
             self.icon = native_folder_icon()
         else:
             self.icon = native_file_icon()
+        self.is_folder = is_folder
         self._path = path
         self._mdbx = mdbx
         self._async_loader = async_loader
@@ -291,14 +294,26 @@ class DropboxPathModel(AbstractTreeItem):
             self._checkState = int(self._originalCheckState)
 
     def _create_children_async(self):
-        self._remote = self._async_loader.listChildren(self._path)
-        self._remote.sig_done.connect(self._async_loading_done)
+        if self.is_folder:
+            self._remote = self._async_loader.listChildren(self._path)
+            self._remote.sig_done.connect(self._async_loading_done)
+        else:
+            self._async_loading_done([])
 
     def _async_loading_done(self, results):
+
+        try:
+            n0 = self._children[0]
+        except IndexError:
+            pass
+        else:
+            if isinstance(n0, MessageTreeItem):
+                self._children.remove(n0)
+
         if results is False:
             self.loading_failed.emit()
         else:
-            self._children = [
+            new_nodes = [
                 self.__class__(
                     self._mdbx,
                     self._async_loader,
@@ -308,6 +323,7 @@ class DropboxPathModel(AbstractTreeItem):
                 )
                 for e in results
             ]
+            self._children.extend(new_nodes)
             self.loading_done.emit()
 
     def data(self, column):
@@ -365,20 +381,23 @@ class DropboxPathModel(AbstractTreeItem):
 
 class AsyncListFolder(QtCore.QObject):
 
-    _lock = threading.BoundedSemaphore(
-        10
-    )  # do not list more than 10 folders in parallel
+    # do not list contents of more than 10 folders in parallel
+    _sem = QtCore.QSemaphore(10)
 
-    def __init__(self, m, parent=None):
+    def __init__(self, config_name, parent=None):
         """
         A helper which creates instances of :class:`BackgroundTask` to
         asynchronously list Dropbox folders
 
-        :param Maestral m: Instance of :class:`maestral.sync.main.Maestral`.
+        :param str config_name: Config name of Maestral instance
         :param parent: QObject. Defaults to None.
         """
         super().__init__(parent=parent)
-        self.m = m
+        self.config_name = config_name
+        self._abort_event = threading.Event()
+
+    def abortListing(self):
+        self._abort_event.set()
 
     def listChildren(self, path):
         """
@@ -389,27 +408,45 @@ class AsyncListFolder(QtCore.QObject):
         :rtype: :class:`maestral.gui.utils.BackgroundTask`
         """
 
-        new_job = BackgroundTask(parent=self, target=self._listChildren, args=(path,))
+        new_job = BackgroundTask(
+            parent=self, target=self._listChildren, args=(path,), autostart=False
+        )
+
+        # use a QTimer based logic to start a maximum of 10 QThreads
+        # we risk a segfault for too many QThreads otherwise
+
+        retry_timer = QtCore.QTimer()
+
+        def retry_job():
+            if self._sem.tryAcquire():
+                new_job.start()
+                retry_timer.stop()
+
+        retry_timer.timeout.connect(retry_job)
+        retry_timer.start(100)
 
         return new_job
 
     def _listChildren(self, path):
-        """The actual function which does the listing. Returns a list of Dropbox folder
-        paths or ``False`` if the listing fails."""
+        """The actual function which does the listing. Returns an iterator over the
+        entries in the Dropbox folder."""
 
-        with self._lock:
+        # use a duplicate proxy to prevent blocking of the main connection
+        with MaestralProxy(self.config_name) as m:
+            entries_iterator = m.list_folder_iterator(path)
 
-            # use a duplicate proxy to prevent blocking of the main connection
-            with Proxy(self.m._pyroUri) as m:
+            while not self._abort_event.is_set():
                 try:
-                    entries = m.list_folder(path, recursive=False)
+                    entries = next(entries_iterator)
                     entries.sort(key=lambda e: e["name"].lower())
                 except (NotAFolderError, NotFoundError):
                     entries = []
                 except ConnectionError:
                     entries = False
+                except StopIteration:
+                    return
 
-            return entries
+                yield entries
 
 
 # noinspection PyArgumentList
@@ -432,7 +469,7 @@ class SelectiveSyncDialog(QtWidgets.QDialog):
 
     def populate_folders_list(self, overload=None):
         self.excluded_items = self.mdbx.excluded_items
-        self.async_loader = AsyncListFolder(self.mdbx, self)
+        self.async_loader = AsyncListFolder(self.mdbx.config_name, self)
         self.dbx_root = DropboxPathModel(self.mdbx, self.async_loader)
         self.dbx_model = TreeModel(self.dbx_root)
         self.dbx_model.loading_done.connect(self.ui_loaded)
@@ -457,6 +494,10 @@ class SelectiveSyncDialog(QtWidgets.QDialog):
         for irow in range(self.dbx_model._root_item.child_count_loaded()):
             index = self.dbx_model.index(irow, 0, QModelIndex())
             self.dbx_model.setCheckState(index, checked_state)
+
+    def closeEvent(self, event):
+        super().closeEvent(event)
+        self.async_loader.abortListing()
 
     def on_accepted(self, overload=None):
         """

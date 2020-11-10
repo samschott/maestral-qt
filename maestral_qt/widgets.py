@@ -24,9 +24,9 @@ from .utils import (
 _USER_DIALOG_ICON_SIZE = 60
 
 
-# ========================================================================================
+# ======================================================================================
 # Dialogs
-# ========================================================================================
+# ======================================================================================
 
 # noinspection PyArgumentList, PyTypeChecker, PyCallByClass
 class BackgroundTaskProgressDialog(QtWidgets.QDialog):
@@ -97,7 +97,9 @@ class BackgroundTaskProgressDialog(QtWidgets.QDialog):
 
 # noinspection PyArgumentList,PyTypeChecker
 class UserDialog(QtWidgets.QDialog):
-    """A template user dialog for Maestral. Shows a traceback if given in constructor."""
+    """
+    A template user dialog for Maestral. Shows a traceback if given in constructor.
+    """
 
     MINIMUM_BUTTON_SIZE = 85
 
@@ -117,7 +119,7 @@ class UserDialog(QtWidgets.QDialog):
 
         :param str title: Title of dialog.
         :param str message: Message.
-        :param str details: Optional details to show in a text view, e.g., traceback info.
+        :param str details: Optional details to show in a text view.
         :param str checkbox: Optional checkbox to show above dialog buttons.
         :param QtWidget parent: Parent.
         """
@@ -304,9 +306,9 @@ def show_update_dialog(latest_release, release_notes_md):
     update_dialog.exec_()
 
 
-# ========================================================================================
+# ======================================================================================
 # Animation widgets
-# ========================================================================================
+# ======================================================================================
 
 # noinspection PyArgumentList
 class FaderWidget(QtWidgets.QWidget):
@@ -463,9 +465,9 @@ class AnimatedStackedWidget(QtWidgets.QStackedWidget):
         self.setCurrentIndex(index)
 
 
-# ========================================================================================
+# ======================================================================================
 # Misc
-# ========================================================================================
+# ======================================================================================
 
 # noinspection PyArgumentList
 class QProgressIndicator(QtWidgets.QWidget):
