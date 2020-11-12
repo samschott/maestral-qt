@@ -6,7 +6,7 @@ setup(
     name="maestral-qt",
     author="Sam Schott",
     author_email="ss2151@cam.ac.uk",
-    version="v1.2.3.dev0",
+    version="v1.2.3",
     description="A Qt GUI for the Maestral daemon",
     url="https://github.com/SamSchott/maestral",
     license="MIT",
