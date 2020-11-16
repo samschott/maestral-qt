@@ -219,7 +219,7 @@ class Worker(QtCore.QObject):
     sig_done = QtCore.pyqtSignal(object)
 
     def __init__(self, target=None, args=None, kwargs=None):
-        QtCore.QObject.__init__(self)
+        super().__init__()
         self._target = target
         self._args = args or ()
         self._kwargs = kwargs or {}
@@ -229,7 +229,7 @@ class Worker(QtCore.QObject):
         res = self._target(*self._args, **self._kwargs)
 
         try:
-            # return results iteratively if target is an iterator
+            # return results iteratively if res is an iterator
             while True:
                 try:
                     self.sig_done.emit(next(res))
@@ -246,7 +246,7 @@ class MaestralWorker(Worker):
 
     def __init__(self, config_name="maestral", target=None, args=None, kwargs=None):
         self.config_name = config_name
-        Worker.__init__(self, target, args, kwargs)
+        super().__init__(target, args, kwargs)
 
     def start(self):
         with MaestralProxy(self.config_name) as m:
@@ -254,7 +254,7 @@ class MaestralWorker(Worker):
             res = func(*self._args, **self._kwargs)
 
             try:
-                # return results iteratively if target is an iterator
+                # return results iteratively if res is an iterator
                 while True:
                     try:
                         self.sig_done.emit(next(res))
@@ -273,7 +273,7 @@ class BackgroundTask(QtCore.QObject):
     def __init__(
         self, parent=None, target=None, args=None, kwargs=None, autostart=True
     ):
-        QtCore.QObject.__init__(self, parent)
+        super().__init__(parent)
         self._target = target
         self._args = args or ()
         self._kwargs = kwargs or {}
@@ -290,6 +290,10 @@ class BackgroundTask(QtCore.QObject):
         self.worker.moveToThread(self.thread)
         self.thread.started.connect(self.worker.start)
         self.thread.start()
+
+    def cancel(self):
+        self.thread.terminate()
+        self.thread.wait()
 
     def wait(self, timeout=None):
         if timeout:
@@ -312,7 +316,7 @@ class MaestralBackgroundTask(BackgroundTask):
         autostart=True,
     ):
         self.config_name = config_name
-        BackgroundTask.__init__(self, parent, target, args, kwargs, autostart)
+        super().__init__(parent, target, args, kwargs, autostart)
 
     def start(self):
 
