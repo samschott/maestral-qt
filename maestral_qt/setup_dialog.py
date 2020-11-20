@@ -305,8 +305,7 @@ class SetupDialog(QtWidgets.QDialog):
     def on_folders_selected(self):
 
         self.update_selection()
-        # this won't trigger downloads because we have not yet performed our first sync
-        self.mdbx.set_excluded_items(self.excluded_items)
+        self.mdbx.excluded_items = self.excluded_items
 
         # if any excluded items are currently on the drive, delete them
         for item in self.excluded_items:

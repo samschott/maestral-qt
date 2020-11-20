@@ -509,7 +509,7 @@ class SelectiveSyncDialog(QtWidgets.QDialog):
             return
 
         self.update_selection()
-        self.mdbx.set_excluded_items(self.excluded_items)
+        self.mdbx.excluded_items = self.excluded_items
 
     def update_selection(self, index=QModelIndex()):
 
