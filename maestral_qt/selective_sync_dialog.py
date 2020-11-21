@@ -23,9 +23,9 @@ from .utils import BackgroundTask
 
 
 # noinspection PyTypeChecker
-class TreeModel(QAbstractItemModel):
+class DropboxTreeModel(QAbstractItemModel):
     """A QAbstractItemModel which loads items and their children on-demand and
-    asynchronously. It is useful for displaying a item hierarchy from a source which is
+    asynchronously. It is useful for displaying a hierarchy from a source which is
     slow to load (remote server, slow file system, etc)."""
 
     loading_failed = QtCore.pyqtSignal()
@@ -44,7 +44,7 @@ class TreeModel(QAbstractItemModel):
     def on_loading_failed(self):
 
         self.display_message(
-            "Could not connect to Dropbox. Please check " "your internet connection."
+            "Could not connect to Dropbox. Please check your internet connection."
         )
 
     def display_message(self, message):
@@ -214,9 +214,11 @@ class AbstractTreeItem(QtCore.QObject):
         raise NotImplementedError(self.data)
 
     def child_count(self):
+        """The number of children. Calling this method will trigger loading."""
         return len(self.children_())
 
     def child_count_loaded(self):
+        """The number of children already loaded."""
         return len(self._children)
 
 
@@ -248,7 +250,7 @@ class MessageTreeItem(AbstractTreeItem):
         return 1
 
 
-class DropboxPathModel(AbstractTreeItem):
+class DropboxPathItem(AbstractTreeItem):
     """A Dropbox folder item. It lists its children asynchronously, only when asked to
     by `TreeModel`."""
 
@@ -470,8 +472,8 @@ class SelectiveSyncDialog(QtWidgets.QDialog):
     def populate_folders_list(self, overload=None):
         self.excluded_items = self.mdbx.excluded_items
         self.async_loader = AsyncListFolder(self.mdbx.config_name, self)
-        self.dbx_root = DropboxPathModel(self.mdbx, self.async_loader)
-        self.dbx_model = TreeModel(self.dbx_root)
+        self.dbx_root = DropboxPathItem(self.mdbx, self.async_loader)
+        self.dbx_model = DropboxTreeModel(self.dbx_root)
         self.dbx_model.loading_done.connect(self.ui_loaded)
         self.dbx_model.loading_failed.connect(self.ui_failed)
         self.dbx_model.dataChanged.connect(self.update_select_all_checkbox)
