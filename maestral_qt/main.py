@@ -125,7 +125,10 @@ class MaestralGuiApp(QtWidgets.QSystemTrayIcon):
 
         # schedule periodic updates
         self._wait_for_status = MaestralBackgroundTask(
-            self, self.config_name, target="status_change_longpoll"
+            parent=self,
+            config_name=self.config_name,
+            target="status_change_longpoll",
+            autostart=False,
         )
         self._wait_for_status.sig_done.connect(self.update_ui)
 
@@ -324,6 +327,9 @@ class MaestralGuiApp(QtWidgets.QSystemTrayIcon):
 
         # --------------- switch to idle icon -------------------
         self.setIcon(IDLE)
+
+        # ------------ subscribe to status updates --------------
+        self._wait_for_status.start()
 
     # callbacks for user interaction
 
