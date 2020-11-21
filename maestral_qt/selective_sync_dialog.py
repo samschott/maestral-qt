@@ -298,7 +298,7 @@ class DropboxPathItem(AbstractTreeItem):
     def _create_children_async(self):
         if self.is_folder:
             self._remote = self._async_loader.listChildren(self._path)
-            self._remote.sig_done.connect(self._async_loading_done)
+            self._remote.sig_result.connect(self._async_loading_done)
         else:
             self._async_loading_done([])
 
@@ -316,7 +316,7 @@ class DropboxPathItem(AbstractTreeItem):
             self.loading_failed.emit()
         else:
             new_nodes = [
-                self.__class__(
+                DropboxPathItem(
                     self._mdbx,
                     self._async_loader,
                     path=e["path_display"],
@@ -404,28 +404,13 @@ class AsyncListFolder(QtCore.QObject):
     def listChildren(self, path):
         """
         Returns a running instance of :class:`maestral.gui.utils.BackgroundTask` which
-        will emit `sig_done` once it has a result.
+        will emit `sig_result` once it has a result.
         :param str path: Dropbox path to list.
         :returns: Running background task.
         :rtype: :class:`maestral.gui.utils.BackgroundTask`
         """
 
-        new_job = BackgroundTask(
-            parent=self, target=self._listChildren, args=(path,), autostart=False
-        )
-
-        # use a QTimer based logic to start a maximum of 10 QThreads
-        # we risk a segfault for too many QThreads otherwise
-
-        retry_timer = QtCore.QTimer()
-
-        def retry_job():
-            if self._sem.tryAcquire():
-                new_job.start()
-                retry_timer.stop()
-
-        retry_timer.timeout.connect(retry_job)
-        retry_timer.start(100)
+        new_job = BackgroundTask(parent=self, target=self._listChildren, args=(path,))
 
         return new_job
 

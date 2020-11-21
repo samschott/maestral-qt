@@ -130,7 +130,7 @@ class MaestralGuiApp(QtWidgets.QSystemTrayIcon):
             target="status_change_longpoll",
             autostart=False,
         )
-        self._wait_for_status.sig_done.connect(self.update_ui)
+        self._wait_for_status.sig_result.connect(self.update_ui)
 
     def setIcon(self, icon_name):
         icon = self.icons.get(icon_name, self.icons[SYNCING])
@@ -344,7 +344,7 @@ class MaestralGuiApp(QtWidgets.QSystemTrayIcon):
             checker = MaestralBackgroundTask(
                 self, self.mdbx.config_name, "check_for_updates"
             )
-            checker.sig_done.connect(self._notify_updates_auto)
+            checker.sig_result.connect(self._notify_updates_auto)
 
     @QtCore.pyqtSlot()
     def on_check_for_updates_clicked(self):
@@ -354,10 +354,10 @@ class MaestralGuiApp(QtWidgets.QSystemTrayIcon):
         )
         self._progress_dialog = BackgroundTaskProgressDialog("Checking for Updates")
         self._progress_dialog.show()
-        self._progress_dialog.rejected.connect(checker.sig_done.disconnect)
+        self._progress_dialog.rejected.connect(checker.sig_result.disconnect)
 
-        checker.sig_done.connect(self._progress_dialog.accept)
-        checker.sig_done.connect(self._notify_updates_user_requested)
+        checker.sig_result.connect(self._progress_dialog.accept)
+        checker.sig_result.connect(self._notify_updates_user_requested)
 
     @QtCore.pyqtSlot(dict)
     def _notify_updates_user_requested(self, res):
@@ -593,7 +593,7 @@ class MaestralGuiApp(QtWidgets.QSystemTrayIcon):
                 target=stop_maestral_daemon_process,
                 args=(self.config_name,),
             )
-            task.sig_done.connect(QtWidgets.QApplication.instance().quit)
+            task.sig_result.connect(QtWidgets.QApplication.instance().quit)
         else:
             QtWidgets.QApplication.instance().quit()
 

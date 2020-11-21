@@ -197,7 +197,7 @@ class SetupDialog(QtWidgets.QDialog):
         self.auth_task = MaestralBackgroundTask(
             parent=self, config_name=self.mdbx.config_name, target="link", args=(token,)
         )
-        self.auth_task.sig_done.connect(self.on_link_done)
+        self.auth_task.sig_result.connect(self.on_link_done)
 
     def on_link_done(self, res):
 

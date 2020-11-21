@@ -32,6 +32,10 @@ IS_MACOS_BUNDLE = IS_BUNDLE and IS_MACOS
 IS_LINUX_BUNDLE = IS_BUNDLE and IS_LINUX
 
 
+thread_pool = QtCore.QThreadPool()
+thread_pool.setMaxThreadCount(10)
+
+
 # ======================================================================================
 # Helper functions
 # ======================================================================================
@@ -213,18 +217,22 @@ def is_dark_window():
 # ======================================================================================
 
 
-class Worker(QtCore.QObject):
-    """A worker object. To be used in QThreads."""
+class WorkerEmitter(QtCore.QObject):
+    sig_result = QtCore.pyqtSignal(object)
+    sig_done = QtCore.pyqtSignal()
 
-    sig_done = QtCore.pyqtSignal(object)
+
+class Worker(QtCore.QRunnable):
+    """A worker object. To be used in QThreads."""
 
     def __init__(self, target=None, args=None, kwargs=None):
         super().__init__()
         self._target = target
         self._args = args or ()
         self._kwargs = kwargs or {}
+        self.emitter = WorkerEmitter()
 
-    def start(self):
+    def run(self):
 
         res = self._target(*self._args, **self._kwargs)
 
@@ -232,12 +240,14 @@ class Worker(QtCore.QObject):
             # return results iteratively if res is an iterator
             while True:
                 try:
-                    self.sig_done.emit(next(res))
+                    self.emitter.sig_result.emit(next(res))
                 except StopIteration:
                     return
         except TypeError:
             # return result directly otherwise
-            self.sig_done.emit(res)
+            self.emitter.sig_result.emit(res)
+
+        self.emitter.sig_done.emit()
 
 
 class MaestralWorker(Worker):
@@ -248,7 +258,7 @@ class MaestralWorker(Worker):
         self.config_name = config_name
         super().__init__(target, args, kwargs)
 
-    def start(self):
+    def run(self):
         with MaestralProxy(self.config_name) as m:
             func = m.__getattr__(self._target)
             res = func(*self._args, **self._kwargs)
@@ -257,18 +267,21 @@ class MaestralWorker(Worker):
                 # return results iteratively if res is an iterator
                 while True:
                     try:
-                        self.sig_done.emit(next(res))
+                        self.emitter.sig_result.emit(next(res))
                     except StopIteration:
                         return
             except TypeError:
                 # return result directly otherwise
-                self.sig_done.emit(res)
+                self.emitter.sig_result.emit(res)
+
+        self.emitter.sig_done.emit()
 
 
 class BackgroundTask(QtCore.QObject):
     """A utility class to manage a worker thread."""
 
-    sig_done = QtCore.pyqtSignal(object)
+    sig_result = QtCore.pyqtSignal(object)
+    sig_done = QtCore.pyqtSignal()
 
     def __init__(
         self, parent=None, target=None, args=None, kwargs=None, autostart=True
@@ -283,23 +296,10 @@ class BackgroundTask(QtCore.QObject):
 
     def start(self):
 
-        self.thread = QtCore.QThread(self)
         self.worker = Worker(target=self._target, args=self._args, kwargs=self._kwargs)
-        self.worker.sig_done.connect(self.thread.quit)
-        self.worker.sig_done.connect(self.sig_done.emit)
-        self.worker.moveToThread(self.thread)
-        self.thread.started.connect(self.worker.start)
-        self.thread.start()
-
-    def cancel(self):
-        self.thread.terminate()
-        self.thread.wait()
-
-    def wait(self, timeout=None):
-        if timeout:
-            self.thread.wait(msecs=timeout)
-        else:
-            self.thread.wait()
+        self.worker.emitter.sig_result.connect(self.sig_result.emit)
+        self.worker.emitter.sig_done.connect(self.sig_done.emit)
+        thread_pool.start(self.worker)
 
 
 class MaestralBackgroundTask(BackgroundTask):
@@ -320,7 +320,6 @@ class MaestralBackgroundTask(BackgroundTask):
 
     def start(self):
 
-        self.thread = QtCore.QThread(self)
         self.worker = MaestralWorker(
             config_name=self.config_name,
             target=self._target,
@@ -328,8 +327,6 @@ class MaestralBackgroundTask(BackgroundTask):
             kwargs=self._kwargs,
         )
 
-        self.worker.sig_done.connect(self.thread.quit)
-        self.worker.sig_done.connect(self.sig_done.emit)
-        self.worker.moveToThread(self.thread)
-        self.thread.started.connect(self.worker.start)
-        self.thread.start()
+        self.worker.emitter.sig_result.connect(self.sig_result.emit)
+        self.worker.emitter.sig_done.connect(self.sig_done.emit)
+        thread_pool.start(self.worker)

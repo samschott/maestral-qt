@@ -73,7 +73,7 @@ class UnlinkDialog(QtWidgets.QDialog):
         self.unlink_thread = MaestralBackgroundTask(
             self, self.mdbx.config_name, "unlink"
         )
-        self.unlink_thread.sig_done.connect(self.restart_func)
+        self.unlink_thread.sig_result.connect(self.restart_func)
 
 
 # noinspection PyArgumentList
