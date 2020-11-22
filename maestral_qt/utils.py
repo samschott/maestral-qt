@@ -12,6 +12,7 @@ import platform
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtCore import Qt, QRect
 from PyQt5.QtGui import QBrush, QImage, QPainter, QPixmap
+from Pyro5.errors import ConnectionClosedError
 
 # maestral modules
 from maestral.daemon import MaestralProxy
@@ -236,17 +237,7 @@ class Worker(QtCore.QRunnable):
 
         res = self._target(*self._args, **self._kwargs)
 
-        try:
-            # return results iteratively if res is an iterator
-            while True:
-                try:
-                    self.emitter.sig_result.emit(next(res))
-                except StopIteration:
-                    return
-        except TypeError:
-            # return result directly otherwise
-            self.emitter.sig_result.emit(res)
-
+        self.emitter.sig_result.emit(next(res))
         self.emitter.sig_done.emit()
 
 
@@ -256,24 +247,33 @@ class MaestralWorker(Worker):
 
     def __init__(self, config_name="maestral", target=None, args=None, kwargs=None):
         self.config_name = config_name
+        self.connection = None
         super().__init__(target, args, kwargs)
 
     def run(self):
-        with MaestralProxy(self.config_name) as m:
-            func = m.__getattr__(self._target)
-            res = func(*self._args, **self._kwargs)
 
-            try:
-                # return results iteratively if res is an iterator
-                while True:
-                    try:
-                        self.emitter.sig_result.emit(next(res))
-                    except StopIteration:
-                        return
-            except TypeError:
-                # return result directly otherwise
-                self.emitter.sig_result.emit(res)
+        try:
+            with MaestralProxy(self.config_name) as proxy:
 
+                self.connection = proxy._m._pyroConnection
+
+                func = proxy.__getattr__(self._target)
+                res = func(*self._args, **self._kwargs)
+
+                if hasattr(res, "__next__"):
+                    while True:
+                        try:
+                            next_res = next(res)
+                            self.emitter.sig_result.emit(next_res)
+                        except StopIteration:
+                            return
+                else:
+                    self.emitter.sig_result.emit(res)
+
+        except ConnectionClosedError:
+            pass
+
+        self.connection = None
         self.emitter.sig_done.emit()
 
 
@@ -330,3 +330,8 @@ class MaestralBackgroundTask(BackgroundTask):
         self.worker.emitter.sig_result.connect(self.sig_result.emit)
         self.worker.emitter.sig_done.connect(self.sig_done.emit)
         thread_pool.start(self.worker)
+
+    def cancel(self):
+        # brute force termination by closing the socket
+        if self.worker.connection:
+            self.worker.connection.close()

@@ -586,6 +586,8 @@ class MaestralGuiApp(QtWidgets.QSystemTrayIcon):
             daemon will only be stopped if it was started by the GUI (default).
         """
 
+        self._wait_for_status.cancel()
+
         # stop sync daemon if we started it or ``stop_daemon`` is ``True``
         if stop_daemon or self._started:
             task = BackgroundTask(
