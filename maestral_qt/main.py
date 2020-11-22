@@ -156,9 +156,8 @@ class MaestralGuiApp(QtWidgets.QSystemTrayIcon):
                 self.update_error()
             except CommunicationError:
                 self.quit()
-
-        # schedule another update
-        self._wait_for_status.start()
+            else:
+                self._wait_for_status.start()
 
     def show_when_systray_available(self):
         # If available, show icon, otherwise, set a timer to check back later.
