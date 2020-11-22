@@ -237,7 +237,7 @@ class Worker(QtCore.QRunnable):
 
         res = self._target(*self._args, **self._kwargs)
 
-        self.emitter.sig_result.emit(next(res))
+        self.emitter.sig_result.emit(res)
         self.emitter.sig_done.emit()
 
 
