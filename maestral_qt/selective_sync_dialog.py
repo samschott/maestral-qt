@@ -14,12 +14,13 @@ from PyQt5.QtCore import QAbstractItemModel, QModelIndex, Qt, QVariant
 
 # maestral modules
 from maestral.daemon import MaestralProxy
-from maestral.errors import NotAFolderError, NotFoundError
+from maestral.errors import NotAFolderError, NotFoundError, BusyError
 from maestral.utils.path import is_child
 
 # local imports
 from .resources import FOLDERS_DIALOG_PATH, native_folder_icon, native_file_icon
 from .utils import BackgroundTask
+from .widgets import UserDialog
 
 
 # noinspection PyTypeChecker
@@ -437,13 +438,13 @@ class SelectiveSyncDialog(QtWidgets.QDialog):
 
         self.mdbx = mdbx
         self.dbx_model = None
-        self.accept_button = self.buttonBox.buttons()[0]
-        self.accept_button.setText("Update")
+        self.updateButton.setEnabled(False)
 
         self.ui_failed()
 
         # connect callbacks
-        self.buttonBox.accepted.connect(self.on_accepted)
+        self.updateButton.clicked.connect(self.on_accepted)
+        self.cancelButton.clicked.connect(self.close)
         self.selectAllCheckBox.clicked.connect(self.on_select_all_clicked)
 
     def populate_folders_list(self, overload=None):
@@ -454,6 +455,7 @@ class SelectiveSyncDialog(QtWidgets.QDialog):
         self.dbx_model.loading_done.connect(self.ui_loaded)
         self.dbx_model.loading_failed.connect(self.ui_failed)
         self.dbx_model.dataChanged.connect(self.update_select_all_checkbox)
+        self.dbx_model.dataChanged.connect(self.update_dialog_buttons)
         self.treeViewFolders.setModel(self.dbx_model)
 
     @QtCore.pyqtSlot()
@@ -466,6 +468,10 @@ class SelectiveSyncDialog(QtWidgets.QDialog):
             self.selectAllCheckBox.setChecked(True)
         else:
             self.selectAllCheckBox.setChecked(False)
+
+    @QtCore.pyqtSlot()
+    def update_dialog_buttons(self):
+        self.updateButton.setEnabled(not self.dbx_root.isOriginalState())
 
     @QtCore.pyqtSlot(bool)
     def on_select_all_clicked(self, checked):
@@ -485,10 +491,18 @@ class SelectiveSyncDialog(QtWidgets.QDialog):
 
         if not self.mdbx.connected:
             self.dbx_model.on_loading_failed()
-            return
 
-        self.update_selection()
-        self.mdbx.excluded_items = self.excluded_items
+        else:
+
+            self.update_selection()
+
+            try:
+                self.mdbx.excluded_items = self.excluded_items
+            except BusyError as err:
+                msg_box = UserDialog(err.title, err.message, parent=self)
+                msg_box.open()
+            else:
+                self.accept()
 
     def update_selection(self, index=QModelIndex()):
 
@@ -514,12 +528,12 @@ class SelectiveSyncDialog(QtWidgets.QDialog):
 
     @QtCore.pyqtSlot()
     def ui_failed(self):
-        self.accept_button.setEnabled(False)
+        self.updateButton.setEnabled(False)
         self.selectAllCheckBox.setEnabled(False)
 
     @QtCore.pyqtSlot()
     def ui_loaded(self):
-        self.accept_button.setEnabled(True)
+        self.updateButton.setEnabled(True)
         self.selectAllCheckBox.setEnabled(True)
 
     def changeEvent(self, QEvent):
