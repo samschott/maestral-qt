@@ -304,13 +304,9 @@ class DropboxPathItem(AbstractTreeItem):
 
     def _async_loading_done(self, results):
 
-        try:
-            n0 = self._children[0]
-        except IndexError:
-            pass
-        else:
-            if isinstance(n0, MessageTreeItem):
-                self._children.remove(n0)
+        for child in self._children.copy():
+            if isinstance(child, MessageTreeItem):
+                self._children.remove(child)
 
         if results is False:
             self.loading_failed.emit()
@@ -382,10 +378,6 @@ class DropboxPathItem(AbstractTreeItem):
 
 
 class AsyncListFolder(QtCore.QObject):
-
-    # do not list contents of more than 10 folders in parallel
-    _sem = QtCore.QSemaphore(10)
-
     def __init__(self, config_name, parent=None):
         """
         A helper which creates instances of :class:`BackgroundTask` to

@@ -237,6 +237,16 @@ class Worker(QtCore.QRunnable):
 
         res = self._target(*self._args, **self._kwargs)
 
+        if hasattr(res, "__next__"):
+            while True:
+                try:
+                    next_res = next(res)
+                    self.emitter.sig_result.emit(next_res)
+                except StopIteration:
+                    return
+        else:
+            self.emitter.sig_result.emit(res)
+
         self.emitter.sig_result.emit(res)
         self.emitter.sig_done.emit()
 
