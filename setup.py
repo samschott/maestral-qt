@@ -35,8 +35,8 @@ setup(
     ],
     zip_safe=False,
     entry_points={
-        "console_scripts": ["maestral_qt=maestral_qt.cli:main"],
-        "maestral_gui": ["maestral_qt=maestral_qt.main:run"],
+        "console_scripts": ["maestral_qt=maestral_qt.__main__:main"],
+        "maestral_gui": ["maestral_qt=maestral_qt.app:run"],
         "pyinstaller40": ["hook-dirs=maestral_qt.__pyinstaller:get_hook_dirs"],
     },
     classifiers=[
