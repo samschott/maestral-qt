@@ -518,8 +518,6 @@ class MaestralGuiApp(QtWidgets.QSystemTrayIcon):
         self.pauseAction.setEnabled(False)
         self.statusAction.setText(self.mdbx.status)
 
-        self.mdbx.stop_sync()
-
         err = errs[-1]
 
         if err["type"] == "NoDropboxDirError":
