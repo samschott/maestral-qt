@@ -25,7 +25,6 @@ setup(
     python_requires=">=3.6",
     setup_requires=["wheel"],
     install_requires=[
-        "bugsnag>=3.4.0",
         "click>=7.1.1",
         "importlib_resources;python_version<'3.9'",
         "maestral>=1.2.2",
