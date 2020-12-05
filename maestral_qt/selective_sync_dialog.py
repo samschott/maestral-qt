@@ -15,7 +15,7 @@ from PyQt5.QtCore import QAbstractItemModel, QModelIndex, Qt, QVariant
 # maestral modules
 from maestral.daemon import MaestralProxy
 from maestral.errors import NotAFolderError, NotFoundError, BusyError
-from maestral.utils.path import is_child
+from maestral.utils.path import is_child, is_equal_or_child
 
 # local imports
 from .resources import FOLDERS_DIALOG_PATH, native_folder_icon, native_file_icon
@@ -513,11 +513,18 @@ class SelectiveSyncDialog(QtWidgets.QDialog):
             # Include items which have been checked / partially checked.
             # Remove items which have been unchecked.
             # The list will be cleaned up later.
-            if item.checkState == 0:
+
+            if item.checkState == 0:  # excluded
                 self.excluded_items.append(item_dbx_path)
-            elif item.checkState in (1, 2):
+            elif item.checkState == 1:  # included but has excluded children
                 self.excluded_items = [
-                    f for f in self.excluded_items if not f == item_dbx_path
+                    p for p in self.excluded_items if not p == item_dbx_path
+                ]
+            elif item.checkState == 2:  # fully included
+                self.excluded_items = [
+                    p
+                    for p in self.excluded_items
+                    if not is_equal_or_child(p, item_dbx_path)
                 ]
         else:
             item = self.dbx_model._root_item
