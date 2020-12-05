@@ -6,7 +6,7 @@ setup(
     name="maestral-qt",
     author="Sam Schott",
     author_email="ss2151@cam.ac.uk",
-    version="1.3.0",
+    version="1.3.1",
     description="A Qt GUI for the Maestral daemon",
     url="https://github.com/SamSchott/maestral",
     license="MIT",
@@ -36,7 +36,7 @@ setup(
     zip_safe=False,
     entry_points={
         "console_scripts": ["maestral_qt=maestral_qt.__main__:main"],
-        "maestral_gui": ["maestral_qt=maestral_qt.app:run"],
+        "maestral_gui": ["maestral_qt=maestral_qt.main:run"],
         "pyinstaller40": ["hook-dirs=maestral_qt.__pyinstaller:get_hook_dirs"],
     },
     classifiers=[
