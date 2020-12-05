@@ -12,6 +12,7 @@ import platform
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtCore import Qt, QRect
 from PyQt5.QtGui import QBrush, QImage, QPainter, QPixmap
+from Pyro5.errors import ConnectionClosedError
 
 # maestral modules
 from maestral.daemon import MaestralProxy
@@ -30,6 +31,10 @@ IS_MACOS = platform.system() == "Darwin"
 IS_LINUX = platform.system() == "Linux"
 IS_MACOS_BUNDLE = IS_BUNDLE and IS_MACOS
 IS_LINUX_BUNDLE = IS_BUNDLE and IS_LINUX
+
+
+thread_pool = QtCore.QThreadPool()
+thread_pool.setMaxThreadCount(10)
 
 
 # ======================================================================================
@@ -213,31 +218,37 @@ def is_dark_window():
 # ======================================================================================
 
 
-class Worker(QtCore.QObject):
+class WorkerEmitter(QtCore.QObject):
+    sig_result = QtCore.pyqtSignal(object)
+    sig_done = QtCore.pyqtSignal()
+
+
+class Worker(QtCore.QRunnable):
     """A worker object. To be used in QThreads."""
 
-    sig_done = QtCore.pyqtSignal(object)
-
     def __init__(self, target=None, args=None, kwargs=None):
-        QtCore.QObject.__init__(self)
+        super().__init__()
         self._target = target
         self._args = args or ()
         self._kwargs = kwargs or {}
+        self.emitter = WorkerEmitter()
 
-    def start(self):
+    def run(self):
 
         res = self._target(*self._args, **self._kwargs)
 
-        try:
-            # return results iteratively if target is an iterator
+        if hasattr(res, "__next__"):
             while True:
                 try:
-                    self.sig_done.emit(next(res))
+                    next_res = next(res)
+                    self.emitter.sig_result.emit(next_res)
                 except StopIteration:
                     return
-        except TypeError:
-            # return result directly otherwise
-            self.sig_done.emit(res)
+        else:
+            self.emitter.sig_result.emit(res)
+
+        self.emitter.sig_result.emit(res)
+        self.emitter.sig_done.emit()
 
 
 class MaestralWorker(Worker):
@@ -246,34 +257,46 @@ class MaestralWorker(Worker):
 
     def __init__(self, config_name="maestral", target=None, args=None, kwargs=None):
         self.config_name = config_name
-        Worker.__init__(self, target, args, kwargs)
+        self.connection = None
+        super().__init__(target, args, kwargs)
 
-    def start(self):
-        with MaestralProxy(self.config_name) as m:
-            func = m.__getattr__(self._target)
-            res = func(*self._args, **self._kwargs)
+    def run(self):
 
-            try:
-                # return results iteratively if target is an iterator
-                while True:
-                    try:
-                        self.sig_done.emit(next(res))
-                    except StopIteration:
-                        return
-            except TypeError:
-                # return result directly otherwise
-                self.sig_done.emit(res)
+        try:
+            with MaestralProxy(self.config_name) as proxy:
+
+                self.connection = proxy._m._pyroConnection
+
+                func = proxy.__getattr__(self._target)
+                res = func(*self._args, **self._kwargs)
+
+                if hasattr(res, "__next__"):
+                    while True:
+                        try:
+                            next_res = next(res)
+                            self.emitter.sig_result.emit(next_res)
+                        except StopIteration:
+                            return
+                else:
+                    self.emitter.sig_result.emit(res)
+
+        except ConnectionClosedError:
+            pass
+
+        self.connection = None
+        self.emitter.sig_done.emit()
 
 
 class BackgroundTask(QtCore.QObject):
     """A utility class to manage a worker thread."""
 
-    sig_done = QtCore.pyqtSignal(object)
+    sig_result = QtCore.pyqtSignal(object)
+    sig_done = QtCore.pyqtSignal()
 
     def __init__(
         self, parent=None, target=None, args=None, kwargs=None, autostart=True
     ):
-        QtCore.QObject.__init__(self, parent)
+        super().__init__(parent)
         self._target = target
         self._args = args or ()
         self._kwargs = kwargs or {}
@@ -283,19 +306,10 @@ class BackgroundTask(QtCore.QObject):
 
     def start(self):
 
-        self.thread = QtCore.QThread(self)
         self.worker = Worker(target=self._target, args=self._args, kwargs=self._kwargs)
-        self.worker.sig_done.connect(self.thread.quit)
-        self.worker.sig_done.connect(self.sig_done.emit)
-        self.worker.moveToThread(self.thread)
-        self.thread.started.connect(self.worker.start)
-        self.thread.start()
-
-    def wait(self, timeout=None):
-        if timeout:
-            self.thread.wait(msecs=timeout)
-        else:
-            self.thread.wait()
+        self.worker.emitter.sig_result.connect(self.sig_result.emit)
+        self.worker.emitter.sig_done.connect(self.sig_done.emit)
+        thread_pool.start(self.worker)
 
 
 class MaestralBackgroundTask(BackgroundTask):
@@ -312,11 +326,10 @@ class MaestralBackgroundTask(BackgroundTask):
         autostart=True,
     ):
         self.config_name = config_name
-        BackgroundTask.__init__(self, parent, target, args, kwargs, autostart)
+        super().__init__(parent, target, args, kwargs, autostart)
 
     def start(self):
 
-        self.thread = QtCore.QThread(self)
         self.worker = MaestralWorker(
             config_name=self.config_name,
             target=self._target,
@@ -324,8 +337,11 @@ class MaestralBackgroundTask(BackgroundTask):
             kwargs=self._kwargs,
         )
 
-        self.worker.sig_done.connect(self.thread.quit)
-        self.worker.sig_done.connect(self.sig_done.emit)
-        self.worker.moveToThread(self.thread)
-        self.thread.started.connect(self.worker.start)
-        self.thread.start()
+        self.worker.emitter.sig_result.connect(self.sig_result.emit)
+        self.worker.emitter.sig_done.connect(self.sig_done.emit)
+        thread_pool.start(self.worker)
+
+    def cancel(self):
+        # brute force termination by closing the socket
+        if self.worker.connection:
+            self.worker.connection.close()

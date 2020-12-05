@@ -316,7 +316,7 @@ class FaderWidget(QtWidgets.QWidget):
     pixmap_opacity = 1.0
 
     def __init__(self, old_widget, new_widget, duration=300):
-        QtWidgets.QWidget.__init__(self, new_widget)
+        super().__init__(new_widget)
 
         pr = QtWidgets.QApplication.instance().devicePixelRatio()
         self.old_pixmap = QPixmap(new_widget.size() * pr)

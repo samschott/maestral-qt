@@ -19,7 +19,7 @@ from maestral.utils.path import delete
 from .resources import APP_ICON_PATH, SETUP_DIALOG_PATH, native_item_icon
 from .utils import IS_MACOS, MaestralBackgroundTask, icon_to_pixmap
 from .widgets import UserDialog
-from .selective_sync_dialog import AsyncListFolder, TreeModel, DropboxPathModel
+from .selective_sync_dialog import AsyncListFolder, DropboxTreeModel, DropboxPathItem
 
 
 # noinspection PyArgumentList
@@ -197,7 +197,7 @@ class SetupDialog(QtWidgets.QDialog):
         self.auth_task = MaestralBackgroundTask(
             parent=self, config_name=self.mdbx.config_name, target="link", args=(token,)
         )
-        self.auth_task.sig_done.connect(self.on_link_done)
+        self.auth_task.sig_result.connect(self.on_link_done)
 
     def on_link_done(self, res):
 
@@ -305,8 +305,7 @@ class SetupDialog(QtWidgets.QDialog):
     def on_folders_selected(self):
 
         self.update_selection()
-        # this won't trigger downloads because we have not yet performed our first sync
-        self.mdbx.set_excluded_items(self.excluded_items)
+        self.mdbx.excluded_items = self.excluded_items
 
         # if any excluded items are currently on the drive, delete them
         for item in self.excluded_items:
@@ -336,8 +335,8 @@ class SetupDialog(QtWidgets.QDialog):
 
     def populate_folders_list(self):
         self.async_loader = AsyncListFolder(self.mdbx.config_name, self)
-        self.dbx_root = DropboxPathModel(self.mdbx, self.async_loader)
-        self.dbx_model = TreeModel(self.dbx_root)
+        self.dbx_root = DropboxPathItem(self.mdbx, self.async_loader)
+        self.dbx_model = DropboxTreeModel(self.dbx_root)
         self.dbx_model.dataChanged.connect(self.update_select_all_checkbox)
         self.treeViewFolders.setModel(self.dbx_model)
 

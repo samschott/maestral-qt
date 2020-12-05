@@ -14,18 +14,19 @@ from PyQt5.QtCore import QAbstractItemModel, QModelIndex, Qt, QVariant
 
 # maestral modules
 from maestral.daemon import MaestralProxy
-from maestral.errors import NotAFolderError, NotFoundError
-from maestral.utils.path import is_child
+from maestral.errors import NotAFolderError, NotFoundError, BusyError
+from maestral.utils.path import is_child, is_equal_or_child
 
 # local imports
 from .resources import FOLDERS_DIALOG_PATH, native_folder_icon, native_file_icon
 from .utils import BackgroundTask
+from .widgets import UserDialog
 
 
 # noinspection PyTypeChecker
-class TreeModel(QAbstractItemModel):
+class DropboxTreeModel(QAbstractItemModel):
     """A QAbstractItemModel which loads items and their children on-demand and
-    asynchronously. It is useful for displaying a item hierarchy from a source which is
+    asynchronously. It is useful for displaying a hierarchy from a source which is
     slow to load (remote server, slow file system, etc)."""
 
     loading_failed = QtCore.pyqtSignal()
@@ -44,7 +45,7 @@ class TreeModel(QAbstractItemModel):
     def on_loading_failed(self):
 
         self.display_message(
-            "Could not connect to Dropbox. Please check " "your internet connection."
+            "Could not connect to Dropbox. Please check your internet connection."
         )
 
     def display_message(self, message):
@@ -214,9 +215,11 @@ class AbstractTreeItem(QtCore.QObject):
         raise NotImplementedError(self.data)
 
     def child_count(self):
+        """The number of children. Calling this method will trigger loading."""
         return len(self.children_())
 
     def child_count_loaded(self):
+        """The number of children already loaded."""
         return len(self._children)
 
 
@@ -248,7 +251,7 @@ class MessageTreeItem(AbstractTreeItem):
         return 1
 
 
-class DropboxPathModel(AbstractTreeItem):
+class DropboxPathItem(AbstractTreeItem):
     """A Dropbox folder item. It lists its children asynchronously, only when asked to
     by `TreeModel`."""
 
@@ -296,25 +299,21 @@ class DropboxPathModel(AbstractTreeItem):
     def _create_children_async(self):
         if self.is_folder:
             self._remote = self._async_loader.listChildren(self._path)
-            self._remote.sig_done.connect(self._async_loading_done)
+            self._remote.sig_result.connect(self._async_loading_done)
         else:
             self._async_loading_done([])
 
     def _async_loading_done(self, results):
 
-        try:
-            n0 = self._children[0]
-        except IndexError:
-            pass
-        else:
-            if isinstance(n0, MessageTreeItem):
-                self._children.remove(n0)
+        for child in self._children.copy():
+            if isinstance(child, MessageTreeItem):
+                self._children.remove(child)
 
         if results is False:
             self.loading_failed.emit()
         else:
             new_nodes = [
-                self.__class__(
+                DropboxPathItem(
                     self._mdbx,
                     self._async_loader,
                     path=e["path_display"],
@@ -380,10 +379,6 @@ class DropboxPathModel(AbstractTreeItem):
 
 
 class AsyncListFolder(QtCore.QObject):
-
-    # do not list contents of more than 10 folders in parallel
-    _sem = QtCore.QSemaphore(10)
-
     def __init__(self, config_name, parent=None):
         """
         A helper which creates instances of :class:`BackgroundTask` to
@@ -402,28 +397,13 @@ class AsyncListFolder(QtCore.QObject):
     def listChildren(self, path):
         """
         Returns a running instance of :class:`maestral.gui.utils.BackgroundTask` which
-        will emit `sig_done` once it has a result.
+        will emit `sig_result` once it has a result.
         :param str path: Dropbox path to list.
         :returns: Running background task.
         :rtype: :class:`maestral.gui.utils.BackgroundTask`
         """
 
-        new_job = BackgroundTask(
-            parent=self, target=self._listChildren, args=(path,), autostart=False
-        )
-
-        # use a QTimer based logic to start a maximum of 10 QThreads
-        # we risk a segfault for too many QThreads otherwise
-
-        retry_timer = QtCore.QTimer()
-
-        def retry_job():
-            if self._sem.tryAcquire():
-                new_job.start()
-                retry_timer.stop()
-
-        retry_timer.timeout.connect(retry_job)
-        retry_timer.start(100)
+        new_job = BackgroundTask(parent=self, target=self._listChildren, args=(path,))
 
         return new_job
 
@@ -458,23 +438,24 @@ class SelectiveSyncDialog(QtWidgets.QDialog):
 
         self.mdbx = mdbx
         self.dbx_model = None
-        self.accept_button = self.buttonBox.buttons()[0]
-        self.accept_button.setText("Update")
+        self.updateButton.setEnabled(False)
 
         self.ui_failed()
 
         # connect callbacks
-        self.buttonBox.accepted.connect(self.on_accepted)
+        self.updateButton.clicked.connect(self.on_accepted)
+        self.cancelButton.clicked.connect(self.close)
         self.selectAllCheckBox.clicked.connect(self.on_select_all_clicked)
 
     def populate_folders_list(self, overload=None):
         self.excluded_items = self.mdbx.excluded_items
         self.async_loader = AsyncListFolder(self.mdbx.config_name, self)
-        self.dbx_root = DropboxPathModel(self.mdbx, self.async_loader)
-        self.dbx_model = TreeModel(self.dbx_root)
+        self.dbx_root = DropboxPathItem(self.mdbx, self.async_loader)
+        self.dbx_model = DropboxTreeModel(self.dbx_root)
         self.dbx_model.loading_done.connect(self.ui_loaded)
         self.dbx_model.loading_failed.connect(self.ui_failed)
         self.dbx_model.dataChanged.connect(self.update_select_all_checkbox)
+        self.dbx_model.dataChanged.connect(self.update_dialog_buttons)
         self.treeViewFolders.setModel(self.dbx_model)
 
     @QtCore.pyqtSlot()
@@ -487,6 +468,10 @@ class SelectiveSyncDialog(QtWidgets.QDialog):
             self.selectAllCheckBox.setChecked(True)
         else:
             self.selectAllCheckBox.setChecked(False)
+
+    @QtCore.pyqtSlot()
+    def update_dialog_buttons(self):
+        self.updateButton.setEnabled(not self.dbx_root.isOriginalState())
 
     @QtCore.pyqtSlot(bool)
     def on_select_all_clicked(self, checked):
@@ -506,10 +491,18 @@ class SelectiveSyncDialog(QtWidgets.QDialog):
 
         if not self.mdbx.connected:
             self.dbx_model.on_loading_failed()
-            return
 
-        self.update_selection()
-        self.mdbx.set_excluded_items(self.excluded_items)
+        else:
+
+            self.update_selection()
+
+            try:
+                self.mdbx.excluded_items = self.excluded_items
+            except BusyError as err:
+                msg_box = UserDialog(err.title, err.message, parent=self)
+                msg_box.open()
+            else:
+                self.accept()
 
     def update_selection(self, index=QModelIndex()):
 
@@ -520,11 +513,18 @@ class SelectiveSyncDialog(QtWidgets.QDialog):
             # Include items which have been checked / partially checked.
             # Remove items which have been unchecked.
             # The list will be cleaned up later.
-            if item.checkState == 0:
+
+            if item.checkState == 0:  # excluded
                 self.excluded_items.append(item_dbx_path)
-            elif item.checkState in (1, 2):
+            elif item.checkState == 1:  # included but has excluded children
                 self.excluded_items = [
-                    f for f in self.excluded_items if not f == item_dbx_path
+                    p for p in self.excluded_items if not p == item_dbx_path
+                ]
+            elif item.checkState == 2:  # fully included
+                self.excluded_items = [
+                    p
+                    for p in self.excluded_items
+                    if not is_equal_or_child(p, item_dbx_path)
                 ]
         else:
             item = self.dbx_model._root_item
@@ -535,12 +535,12 @@ class SelectiveSyncDialog(QtWidgets.QDialog):
 
     @QtCore.pyqtSlot()
     def ui_failed(self):
-        self.accept_button.setEnabled(False)
+        self.updateButton.setEnabled(False)
         self.selectAllCheckBox.setEnabled(False)
 
     @QtCore.pyqtSlot()
     def ui_loaded(self):
-        self.accept_button.setEnabled(True)
+        self.updateButton.setEnabled(True)
         self.selectAllCheckBox.setEnabled(True)
 
     def changeEvent(self, QEvent):

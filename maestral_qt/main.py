@@ -116,16 +116,21 @@ class MaestralGuiApp(QtWidgets.QSystemTrayIcon):
 
         self.setup_ui_unlinked()
 
-        self.update_ui_timer = QtCore.QTimer()
-        self.update_ui_timer.timeout.connect(self.update_ui)
-        self.update_ui_timer.start(2000)
-
         self.check_for_updates_timer = QtCore.QTimer()
         self.check_for_updates_timer.timeout.connect(self.auto_check_for_updates)
         self.check_for_updates_timer.start(30 * 60 * 1000)  # every 30 min
 
         self.menu.aboutToShow.connect(self._onContextMenuAboutToShow)
         self.menu.aboutToHide.connect(self._onContextMenuAboutToHide)
+
+        # schedule periodic updates
+        self._wait_for_status = MaestralBackgroundTask(
+            parent=self,
+            config_name=self.config_name,
+            target="status_change_longpoll",
+            autostart=False,
+        )
+        self._wait_for_status.sig_result.connect(self.update_ui)
 
     def setIcon(self, icon_name):
         icon = self.icons.get(icon_name, self.icons[SYNCING])
@@ -138,7 +143,6 @@ class MaestralGuiApp(QtWidgets.QSystemTrayIcon):
         self._context_menu_visible = True
         if self.loading_done:
             self.update_status()
-        self.update_ui_timer.setInterval(500)
 
     @QtCore.pyqtSlot()
     def _onContextMenuAboutToHide(self):
@@ -152,9 +156,8 @@ class MaestralGuiApp(QtWidgets.QSystemTrayIcon):
                 self.update_error()
             except CommunicationError:
                 self.quit()
-
-        if not self.contextMenuVisible():
-            self.update_ui_timer.setInterval(2000)
+            else:
+                self._wait_for_status.start()
 
     def show_when_systray_available(self):
         # If available, show icon, otherwise, set a timer to check back later.
@@ -324,6 +327,9 @@ class MaestralGuiApp(QtWidgets.QSystemTrayIcon):
         # --------------- switch to idle icon -------------------
         self.setIcon(IDLE)
 
+        # ------------ subscribe to status updates --------------
+        self._wait_for_status.start()
+
     # callbacks for user interaction
 
     @QtCore.pyqtSlot()
@@ -337,7 +343,7 @@ class MaestralGuiApp(QtWidgets.QSystemTrayIcon):
             checker = MaestralBackgroundTask(
                 self, self.mdbx.config_name, "check_for_updates"
             )
-            checker.sig_done.connect(self._notify_updates_auto)
+            checker.sig_result.connect(self._notify_updates_auto)
 
     @QtCore.pyqtSlot()
     def on_check_for_updates_clicked(self):
@@ -347,10 +353,10 @@ class MaestralGuiApp(QtWidgets.QSystemTrayIcon):
         )
         self._progress_dialog = BackgroundTaskProgressDialog("Checking for Updates")
         self._progress_dialog.show()
-        self._progress_dialog.rejected.connect(checker.sig_done.disconnect)
+        self._progress_dialog.rejected.connect(checker.sig_result.disconnect)
 
-        checker.sig_done.connect(self._progress_dialog.accept)
-        checker.sig_done.connect(self._notify_updates_user_requested)
+        checker.sig_result.connect(self._progress_dialog.accept)
+        checker.sig_result.connect(self._notify_updates_user_requested)
 
     @QtCore.pyqtSlot(dict)
     def _notify_updates_user_requested(self, res):
@@ -512,8 +518,6 @@ class MaestralGuiApp(QtWidgets.QSystemTrayIcon):
         self.pauseAction.setEnabled(False)
         self.statusAction.setText(self.mdbx.status)
 
-        self.mdbx.stop_sync()
-
         err = errs[-1]
 
         if err["type"] == "NoDropboxDirError":
@@ -579,8 +583,7 @@ class MaestralGuiApp(QtWidgets.QSystemTrayIcon):
             daemon will only be stopped if it was started by the GUI (default).
         """
 
-        # stop update timer to stop communication with daemon
-        self.update_ui_timer.stop()
+        self._wait_for_status.cancel()
 
         # stop sync daemon if we started it or ``stop_daemon`` is ``True``
         if stop_daemon or self._started:
@@ -589,7 +592,7 @@ class MaestralGuiApp(QtWidgets.QSystemTrayIcon):
                 target=stop_maestral_daemon_process,
                 args=(self.config_name,),
             )
-            task.sig_done.connect(QtWidgets.QApplication.instance().quit)
+            task.sig_result.connect(QtWidgets.QApplication.instance().quit)
         else:
             QtWidgets.QApplication.instance().quit()
 

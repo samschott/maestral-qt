@@ -18,3 +18,7 @@ def main():
     parsed_args = parser.parse_args()
 
     run(parsed_args.config_name)
+
+
+if __name__ == "__main__":
+    main()

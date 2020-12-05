@@ -6,7 +6,7 @@ import platform
 from typing import Optional
 
 # external imports
-from maestral.utils.autostart import (
+from maestral.autostart import (
     AutoStartBase,
     AutoStartLaunchd,
     AutoStartXDGDesktop,
@@ -26,7 +26,7 @@ class AutoStart:
 
         self.implementation = self._get_available_implementation()
 
-        start_cmd_list = [sys.executable, "-m", "maestral_cocoa", "-c", config_name]
+        start_cmd_list = [sys.executable, "-m", "maestral_qt", "-c", config_name]
         start_cmd = " ".join(start_cmd_list)
         bundle_id = "{}.{}".format(BUNDLE_ID, config_name)
 
