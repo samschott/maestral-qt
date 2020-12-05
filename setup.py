@@ -28,7 +28,7 @@ setup(
         "bugsnag>=3.4.0",
         "click>=7.1.1",
         "importlib_resources;python_version<'3.9'",
-        "maestral>=1.2.2",
+        "maestral>=1.3.0",
         "markdown2",
         "packaging",
         "PyQt5>=5.9",
