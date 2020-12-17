@@ -533,7 +533,7 @@ class MaestralGuiApp(QtWidgets.QSystemTrayIcon):
         elif "MaestralApiError" in err["inherits"] or "SyncError" in err["inherits"]:
             show_dialog(err["title"], err["message"], level="error")
         else:
-            self._exec_stacktrace_dialog(err)
+            show_stacktrace_dialog(err["traceback"])
 
     def _exec_relink_dialog(self, reason):
 
@@ -541,36 +541,6 @@ class MaestralGuiApp(QtWidgets.QSystemTrayIcon):
 
         relink_dialog.show()
         relink_dialog.exec_()
-
-    def _exec_stacktrace_dialog(self, err):
-
-        share, auto_share = show_stacktrace_dialog(
-            err["traceback"], ask_share=not self.mdbx.analytics
-        )
-
-        if share:
-            import bugsnag
-
-            bugsnag.configure(
-                api_key="081c05e2bf9730d5f55bc35dea15c833",
-                app_version=__version__,
-                auto_notify=False,
-                auto_capture_sessions=False,
-            )
-            bugsnag.notify(
-                RuntimeError(err["type"]),
-                meta_data={
-                    "system": {
-                        "platform": platform.platform(),
-                        "python": platform.python_version(),
-                        "gui": f"Qt {QtCore.PYQT_VERSION_STR}",
-                        "desktop": DESKTOP,
-                    },
-                    "original exception": err,
-                },
-            )
-
-        self.mdbx.analytics = self.mdbx.analytics or auto_share
 
     def contextMenuVisible(self):
         return self._context_menu_visible

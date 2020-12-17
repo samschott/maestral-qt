@@ -128,7 +128,6 @@ class SettingsWindow(QtWidgets.QWidget):
         self.pushButtonExcludedFolders.clicked.connect(self.selective_sync_dialog.open)
         self.checkBoxStartup.stateChanged.connect(self.on_start_on_login_clicked)
         self.checkBoxNotifications.stateChanged.connect(self.on_notifications_clicked)
-        self.checkBoxAnalytics.stateChanged.connect(self.on_analytics_clicked)
         self.comboBoxUpdateInterval.currentIndexChanged.connect(
             self.on_combobox_update_interval
         )
@@ -169,7 +168,6 @@ class SettingsWindow(QtWidgets.QWidget):
         # populate app section
         self.checkBoxStartup.setChecked(self.autostart.enabled)
         self.checkBoxNotifications.setChecked(self.mdbx.notification_level <= 15)
-        self.checkBoxAnalytics.setChecked(self.mdbx.analytics)
         update_interval = self.mdbx.get_conf("app", "update_notification_interval")
         closest_key = min(
             self._update_interval_mapping,
@@ -271,10 +269,6 @@ class SettingsWindow(QtWidgets.QWidget):
     @QtCore.pyqtSlot(int)
     def on_notifications_clicked(self, state):
         self.mdbx.notification_level = 15 if state == 2 else 30
-
-    @QtCore.pyqtSlot(int)
-    def on_analytics_clicked(self, state):
-        self.mdbx.analytics = state == 2
 
     @staticmethod
     def rel_path(path):
