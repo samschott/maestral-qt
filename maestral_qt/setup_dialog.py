@@ -38,11 +38,11 @@ class SetupDialog(QtWidgets.QDialog):
 
         self.mdbx = mdbx
         self.dbx_model = None
-        self.dropbox_location = ""
         self.excluded_items = []
         self.dropbox_location = (
             osp.dirname(self.mdbx.get_conf("main", "path")) or get_home_dir()
         )
+        self.dropbox_dirname = f"Dropbox ({self.mdbx.config_name.capitalize()})"
 
         self.app_icon = QtGui.QIcon(APP_ICON_PATH)
 
@@ -57,8 +57,7 @@ class SetupDialog(QtWidgets.QDialog):
         self.labelAuthLink.setText(prompt)
 
         # set up Dropbox location info text
-        default_dir_name = self.mdbx.get_conf("main", "default_dir_name")
-        new_label = self.labelDropboxPath.text().format(default_dir_name)
+        new_label = self.labelDropboxPath.text().format(self.dropbox_dirname)
         self.labelDropboxPath.setText(new_label)
 
         # set up Dropbox location combobox
@@ -131,8 +130,7 @@ class SetupDialog(QtWidgets.QDialog):
             To unlink your Dropbox account from Maestral, click "Unlink" below.</p>
             </body></html>
             """.format(
-                    self.mdbx.get_conf("main", "path"),
-                    self.mdbx.get_conf("main", "default_dir_name"),
+                    self.mdbx.get_conf("main", "path"), self.dropbox_dirname
                 )
             )
             self.pushButtonDropboxPathCalcel.setText("Quit")
@@ -229,9 +227,7 @@ class SetupDialog(QtWidgets.QDialog):
         self.mdbx.reset_sync_state()
 
         # apply dropbox path
-        dropbox_path = osp.join(
-            self.dropbox_location, self.mdbx.get_conf("main", "default_dir_name")
-        )
+        dropbox_path = osp.join(self.dropbox_location, self.dropbox_dirname)
 
         if osp.exists(dropbox_path):
             if osp.isdir(dropbox_path):
@@ -248,12 +244,11 @@ class SetupDialog(QtWidgets.QDialog):
                 res = msg_box.exec_()
 
             else:
-                dir_name = self.mdbx.get_conf("main", "default_dir_name")
                 msg_box = UserDialog(
                     title="File conflict",
                     message=(
-                        f'There already is a file named "{dir_name}" at this '
-                        "location. Would you like to replace it?"
+                        f'There already is a file named "{self.dropbox_dirname}" at '
+                        "this location. Would you like to replace it?"
                     ),
                     button_names=("Replace", "Cancel"),
                     parent=self,
