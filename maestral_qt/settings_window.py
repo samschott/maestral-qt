@@ -104,6 +104,7 @@ class SettingsWindow(QtWidgets.QWidget):
         self.selective_sync_dialog = SelectiveSyncDialog(self.mdbx, parent=self)
         self.unlink_dialog = UnlinkDialog(self.mdbx, self._parent.restart, parent=self)
         self.autostart = AutoStart(self.mdbx.config_name)
+        self.default_dirname = f"Dropbox ({self.mdbx.config_name.capitalize()})"
 
         self.labelAccountName.setFont(get_scaled_font(1.5))
         self.labelAccountInfo.setFont(get_scaled_font(0.9))
@@ -133,9 +134,9 @@ class SettingsWindow(QtWidgets.QWidget):
         )
         self.comboBoxDropboxPath.currentIndexChanged.connect(self.on_combobox_path)
         msg = (
-            'Choose a location for your Dropbox. A folder named "{0}" will be '
-            + "created inside the folder you select."
-        ).format(self.mdbx.get_conf("main", "default_dir_name"))
+            "Choose a location for your Dropbox. A folder named "
+            f'"{self.default_dirname}" will be created inside the selected location.'
+        )
         self.dropbox_folder_dialog = QtWidgets.QFileDialog(self, caption=msg)
         self.dropbox_folder_dialog.setModal(True)
         self.dropbox_folder_dialog.setAcceptMode(QtWidgets.QFileDialog.AcceptOpen)
@@ -244,9 +245,7 @@ class SettingsWindow(QtWidgets.QWidget):
         self.comboBoxDropboxPath.setCurrentIndex(0)
         if not new_location == "":
 
-            new_path = osp.join(
-                new_location, self.mdbx.get_conf("main", "default_dir_name")
-            )
+            new_path = osp.join(new_location, self.default_dirname)
 
             try:
                 self.mdbx.move_dropbox_directory(new_path)
