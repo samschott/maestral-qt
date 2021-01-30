@@ -247,19 +247,33 @@ class SettingsWindow(QtWidgets.QWidget):
 
             new_path = osp.join(new_location, self.default_dirname)
 
-            try:
-                self.mdbx.move_dropbox_directory(new_path)
-            except OSError:
+            task = MaestralBackgroundTask(
+                parent=self,
+                config_name=self.mdbx.config_name,
+                target="move_dropbox_directory",
+                args=(new_path,),
+            )
+
+            task.sig_result.connect(self.on_move_completed)
+
+    @QtCore.pyqtSlot(object)
+    def on_move_completed(self, result):
+
+        if isinstance(result, Exception):
+            if isinstance(result, OSError):
                 msg = (
                     "Please check if you have permissions to write to the "
                     "selected location."
                 )
                 msg_box = UserDialog("Could not create directory", msg, parent=self)
                 msg_box.open()  # no need to block with exec
-                self.mdbx.resume_sync()
+                self.mdbx.start_sync()
             else:
-                self.comboBoxDropboxPath.setItemText(0, self.rel_path(new_location))
-                self.comboBoxDropboxPath.setItemIcon(0, native_item_icon(new_location))
+                raise result
+        else:
+            new_location = self.mdbx.dropbox_path
+            self.comboBoxDropboxPath.setItemText(0, self.rel_path(new_location))
+            self.comboBoxDropboxPath.setItemIcon(0, native_item_icon(new_location))
 
     @QtCore.pyqtSlot(int)
     def on_start_on_login_clicked(self, state):
