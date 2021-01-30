@@ -260,16 +260,20 @@ class SettingsWindow(QtWidgets.QWidget):
     def on_move_completed(self, result):
 
         if isinstance(result, Exception):
+
             if isinstance(result, OSError):
+                title = f"Could not move directory (errno {result.errno})"
                 msg = (
                     "Please check if you have permissions to write to the "
                     "selected location."
                 )
-                msg_box = UserDialog("Could not create directory", msg, parent=self)
-                msg_box.open()  # no need to block with exec
-                self.mdbx.start_sync()
             else:
-                raise result
+                title = "Could not move directory"
+                msg = result.args[0]
+
+            msg_box = UserDialog(title, msg, parent=self)
+            msg_box.open()  # no need to block with exec
+            self.mdbx.start_sync()
         else:
             new_location = self.mdbx.dropbox_path
             self.comboBoxDropboxPath.setItemText(0, self.rel_path(new_location))
