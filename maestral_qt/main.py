@@ -8,7 +8,6 @@ Created on Wed Oct 31 16:23:13 2018
 # system imports
 import sys
 import os
-import platform
 import time
 from subprocess import Popen
 from datetime import timedelta, datetime
@@ -19,13 +18,11 @@ import click
 from PyQt5 import QtCore, QtWidgets, QtGui
 
 # maestral modules
-from maestral import __version__
 from maestral.constants import (
     IDLE,
     SYNCING,
-    PAUSED,
     STOPPED,
-    DISCONNECTED,
+    CONNECTING,
     SYNC_ERROR,
     ERROR,
 )
@@ -43,7 +40,7 @@ from maestral_qt.relink_dialog import RelinkDialog
 from maestral_qt.settings_window import SettingsWindow
 from maestral_qt.activity_window import ActivityWindow
 from maestral_qt.sync_issues_window import SyncIssueWindow
-from maestral_qt.resources import system_tray_icon, DESKTOP, APP_ICON_PATH
+from maestral_qt.resources import system_tray_icon, APP_ICON_PATH
 from maestral_qt.utils import (
     BackgroundTask,
     MaestralBackgroundTask,
@@ -76,9 +73,8 @@ class MaestralGuiApp(QtWidgets.QSystemTrayIcon):
     icon_mapping = {
         IDLE: "idle",
         SYNCING: "syncing",
-        PAUSED: "paused",
-        STOPPED: "error",
-        DISCONNECTED: "disconnected",
+        STOPPED: "paused",
+        CONNECTING: "disconnected",
         SYNC_ERROR: "info",
         ERROR: "error",
     }
@@ -108,7 +104,7 @@ class MaestralGuiApp(QtWidgets.QSystemTrayIcon):
         self.autostart = AutoStart(self.config_name)
 
         self.icons = self.load_tray_icons()
-        self.setIcon(DISCONNECTED)
+        self.setIcon(CONNECTING)
         self.show_when_systray_available()
 
         self.menu = QtWidgets.QMenu()
@@ -397,10 +393,10 @@ class MaestralGuiApp(QtWidgets.QSystemTrayIcon):
     def on_start_stop_clicked(self):
         """Pause / resume syncing on menu item clicked."""
         if self.pauseAction.text() == self.PAUSE_TEXT:
-            self.mdbx.pause_sync()
+            self.mdbx.stop_sync()
             self.pauseAction.setText(self.RESUME_TEXT)
         elif self.pauseAction.text() == self.RESUME_TEXT:
-            self.mdbx.resume_sync()
+            self.mdbx.start_sync()
             self.pauseAction.setText(self.PAUSE_TEXT)
         elif self.pauseAction.text() == "Start Syncing":
             self.mdbx.start_sync()
@@ -469,13 +465,10 @@ class MaestralGuiApp(QtWidgets.QSystemTrayIcon):
         n_sync_errors = len(self.mdbx.sync_errors)
         status = self.mdbx.status
         is_paused = self.mdbx.paused
-        is_stopped = not self.mdbx.running
 
         # update icon
         if is_paused:
-            new_icon = PAUSED
-        elif is_stopped:
-            new_icon = ERROR
+            new_icon = STOPPED
         elif n_sync_errors > 0 and status == IDLE:
             new_icon = SYNC_ERROR
         else:
