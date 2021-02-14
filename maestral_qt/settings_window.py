@@ -104,6 +104,7 @@ class SettingsWindow(QtWidgets.QWidget):
         self.selective_sync_dialog = SelectiveSyncDialog(self.mdbx, parent=self)
         self.unlink_dialog = UnlinkDialog(self.mdbx, self._parent.restart, parent=self)
         self.autostart = AutoStart(self.mdbx.config_name)
+        self.default_dirname = f"Dropbox ({self.mdbx.config_name.capitalize()})"
 
         self.labelAccountName.setFont(get_scaled_font(1.5))
         self.labelAccountInfo.setFont(get_scaled_font(0.9))
@@ -128,15 +129,14 @@ class SettingsWindow(QtWidgets.QWidget):
         self.pushButtonExcludedFolders.clicked.connect(self.selective_sync_dialog.open)
         self.checkBoxStartup.stateChanged.connect(self.on_start_on_login_clicked)
         self.checkBoxNotifications.stateChanged.connect(self.on_notifications_clicked)
-        self.checkBoxAnalytics.stateChanged.connect(self.on_analytics_clicked)
         self.comboBoxUpdateInterval.currentIndexChanged.connect(
             self.on_combobox_update_interval
         )
         self.comboBoxDropboxPath.currentIndexChanged.connect(self.on_combobox_path)
         msg = (
-            'Choose a location for your Dropbox. A folder named "{0}" will be '
-            + "created inside the folder you select."
-        ).format(self.mdbx.get_conf("main", "default_dir_name"))
+            "Choose a location for your Dropbox. A folder named "
+            f'"{self.default_dirname}" will be created inside the selected location.'
+        )
         self.dropbox_folder_dialog = QtWidgets.QFileDialog(self, caption=msg)
         self.dropbox_folder_dialog.setModal(True)
         self.dropbox_folder_dialog.setAcceptMode(QtWidgets.QFileDialog.AcceptOpen)
@@ -169,7 +169,6 @@ class SettingsWindow(QtWidgets.QWidget):
         # populate app section
         self.checkBoxStartup.setChecked(self.autostart.enabled)
         self.checkBoxNotifications.setChecked(self.mdbx.notification_level <= 15)
-        self.checkBoxAnalytics.setChecked(self.mdbx.analytics)
         update_interval = self.mdbx.get_conf("app", "update_notification_interval")
         closest_key = min(
             self._update_interval_mapping,
@@ -246,23 +245,39 @@ class SettingsWindow(QtWidgets.QWidget):
         self.comboBoxDropboxPath.setCurrentIndex(0)
         if not new_location == "":
 
-            new_path = osp.join(
-                new_location, self.mdbx.get_conf("main", "default_dir_name")
+            new_path = osp.join(new_location, self.default_dirname)
+
+            task = MaestralBackgroundTask(
+                parent=self,
+                config_name=self.mdbx.config_name,
+                target="move_dropbox_directory",
+                args=(new_path,),
             )
 
-            try:
-                self.mdbx.move_dropbox_directory(new_path)
-            except OSError:
+            task.sig_result.connect(self.on_move_completed)
+
+    @QtCore.pyqtSlot(object)
+    def on_move_completed(self, result):
+
+        if isinstance(result, Exception):
+
+            if isinstance(result, OSError):
+                title = f"Could not move directory (errno {result.errno})"
                 msg = (
                     "Please check if you have permissions to write to the "
                     "selected location."
                 )
-                msg_box = UserDialog("Could not create directory", msg, parent=self)
-                msg_box.open()  # no need to block with exec
-                self.mdbx.resume_sync()
             else:
-                self.comboBoxDropboxPath.setItemText(0, self.rel_path(new_location))
-                self.comboBoxDropboxPath.setItemIcon(0, native_item_icon(new_location))
+                title = "Could not move directory"
+                msg = result.args[0]
+
+            msg_box = UserDialog(title, msg, parent=self)
+            msg_box.open()  # no need to block with exec
+            self.mdbx.start_sync()
+        else:
+            new_location = self.mdbx.dropbox_path
+            self.comboBoxDropboxPath.setItemText(0, self.rel_path(new_location))
+            self.comboBoxDropboxPath.setItemIcon(0, native_item_icon(new_location))
 
     @QtCore.pyqtSlot(int)
     def on_start_on_login_clicked(self, state):
@@ -271,10 +286,6 @@ class SettingsWindow(QtWidgets.QWidget):
     @QtCore.pyqtSlot(int)
     def on_notifications_clicked(self, state):
         self.mdbx.notification_level = 15 if state == 2 else 30
-
-    @QtCore.pyqtSlot(int)
-    def on_analytics_clicked(self, state):
-        self.mdbx.analytics = state == 2
 
     @staticmethod
     def rel_path(path):

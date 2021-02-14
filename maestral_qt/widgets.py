@@ -250,40 +250,23 @@ def show_dialog(title, message, details=None, level="info"):
     UserDialog(title, message, details).exec_()
 
 
-def show_stacktrace_dialog(traceback, ask_share=False):
+def show_stacktrace_dialog(traceback):
 
     title = "An unexpected error occurred"
 
-    if not ask_share:
+    message = (
+        "You can report this issue together with the traceback below on GitHub. "
+        "Please restart Maestral to continue syncing."
+    )
 
-        message = (
-            "A report has been sent to the developers. "
-            "Please restart Maestral to continue syncing."
-        )
+    error_dialog = UserDialog(
+        title,
+        message,
+        details=traceback,
+        button_names=("Close",),
+    )
 
-        UserDialog(title, message, details=traceback).exec_()
-
-        return False, False
-    else:
-        message = (
-            "You can send a report to the developers or open an issue on "
-            "GitHub. Please restart Maestral to continue syncing."
-        )
-
-        checkbox_text = "Always send error reports (can be changed in Settings)"
-
-        error_dialog = UserDialog(
-            title,
-            message,
-            details=traceback,
-            checkbox=checkbox_text,
-            button_names=("Send to Developers", "Don't send"),
-        )
-
-        share = error_dialog.exec_() == 1
-        ask_share = error_dialog.checkbox.isChecked()
-
-        return share, ask_share
+    error_dialog.exec_()
 
 
 def show_update_dialog(latest_release, release_notes_md):

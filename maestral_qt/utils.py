@@ -235,20 +235,23 @@ class Worker(QtCore.QRunnable):
 
     def run(self):
 
-        res = self._target(*self._args, **self._kwargs)
+        try:
 
-        if hasattr(res, "__next__"):
-            while True:
-                try:
-                    next_res = next(res)
-                    self.emitter.sig_result.emit(next_res)
-                except StopIteration:
-                    return
-        else:
-            self.emitter.sig_result.emit(res)
+            res = self._target(*self._args, **self._kwargs)
 
-        self.emitter.sig_result.emit(res)
-        self.emitter.sig_done.emit()
+            if hasattr(res, "__next__"):
+                while True:
+                    try:
+                        next_res = next(res)
+                        self.emitter.sig_result.emit(next_res)
+                    except StopIteration:
+                        return
+            else:
+                self.emitter.sig_result.emit(res)
+        except Exception as exc:
+            self.emitter.sig_result.emit(exc)
+        finally:
+            self.emitter.sig_done.emit()
 
 
 class MaestralWorker(Worker):
@@ -268,6 +271,7 @@ class MaestralWorker(Worker):
                 self.connection = proxy._m._pyroConnection
 
                 func = proxy.__getattr__(self._target)
+
                 res = func(*self._args, **self._kwargs)
 
                 if hasattr(res, "__next__"):
@@ -282,9 +286,11 @@ class MaestralWorker(Worker):
 
         except ConnectionClosedError:
             pass
-
-        self.connection = None
-        self.emitter.sig_done.emit()
+        except Exception as exc:
+            self.emitter.sig_result.emit(exc)
+        finally:
+            self.connection = None
+            self.emitter.sig_done.emit()
 
 
 class BackgroundTask(QtCore.QObject):

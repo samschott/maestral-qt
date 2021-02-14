@@ -374,8 +374,10 @@ class DropboxPathItem(AbstractTreeItem):
     def checkStateChanged(self):
         return self._checkStateChanged
 
-    def isOriginalState(self):
-        return self._checkState == self._originalCheckState
+    def isSelectionModified(self):
+        own_selection_modified = self._checkState != self._originalCheckState
+        child_selection_modified = any(c.isSelectionModified() for c in self._children)
+        return own_selection_modified or child_selection_modified
 
 
 class AsyncListFolder(QtCore.QObject):
@@ -471,7 +473,7 @@ class SelectiveSyncDialog(QtWidgets.QDialog):
 
     @QtCore.pyqtSlot()
     def update_dialog_buttons(self):
-        self.updateButton.setEnabled(not self.dbx_root.isOriginalState())
+        self.updateButton.setEnabled(self.dbx_root.isSelectionModified())
 
     @QtCore.pyqtSlot(bool)
     def on_select_all_clicked(self, checked):
@@ -540,7 +542,6 @@ class SelectiveSyncDialog(QtWidgets.QDialog):
 
     @QtCore.pyqtSlot()
     def ui_loaded(self):
-        self.updateButton.setEnabled(True)
         self.selectAllCheckBox.setEnabled(True)
 
     def changeEvent(self, QEvent):
