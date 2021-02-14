@@ -27,7 +27,7 @@ setup(
     install_requires=[
         "click>=7.1.1",
         "importlib_resources;python_version<'3.9'",
-        "maestral>=1.3.2.dev0",
+        "maestral>=1.4.0",
         "markdown2",
         "packaging",
         "PyQt5>=5.9",
