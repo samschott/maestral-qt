@@ -21,8 +21,9 @@ from PyQt5 import QtCore, QtWidgets, QtGui
 from maestral.constants import (
     IDLE,
     SYNCING,
-    STOPPED,
+    PAUSED,
     CONNECTING,
+    CONNECTED,
     SYNC_ERROR,
     ERROR,
 )
@@ -73,7 +74,8 @@ class MaestralGuiApp(QtWidgets.QSystemTrayIcon):
     icon_mapping = {
         IDLE: "idle",
         SYNCING: "syncing",
-        STOPPED: "paused",
+        PAUSED: "paused",
+        CONNECTED: "idle",
         CONNECTING: "disconnected",
         SYNC_ERROR: "info",
         ERROR: "error",
@@ -465,11 +467,10 @@ class MaestralGuiApp(QtWidgets.QSystemTrayIcon):
         n_sync_errors = len(self.mdbx.sync_errors)
         status = self.mdbx.status
         is_paused = self.mdbx.paused
+        is_connected = self.mdbx.connected
 
         # update icon
-        if is_paused:
-            new_icon = STOPPED
-        elif n_sync_errors > 0 and status == IDLE:
+        if n_sync_errors > 0 and status == IDLE:
             new_icon = SYNC_ERROR
         else:
             new_icon = status
@@ -541,9 +542,9 @@ class MaestralGuiApp(QtWidgets.QSystemTrayIcon):
     def quit(self, *args, stop_daemon=None):
         """Quits Maestral.
 
-        :param bool stop_daemon: If ``True``, the sync daemon will be stopped when
+        :param bool stop_daemon: If ``True``, the sync daemon will be PAUSED when
             quitting the GUI, if ``False``, it will be kept alive. If ``None``, the
-            daemon will only be stopped if it was started by the GUI (default).
+            daemon will only be PAUSED if it was started by the GUI (default).
         """
 
         self._wait_for_status.cancel()
