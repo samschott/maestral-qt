@@ -6,7 +6,7 @@ setup(
     name="maestral-qt",
     author="Sam Schott",
     author_email="ss2151@cam.ac.uk",
-    version="1.4.0",
+    version="1.4.2",
     description="A Qt GUI for the Maestral daemon",
     url="https://github.com/SamSchott/maestral",
     license="MIT",
@@ -27,7 +27,7 @@ setup(
     install_requires=[
         "click>=7.1.1",
         "importlib_resources;python_version<'3.9'",
-        "maestral>=1.4.0",
+        "maestral>=1.4.2",
         "markdown2",
         "packaging",
         "PyQt5>=5.9",
