@@ -9,7 +9,7 @@ import os
 
 __author__ = "Sam Schott"
 __version__ = "1.4.2"
-__url__ = "https://github.com/SamSchott/maestral"
+__url__ = "https://samschott.github.io/maestral"
 
 # add '~/.local/share' to XDG_DATA_DIRS
 # this is needed to find icons installed for the current user only
