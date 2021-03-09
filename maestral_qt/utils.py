@@ -306,6 +306,7 @@ class BackgroundTask(QtCore.QObject):
         self._target = target
         self._args = args or ()
         self._kwargs = kwargs or {}
+        self.worker = None
 
         if autostart:
             self.start()
@@ -349,5 +350,5 @@ class MaestralBackgroundTask(BackgroundTask):
 
     def cancel(self):
         # brute force termination by closing the socket
-        if self.worker.connection:
+        if self.worker and self.worker.connection:
             self.worker.connection.close()
