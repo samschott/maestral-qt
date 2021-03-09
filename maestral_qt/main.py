@@ -34,6 +34,7 @@ from maestral.daemon import (
     Start,
     CommunicationError,
 )
+from maestral.errors import KeyringAccessError
 
 # local imports
 from maestral_qt.setup_dialog import SetupDialog
@@ -179,7 +180,13 @@ class MaestralGuiApp(QtWidgets.QSystemTrayIcon):
 
         self.mdbx = self.get_or_start_maestral_daemon()
 
-        if self.mdbx.pending_link or self.mdbx.pending_dropbox_folder:
+        try:
+            pending_link = self.mdbx.pending_link
+        except KeyringAccessError:
+            self.update_error()
+            return
+
+        if pending_link or self.mdbx.pending_dropbox_folder:
             self.loading_done = SetupDialog.configureMaestral(self.mdbx)
         else:
             self.loading_done = True
@@ -508,9 +515,12 @@ class MaestralGuiApp(QtWidgets.QSystemTrayIcon):
             self.mdbx.clear_fatal_errors()
 
         self.setIcon(ERROR)
-        self.pauseAction.setText(self.RESUME_TEXT)
-        self.pauseAction.setEnabled(False)
-        self.statusAction.setText(self.mdbx.status)
+
+        if self.pauseAction:
+            self.pauseAction.setText(self.RESUME_TEXT)
+
+        if self.statusAction:
+            self.statusAction.setText(self.mdbx.status)
 
         err = errs[-1]
 
