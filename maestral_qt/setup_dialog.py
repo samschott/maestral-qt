@@ -113,23 +113,23 @@ class SetupDialog(QtWidgets.QDialog):
         if not self.mdbx.pending_link:
             self.labelDropboxPath.setText(
                 """
-            <html><head/><body>
-            <p align="left">
-            Your Dropbox folder has been moved or deleted from its original location.
-            Maestral will not work properly until you move it back. It used to be 
-            located at: </p><p align="left">{0}</p>
-            <p align="left">
-            To move it back, click "Quit" below, move the Dropbox folder back to its
-            original location, and launch Maestral again.
-            </p>
-            <p align="left">
-            To re-download your Dropbox, please select a location for your Dropbox
-            folder below. Maestral will create a new folder named "{1}" in the
-            selected location.</p>
-            <p align="left">
-            To unlink your Dropbox account from Maestral, click "Unlink" below.</p>
-            </body></html>
-            """.format(
+                <html><head/><body>
+                <p align="left">
+                Your Dropbox folder has been moved or deleted from its original
+                location. Maestral will not work properly until you move it back. It
+                used to be located at: </p><p align="left">{0}</p>
+                <p align="left">
+                To move it back, click "Quit" below, move the Dropbox folder back to its
+                original location, and launch Maestral again.
+                </p>
+                <p align="left">
+                To re-download your Dropbox, please select a location for your Dropbox
+                folder below. Maestral will create a new folder named "{1}" in the
+                selected location.</p>
+                <p align="left">
+                To unlink your Dropbox account from Maestral, click "Unlink" below.</p>
+                </body></html>
+                """.format(
                     self.mdbx.get_conf("main", "path"), self.dropbox_dirname
                 )
             )
@@ -329,6 +329,8 @@ class SetupDialog(QtWidgets.QDialog):
         self.dropbox_location = new_location
 
     def populate_folders_list(self):
+        self.pushButtonFolderSelectionSelect.setEnabled(False)
+
         self.async_loader = AsyncListFolder(self.mdbx.config_name, self)
         self.dbx_root = DropboxPathItem(self.mdbx, self.async_loader)
         self.dbx_model = DropboxTreeModel(self.dbx_root)
