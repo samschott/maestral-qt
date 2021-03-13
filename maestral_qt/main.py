@@ -37,6 +37,7 @@ from maestral.daemon import (
 from maestral.errors import KeyringAccessError
 
 # local imports
+from maestral_qt import __url__
 from maestral_qt.setup_dialog import SetupDialog
 from maestral_qt.relink_dialog import RelinkDialog
 from maestral_qt.settings_window import SettingsWindow
@@ -396,7 +397,7 @@ class MaestralGuiApp(QtWidgets.QSystemTrayIcon):
     @QtCore.pyqtSlot()
     def on_help_clicked(self):
         """Open the Dropbox help website."""
-        click.launch("https://dropbox.com/help")
+        click.launch(f"{__url__}/docs")
 
     @QtCore.pyqtSlot()
     def on_start_stop_clicked(self):
