@@ -34,14 +34,19 @@ class AutoStart:
             self._impl = AutoStartLaunchd(bundle_id, start_cmd)
 
         elif self.implementation == SupportedImplementations.xdg_desktop:
+
+            additional_keys = {
+                "Icon": "maestral",
+                "X-GNOME-Autostart-enabled": "true",
+                "X-GNOME-Autostart-Delay": "2",
+                "X-KDE-autostart-after": "panel",
+            }
+
             self._impl = AutoStartXDGDesktop(
                 filename=f"maestral-{config_name}.desktop",
                 app_name="Maestral",
                 start_cmd=start_cmd,
-                Icon="maestral",
-                Terminal="false",
-                GenericName="File Synchronizer",
-                Comment="Sync your files with Dropbox",
+                **additional_keys,
             )
         else:
             self._impl = AutoStartBase()
