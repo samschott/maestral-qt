@@ -536,7 +536,12 @@ class MaestralGuiApp(QtWidgets.QSystemTrayIcon):
 
             self._exec_relink_dialog(RelinkDialog.EXPIRED)
         elif "MaestralApiError" in err["inherits"] or "SyncError" in err["inherits"]:
-            show_dialog(err["title"], err["message"], level="error")
+            filename = err["dbx_path"] or err["local_path"]
+            if filename:
+                message = f"Path: {filename}\n" + err["message"]
+            else:
+                message = err["message"]
+            show_dialog(err["title"], message, level="error")
         else:
             show_stacktrace_dialog(err["traceback"])
 
