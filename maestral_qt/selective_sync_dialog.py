@@ -385,7 +385,7 @@ class DropboxPathItem(AbstractTreeItem):
 
         # propagate to children if checked or unchecked
         if state in (0, 2) and self.child_count_loaded() > 0:
-            for child in self.children_():
+            for child in self._children:
                 child._checkStateChanged = True
                 child._checkState = state
                 child._checkStatePropagateToChildren(state)
