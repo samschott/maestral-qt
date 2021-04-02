@@ -18,7 +18,7 @@ from maestral.errors import NotAFolderError, NotFoundError, BusyError
 from maestral.utils.path import is_child, is_equal_or_child
 
 # local imports
-from .resources import FOLDERS_DIALOG_PATH, native_folder_icon, native_file_icon
+from .resources import SELECTIVE_SYNC_DIALOG_PATH, native_folder_icon, native_file_icon
 from .utils import BackgroundTask
 from .widgets import UserDialog
 

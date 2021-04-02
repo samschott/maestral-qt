@@ -34,7 +34,6 @@ THEME_ICON_NAME_SYMBOLIC = "maestral_tray-{}-symbolic"
 
 FACEHOLDER_PATH = resource_path("faceholder.png")
 
-FOLDERS_DIALOG_PATH = resource_path("folders_dialog.ui")
 SETUP_DIALOG_PATH = resource_path("setup_dialog.ui")
 SETTINGS_WINDOW_PATH = resource_path("settings_window.ui")
 UNLINK_DIALOG_PATH = resource_path("unlink_dialog.ui")
@@ -42,6 +41,7 @@ RELINK_DIALOG_PATH = resource_path("relink_dialog.ui")
 SYNC_ISSUES_WINDOW_PATH = resource_path("sync_issues_window.ui")
 SYNC_ISSUE_WIDGET_PATH = resource_path("sync_issue_widget.ui")
 SYNC_EVENT_WIDGET_PATH = resource_path("sync_event_widget.ui")
+SELECTIVE_SYNC_DIALOG_PATH = resource_path("selective_sync_dialog.ui")
 
 THEME_DARK = "dark"
 THEME_LIGHT = "light"
