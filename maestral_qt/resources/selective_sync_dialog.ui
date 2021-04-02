@@ -97,6 +97,12 @@
      <property name="uniformRowHeights">
       <bool>true</bool>
      </property>
+     <property name="sortingEnabled">
+      <bool>true</bool>
+     </property>
+     <attribute name="headerShowSortIndicator" stdset="0">
+      <bool>true</bool>
+     </attribute>
     </widget>
    </item>
    <item row="0" column="4" rowspan="2">

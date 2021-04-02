@@ -154,6 +154,12 @@ class DropboxTreeModel(QAbstractItemModel):
             return QModelIndex()
         return self.createIndex(parent_item.row(), 0, parent_item)
 
+    def sort(self, column, order):
+        self.layoutAboutToBeChanged.emit()
+        self._root_item.sort(column, order)
+        self.dataChanged.emit(QModelIndex(), QModelIndex())
+        self.layoutChanged.emit()
+
 
 class AbstractTreeItem(QtCore.QObject):
     """
@@ -231,6 +237,9 @@ class AbstractTreeItem(QtCore.QObject):
     def isSelectionModified(self):
         return False
 
+    def sort(self, column, order):
+        pass
+
 
 class MessageTreeItem(AbstractTreeItem):
     """A tree item to display a message instead of contents."""
@@ -261,6 +270,20 @@ class MessageTreeItem(AbstractTreeItem):
         return 1
 
 
+def _sort_key(item, column, reverse):
+
+    if column == 0 and isinstance(item, DropboxPathItem):
+
+        if item.is_folder is not reverse:
+            prefix = "\x00"
+        else:
+            prefix = ""
+
+        return f"{prefix}{item._basename.lower()}"
+    else:
+        return item.data(column)
+
+
 class DropboxPathItem(AbstractTreeItem):
     """A Dropbox folder item. It lists its children asynchronously, only when asked to
     by `TreeModel`."""
@@ -276,6 +299,7 @@ class DropboxPathItem(AbstractTreeItem):
         self.is_folder = is_folder
         self.can_have_children = is_folder
         self._path = path
+        self._basename = os.path.basename(self._path)
         self._mdbx = mdbx
         self._async_loader = async_loader
 
@@ -336,10 +360,11 @@ class DropboxPathItem(AbstractTreeItem):
                 for e in results
             ]
             self._children.extend(new_nodes)
+            self.sort(0, Qt.AscendingOrder)
             self.loading_done.emit()
 
     def data(self, column):
-        return os.path.basename(self._path)
+        return self._basename
 
     def header(self):
         return ["Name"]
@@ -391,6 +416,16 @@ class DropboxPathItem(AbstractTreeItem):
         own_selection_modified = self._checkState != self._originalCheckState
         child_selection_modified = any(c.isSelectionModified() for c in self._children)
         return own_selection_modified or child_selection_modified
+
+    def sort(self, column, order):
+        reverse = order == Qt.DescendingOrder
+
+        self._children.sort(
+            key=lambda x: _sort_key(x, column, reverse), reverse=reverse
+        )
+
+        for child in self._children:
+            child.sort(column, order)
 
 
 class AsyncListFolder(QtCore.QObject):
