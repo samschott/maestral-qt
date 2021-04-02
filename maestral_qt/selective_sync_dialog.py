@@ -35,7 +35,6 @@ class DropboxTreeModel(QAbstractItemModel):
     def __init__(self, root, parent=None):
         super().__init__(parent=parent)
         self._root_item = root
-        self.display_message("Loading your folders...")
         self._root_item.loading_done.connect(self.reloadData)
         self._root_item.loading_failed.connect(self.on_loading_failed)
         self._header = self._root_item.header()
@@ -73,6 +72,21 @@ class DropboxTreeModel(QAbstractItemModel):
             return parent.internalPointer().column_count()
         else:
             return len(self._header)
+
+    def rowCount(self, parent=QModelIndex()):
+        if parent.column() > 0:
+            return 0
+        if not parent.isValid():
+            parent_item = self._root_item
+        else:
+            parent_item = parent.internalPointer()
+        return parent_item.child_count()
+
+    def hasChildren(self, parent=None):
+        if parent and parent.isValid():
+            return parent.internalPointer().can_have_children
+        else:
+            return True
 
     def checkState(self, index):
         if not index.isValid():
@@ -140,15 +154,6 @@ class DropboxTreeModel(QAbstractItemModel):
             return QModelIndex()
         return self.createIndex(parent_item.row(), 0, parent_item)
 
-    def rowCount(self, parent=QModelIndex()):
-        if parent.column() > 0:
-            return 0
-        if not parent.isValid():
-            parent_item = self._root_item
-        else:
-            parent_item = parent.internalPointer()
-        return parent_item.child_count()
-
 
 class AbstractTreeItem(QtCore.QObject):
     """
@@ -170,6 +175,7 @@ class AbstractTreeItem(QtCore.QObject):
 
         self.icon = QtGui.QIcon()
         self._checkState = 0
+        self.can_have_children = True
 
     @property
     def checkState(self):
@@ -222,6 +228,9 @@ class AbstractTreeItem(QtCore.QObject):
         """The number of children already loaded."""
         return len(self._children)
 
+    def isSelectionModified(self):
+        return False
+
 
 class MessageTreeItem(AbstractTreeItem):
     """A tree item to display a message instead of contents."""
@@ -231,6 +240,7 @@ class MessageTreeItem(AbstractTreeItem):
         self._parent = parent
         self._message = message
         self._checkState = QVariant()
+        self.can_have_children = False
 
     def _async_loading_done(self, result):
         pass
@@ -245,7 +255,7 @@ class MessageTreeItem(AbstractTreeItem):
         return self._message
 
     def header(self):
-        return ["name"]
+        return ["nName"]
 
     def column_count(self):
         return 1
@@ -259,9 +269,12 @@ class DropboxPathItem(AbstractTreeItem):
         super().__init__(parent=parent)
         if is_folder:
             self.icon = native_folder_icon()
+            self._children = [MessageTreeItem(self, "Loading...")]
         else:
             self.icon = native_file_icon()
+            self._children = []
         self.is_folder = is_folder
+        self.can_have_children = is_folder
         self._path = path
         self._mdbx = mdbx
         self._async_loader = async_loader
@@ -329,7 +342,7 @@ class DropboxPathItem(AbstractTreeItem):
         return os.path.basename(self._path)
 
     def header(self):
-        return ["name"]
+        return ["Name"]
 
     def column_count(self):
         return 1
@@ -435,7 +448,7 @@ class AsyncListFolder(QtCore.QObject):
 class SelectiveSyncDialog(QtWidgets.QDialog):
     def __init__(self, mdbx, parent=None):
         super().__init__(parent=parent)
-        uic.loadUi(FOLDERS_DIALOG_PATH, self)
+        uic.loadUi(SELECTIVE_SYNC_DIALOG_PATH, self)
         self.setModal(True)
 
         self.mdbx = mdbx
