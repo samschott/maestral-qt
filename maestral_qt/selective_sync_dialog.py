@@ -32,13 +32,14 @@ class DropboxTreeModel(QAbstractItemModel):
     loading_failed = QtCore.pyqtSignal()
     loading_done = QtCore.pyqtSignal()
 
-    def __init__(self, root, parent=None):
+    def __init__(self, root, parent=None, checkbox_column=1):
         super().__init__(parent=parent)
         self._root_item = root
         self._root_item.loading_done.connect(self.reloadData)
         self._root_item.loading_failed.connect(self.on_loading_failed)
         self._header = self._root_item.header()
         self._flags = Qt.ItemIsUserCheckable
+        self.checkbox_column = checkbox_column
 
     @QtCore.pyqtSlot()
     def on_loading_failed(self):
@@ -57,7 +58,7 @@ class DropboxTreeModel(QAbstractItemModel):
     def reloadData(self, roles=None):
 
         if not roles:
-            roles = [Qt.DisplayRole]
+            roles = [Qt.DisplayRole, Qt.CheckStateRole]
 
         self.dataChanged.emit(QModelIndex(), QModelIndex(), roles)
         self.layoutChanged.emit()
@@ -104,7 +105,7 @@ class DropboxTreeModel(QAbstractItemModel):
         return False
 
     def setData(self, index, value, role):
-        if role == Qt.CheckStateRole and index.column() == 0:
+        if role == Qt.CheckStateRole and index.column() == self.checkbox_column:
             self.setCheckState(index, value)
             return True
 
@@ -114,11 +115,12 @@ class DropboxTreeModel(QAbstractItemModel):
         if not index.isValid():
             return QVariant()
         item = index.internalPointer()
+        column = index.column()
         if role == Qt.DisplayRole:
-            return item.data(index.column())
-        if role == Qt.CheckStateRole:
+            return item.data(column)
+        if role == Qt.CheckStateRole and column == self.checkbox_column:
             return item.checkState
-        if role == Qt.DecorationRole:
+        if role == Qt.DecorationRole and column == 0:
             return item.icon
         return QVariant()
 
@@ -174,6 +176,7 @@ class AbstractTreeItem(QtCore.QObject):
         self._children = []
         self._parent = parent
         self._children_update_started = False
+        self._checkStateChanged = False
 
         if self._parent:
             self.loading_done.connect(self._parent.loading_done)
@@ -189,15 +192,24 @@ class AbstractTreeItem(QtCore.QObject):
 
     @checkState.setter
     def checkState(self, state):
+        self._checkStateChanged = True
         self._checkState = state
+
+        self._checkStatePropagateToChildren(state)
+        self._checkStatePropagateToParent(state)
+
+    def _checkStatePropagateToChildren(self, state):
+        pass
+
+    def _checkStatePropagateToParent(self, state):
+        pass
 
     def header(self):
         # subclass this
         raise NotImplementedError(self.header)
 
     def column_count(self):
-        # subclass this
-        raise NotImplementedError(self.column_count)
+        return len(self.header())
 
     def parent_(self):
         return self._parent
@@ -261,13 +273,10 @@ class MessageTreeItem(AbstractTreeItem):
         return QVariant()
 
     def data(self, column):
-        return self._message
+        return (self._message, "")[column]
 
     def header(self):
-        return ["nName"]
-
-    def column_count(self):
-        return 1
+        return ["Name", "Included"]
 
 
 def _sort_key(item, column, reverse):
@@ -280,6 +289,9 @@ def _sort_key(item, column, reverse):
             prefix = ""
 
         return f"{prefix}{item._basename.lower()}"
+
+    elif column == 1:
+        return item.checkState
     else:
         return item.data(column)
 
@@ -364,25 +376,10 @@ class DropboxPathItem(AbstractTreeItem):
             self.loading_done.emit()
 
     def data(self, column):
-        return self._basename
+        return (self._basename, "")[column]
 
     def header(self):
-        return ["Name"]
-
-    def column_count(self):
-        return 1
-
-    @property
-    def checkState(self):
-        return self._checkState
-
-    @checkState.setter
-    def checkState(self, state):
-        self._checkStateChanged = True
-        self._checkState = state
-
-        self._checkStatePropagateToChildren(state)
-        self._checkStatePropagateToParent(state)
+        return ["Name", "Included"]
 
     def _checkStatePropagateToChildren(self, state):
 
@@ -591,6 +588,7 @@ class SelectiveSyncDialog(QtWidgets.QDialog):
     @QtCore.pyqtSlot()
     def ui_loaded(self):
         self.selectAllCheckBox.setEnabled(True)
+        self.treeViewFolders.resizeColumnToContents(0)
 
     def changeEvent(self, QEvent):
 
