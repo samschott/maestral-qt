@@ -244,7 +244,7 @@ class AbstractTreeItem(QtCore.QObject):
 
     def child_count_loaded(self):
         """The number of children already loaded."""
-        return len(self._children)
+        return len([c for c in self._children if not isinstance(c, MessageTreeItem)])
 
     def isSelectionModified(self):
         return False
