@@ -10,9 +10,9 @@ import os.path as osp
 import platform
 
 try:
-    from importlib.resources import files
+    from importlib.resources import path
 except ImportError:
-    from importlib_resources import files
+    from importlib_resources import path
 
 
 from PyQt5 import QtWidgets, QtCore, QtGui
@@ -22,16 +22,11 @@ _tmp_file_for_ext = dict()
 
 
 def resource_path(name):
-    return osp.join(files("maestral_qt"), "resources", name)
+    """Returns the resource path as a string. Extracts the resource if necessary."""
+    return str(path("maestral_qt.resources", name).__enter__())
 
 
 APP_ICON_PATH = resource_path("maestral.png")
-TRAY_ICON_PATH_SVG = resource_path("maestral_tray-{0}-{1}.svg")
-TRAY_ICON_PATH_PNG = resource_path("maestral_tray-{0}-{1}.png")
-
-THEME_ICON_NAME = "maestral_tray-{}"
-THEME_ICON_NAME_SYMBOLIC = "maestral_tray-{}-symbolic"
-
 FACEHOLDER_PATH = resource_path("faceholder.png")
 
 SETUP_DIALOG_PATH = resource_path("setup_dialog.ui")
@@ -132,23 +127,26 @@ def system_tray_icon(status, geometry=None):
     :param geometry: Tray icon geometry on screen. If given, this location will be used
         to determine the system tray background color.
     """
-    allowed_status = ("idle", "syncing", "paused", "disconnected", "info", "error")
+    allowed_status = {"idle", "syncing", "paused", "disconnected", "info", "error"}
     if status not in allowed_status:
         raise ValueError(f"status must be in {allowed_status}")
 
     if platform.system() == "Darwin":
         # use SVG icon with automatic color
-        icon = QtGui.QIcon(TRAY_ICON_PATH_SVG.format(status, "dark"))
+        icon = QtGui.QIcon(resource_path(f"maestral_tray-{status}-dark.svg"))
         icon.setIsMask(True)
 
     else:
 
-        theme_icon_name = THEME_ICON_NAME.format(status)
-        theme_icon_name_symbolic = THEME_ICON_NAME_SYMBOLIC.format(status)
+        # Prefer icons from theme if installed / existing. Fall back to loading our own
+        # SVG icon with a color contrasting the status bar.
+
+        theme_icon_name = f"maestral_tray-{status}"
+        theme_icon_name_symbolic = f"maestral_tray-{status}-symbolic"
 
         # Prefer "symbolic" icons where the appearance is adapted by the platform
         # automatically. Specs for symbolic icons and their use in the system tray
-        # vary between platforms.
+        # vary between platforms. Fall back to regular icons instead.
 
         if QtGui.QIcon.hasThemeIcon(theme_icon_name_symbolic):
             icon = QtGui.QIcon.fromTheme(theme_icon_name_symbolic)
@@ -159,11 +157,11 @@ def system_tray_icon(status, geometry=None):
 
         if icon.isNull():
 
-            icon_color = "light" if is_dark_status_bar(geometry) else "dark"
+            color = "light" if is_dark_status_bar(geometry) else "dark"
 
-            # we create our icon from a pixmap instead of the SVG directly, this works
-            # around https://bugreports.qt.io/browse/QTBUG-53550
-            pixmap = QtGui.QPixmap(TRAY_ICON_PATH_SVG.format(status, icon_color))
+            # We create our icon from a pixmap instead of the SVG directly, this works
+            # around https://bugreports.qt.io/browse/QTBUG-53550.
+            pixmap = QtGui.QPixmap(resource_path(f"maestral_tray-{status}-{color}.svg"))
             icon = QtGui.QIcon(pixmap)
 
     return icon
