@@ -351,6 +351,10 @@ class SetupDialog(QtWidgets.QDialog):
             lambda: self.selectAllCheckBox.setEnabled(False)
         )
 
+        self.dbx_model.loading_done.connect(
+            lambda: self.treeViewFolders.resizeColumnToContents(0)
+        )
+
     @QtCore.pyqtSlot()
     def update_select_all_checkbox(self):
         check_states = []
