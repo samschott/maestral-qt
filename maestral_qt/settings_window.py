@@ -15,6 +15,7 @@ from PyQt5 import QtGui, QtCore, QtWidgets, uic
 
 # maestral modules
 from maestral import __version__ as __daemon_version__
+from maestral.utils.path import delete
 from maestral.utils.appdirs import get_home_dir
 
 # local imports
@@ -37,6 +38,7 @@ from .utils import (
     icon_to_pixmap,
     get_masked_image,
     MaestralBackgroundTask,
+    is_empty,
 )
 from .widgets import UserDialog
 from .autostart import AutoStart
@@ -104,7 +106,6 @@ class SettingsWindow(QtWidgets.QWidget):
         self.selective_sync_dialog = SelectiveSyncDialog(self.mdbx, parent=self)
         self.unlink_dialog = UnlinkDialog(self.mdbx, self._parent.restart, parent=self)
         self.autostart = AutoStart(self.mdbx.config_name)
-        self.default_dirname = f"Dropbox ({self.mdbx.config_name.capitalize()})"
 
         self.labelAccountName.setFont(get_scaled_font(1.5))
         self.labelAccountInfo.setFont(get_scaled_font(0.9))
@@ -134,18 +135,16 @@ class SettingsWindow(QtWidgets.QWidget):
         )
         self.comboBoxDropboxPath.currentIndexChanged.connect(self.on_combobox_path)
         msg = (
-            "Choose a location for your Dropbox. A folder named "
-            f'"{self.default_dirname}" will be created inside the selected location.'
+            "Choose a new local Dropbox folder. If the new folder is not empty, you "
+            "can either delete its content or merge it with your Dropbox."
         )
         self.dropbox_folder_dialog = QtWidgets.QFileDialog(self, caption=msg)
         self.dropbox_folder_dialog.setModal(True)
         self.dropbox_folder_dialog.setAcceptMode(QtWidgets.QFileDialog.AcceptOpen)
         self.dropbox_folder_dialog.setFileMode(QtWidgets.QFileDialog.Directory)
         self.dropbox_folder_dialog.setOption(QtWidgets.QFileDialog.ShowDirsOnly)
-        self.dropbox_folder_dialog.fileSelected.connect(self.on_new_dbx_folder)
-        self.dropbox_folder_dialog.rejected.connect(
-            lambda: self.comboBoxDropboxPath.setCurrentIndex(0)
-        )
+        self.dropbox_folder_dialog.setLabelText(QtWidgets.QFileDialog.Accept, "Select")
+        self.dropbox_folder_dialog.finished.connect(self.on_new_dbx_folder)
 
         center_window(self)
 
@@ -157,14 +156,13 @@ class SettingsWindow(QtWidgets.QWidget):
         self.set_account_info_from_cache()
 
         # populate sync section
-        parent_dir = osp.split(self.mdbx.dropbox_path)[0]
-        relative_path = self.rel_path(parent_dir)
-        folder_icon = native_item_icon(parent_dir)
+        dbx_path = self.mdbx.dropbox_path
+        folder_icon = native_item_icon(dbx_path)
 
         self.comboBoxDropboxPath.clear()
-        self.comboBoxDropboxPath.addItem(folder_icon, relative_path)
+        self.comboBoxDropboxPath.addItem(folder_icon, self.rel_path(dbx_path))
         self.comboBoxDropboxPath.insertSeparator(1)
-        self.comboBoxDropboxPath.addItem(QtGui.QIcon(), "Other...")
+        self.comboBoxDropboxPath.addItem(QtGui.QIcon(), "Choose...")
 
         # populate app section
         self.checkBoxStartup.setChecked(self.autostart.enabled)
@@ -231,7 +229,9 @@ class SettingsWindow(QtWidgets.QWidget):
     @QtCore.pyqtSlot(int)
     def on_combobox_path(self, idx):
         if idx == 2:
+            initial_dir = osp.dirname(self.mdbx.dropbox_path)
             self.dropbox_folder_dialog.open()
+            self.dropbox_folder_dialog.setDirectory(initial_dir)
 
     @QtCore.pyqtSlot(int)
     def on_combobox_update_interval(self, idx):
@@ -239,37 +239,51 @@ class SettingsWindow(QtWidgets.QWidget):
             "app", "update_notification_interval", self._update_interval_mapping[idx]
         )
 
-    @QtCore.pyqtSlot(str)
-    def on_new_dbx_folder(self, new_location):
+    def on_new_dbx_folder(self, res):
 
         self.comboBoxDropboxPath.setCurrentIndex(0)
-        if not new_location == "":
 
-            new_path = osp.join(new_location, self.default_dirname)
+        if res == QtWidgets.QDialog.Rejected:
+            return
 
-            task = MaestralBackgroundTask(
+        new_location = self.dropbox_folder_dialog.selectedFiles()[0]
+
+        if not is_empty(new_location):
+
+            msg_box = UserDialog(
+                title="Folder is not empty",
+                message=(
+                    f'The folder "{osp.basename(new_location)}" is not empty. '
+                    "Would you like to delete its contents?"
+                ),
+                button_names=("Delete", "Cancel"),
                 parent=self,
-                config_name=self.mdbx.config_name,
-                target="move_dropbox_directory",
-                args=(new_path,),
             )
+            msg_box.setAcceptButtonIcon("edit-clear")
+            res = msg_box.exec_()
 
-            task.sig_result.connect(self.on_move_completed)
+            if res == UserDialog.Rejected:
+                return
+
+        err = delete(new_location)
+        if err:
+            return self.on_move_completed(err)
+
+        task = MaestralBackgroundTask(
+            parent=self,
+            config_name=self.mdbx.config_name,
+            target="move_dropbox_directory",
+            args=(new_location,),
+        )
+
+        task.sig_result.connect(self.on_move_completed)
 
     @QtCore.pyqtSlot(object)
     def on_move_completed(self, result):
 
         if isinstance(result, Exception):
-
-            if isinstance(result, OSError):
-                title = f"Could not move directory (errno {result.errno})"
-                msg = (
-                    "Please check if you have permissions to write to the "
-                    "selected location."
-                )
-            else:
-                title = "Could not move directory"
-                msg = result.args[0]
+            title = "Could not move directory"
+            msg = str(result.args[0])
 
             msg_box = UserDialog(title, msg, parent=self)
             msg_box.open()  # no need to block with exec
@@ -290,12 +304,12 @@ class SettingsWindow(QtWidgets.QWidget):
     @staticmethod
     def rel_path(path):
         """
-        Returns the path relative to the users directory, or the absolute
+        Returns the path relative to the user's home directory, or the absolute
         path if not in a user directory.
         """
-        usr = osp.abspath(osp.join(get_home_dir(), osp.pardir))
-        if osp.commonprefix([path, usr]) == usr:
-            return osp.relpath(path, usr)
+        home = get_home_dir()
+        if osp.commonprefix([path, home]) == home:
+            return osp.relpath(path, home)
         else:
             return path
 
