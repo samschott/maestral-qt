@@ -248,6 +248,9 @@ class SettingsWindow(QtWidgets.QWidget):
 
         new_location = self.dropbox_folder_dialog.selectedFiles()[0]
 
+        if new_location == self.mdbx.dropbox_path:
+            return
+
         if not is_empty(new_location):
 
             msg_box = UserDialog(
