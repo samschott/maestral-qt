@@ -509,8 +509,9 @@ class SelectiveSyncDialog(QtWidgets.QDialog):
     def update_select_all_checkbox(self):
         check_states = []
         for irow in range(self.dbx_model._root_item.child_count_loaded()):
-            index = self.dbx_model.index(irow, 0, QModelIndex())
+            index = self.dbx_model.index(irow, 1, QModelIndex())
             check_states.append(self.dbx_model.data(index, Qt.CheckStateRole))
+
         if all(cs == 2 for cs in check_states):
             self.selectAllCheckBox.setChecked(True)
         else:
@@ -524,7 +525,7 @@ class SelectiveSyncDialog(QtWidgets.QDialog):
     def on_select_all_clicked(self, checked):
         checked_state = 2 if checked else 0
         for irow in range(self.dbx_model._root_item.child_count_loaded()):
-            index = self.dbx_model.index(irow, 0, QModelIndex())
+            index = self.dbx_model.index(irow, 1, QModelIndex())
             self.dbx_model.setCheckState(index, checked_state)
 
     def closeEvent(self, event):
