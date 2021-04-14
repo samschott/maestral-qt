@@ -331,7 +331,7 @@
           </sizepolicy>
          </property>
          <property name="text">
-          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p align=&quot;center&quot;&gt;Maestral has been successfully linked with your Dropbox account.&lt;/p&gt;&lt;p align=&quot;center&quot;&gt;Please select the location of your Dropbox folder below. Maestral will create a new folder named &quot;{0}&quot; in the selected location. In the next step, you will be asked to choose which folders to sync.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p align=&quot;center&quot;&gt;Maestral has been successfully linked with your Dropbox account.&lt;/p&gt;&lt;p align=&quot;center&quot;&gt;&lt;span style=&quot; font-family:'Helvetica Neue Light'; color:#000000;&quot;&gt;Please select a local folder for your Dropbox.&lt;/span&gt; If the folder is not empty, you will be given the option to delete its contents or merge it with your Dropbox. In the next step, you will be asked to choose which folders to sync.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
          </property>
          <property name="alignment">
           <set>Qt::AlignCenter</set>

@@ -5,7 +5,9 @@ Created on Wed Oct 31 16:23:13 2018
 
 @author: samschott
 """
+# system imports
 import sys
+import os
 import platform
 
 # external packages
@@ -40,6 +42,18 @@ thread_pool.setMaxThreadCount(10)
 # ======================================================================================
 # Helper functions
 # ======================================================================================
+
+
+def is_empty(dirname):
+    """Checks if a directory is empty."""
+
+    try:
+        with os.scandir(dirname) as sciter:
+            next(sciter)
+    except StopIteration:
+        return True
+
+    return False
 
 
 def elide_string(string, font=None, pixels=200, side="right"):

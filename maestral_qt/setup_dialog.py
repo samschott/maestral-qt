@@ -7,6 +7,7 @@ Created on Wed Oct 31 16:23:13 2018
 """
 
 # system imports
+import os
 import os.path as osp
 from PyQt5 import QtGui, QtCore, QtWidgets, uic
 from PyQt5.QtCore import QModelIndex, Qt
@@ -16,8 +17,8 @@ from maestral.utils.appdirs import get_home_dir
 from maestral.utils.path import delete
 
 # local imports
-from .resources import APP_ICON_PATH, SETUP_DIALOG_PATH, native_item_icon
-from .utils import IS_MACOS, MaestralBackgroundTask, icon_to_pixmap
+from .resources import APP_ICON_PATH, SETUP_DIALOG_PATH, native_folder_icon
+from .utils import IS_MACOS, MaestralBackgroundTask, icon_to_pixmap, is_empty
 from .widgets import UserDialog
 from .selective_sync_dialog import AsyncListFolder, DropboxTreeModel, DropboxPathItem
 
@@ -37,12 +38,9 @@ class SetupDialog(QtWidgets.QDialog):
             self.setWindowFlags(Qt.WindowStaysOnTopHint)
 
         self.mdbx = mdbx
+        self.config_name = self.mdbx.config_name
         self.dbx_model = None
         self.excluded_items = []
-        self.dropbox_location = (
-            osp.dirname(self.mdbx.get_conf("main", "path")) or get_home_dir()
-        )
-        self.dropbox_dirname = f"Dropbox ({self.mdbx.config_name.capitalize()})"
 
         self.app_icon = QtGui.QIcon(APP_ICON_PATH)
 
@@ -56,16 +54,16 @@ class SetupDialog(QtWidgets.QDialog):
         prompt = self.labelAuthLink.text().format(self.auth_url)
         self.labelAuthLink.setText(prompt)
 
-        # set up Dropbox location info text
-        new_label = self.labelDropboxPath.text().format(self.dropbox_dirname)
-        self.labelDropboxPath.setText(new_label)
-
         # set up Dropbox location combobox
-        folder_icon = native_item_icon(self.dropbox_location)
-        relative_path = self.rel_path(self.dropbox_location)
-        self.comboBoxDropboxPath.addItem(folder_icon, relative_path)
+
+        dropbox_dir = self.mdbx.get_conf("main", "path")
+
+        if dropbox_dir == "":
+            dropbox_dir = f"{get_home_dir()}/Dropbox ({self.config_name.capitalize()})"
+
+        self.comboBoxDropboxPath.addItem(native_folder_icon(), dropbox_dir)
         self.comboBoxDropboxPath.insertSeparator(1)
-        self.comboBoxDropboxPath.addItem(QtGui.QIcon(), "Other...")
+        self.comboBoxDropboxPath.addItem(QtGui.QIcon(), "Choose...")
         self.comboBoxDropboxPath.currentIndexChanged.connect(self.on_combobox)
 
         # resize dialog buttons
@@ -87,6 +85,8 @@ class SetupDialog(QtWidgets.QDialog):
         self.dropbox_folder_dialog.setAcceptMode(QtWidgets.QFileDialog.AcceptOpen)
         self.dropbox_folder_dialog.setFileMode(QtWidgets.QFileDialog.Directory)
         self.dropbox_folder_dialog.setOption(QtWidgets.QFileDialog.ShowDirsOnly, True)
+        self.dropbox_folder_dialog.setLabelText(QtWidgets.QFileDialog.Accept, "Select")
+        self.dropbox_folder_dialog.setDirectory(get_home_dir())
         self.dropbox_folder_dialog.fileSelected.connect(self.on_new_dbx_folder)
         self.dropbox_folder_dialog.rejected.connect(
             lambda: self.comboBoxDropboxPath.setCurrentIndex(0)
@@ -116,22 +116,17 @@ class SetupDialog(QtWidgets.QDialog):
                 <html><head/><body>
                 <p align="left">
                 Your Dropbox folder has been moved or deleted from its original
-                location. Maestral will not work properly until you move it back. It
-                used to be located at: </p><p align="left">{0}</p>
+                location. Syncing will not work until you move it back.
                 <p align="left">
                 To move it back, click "Quit" below, move the Dropbox folder back to its
                 original location, and launch Maestral again.
                 </p>
                 <p align="left">
-                To re-download your Dropbox, please select a location for your Dropbox
-                folder below. Maestral will create a new folder named "{1}" in the
-                selected location.</p>
-                <p align="left">
-                To unlink your Dropbox account from Maestral, click "Unlink" below.</p>
+                To re-download your Dropbox, please select a new folder below. Select
+                "Unlink" to unlink your Dropbox account from Maestral.
+                </p>
                 </body></html>
-                """.format(
-                    self.mdbx.get_conf("main", "path"), self.dropbox_dirname
-                )
+                """
             )
             self.pushButtonDropboxPathCalcel.setText("Quit")
             self.stackedWidget.setCurrentIndex(2)
@@ -227,57 +222,38 @@ class SetupDialog(QtWidgets.QDialog):
         self.mdbx.reset_sync_state()
 
         # apply dropbox path
-        dropbox_path = osp.join(self.dropbox_location, self.dropbox_dirname)
-
-        if osp.exists(dropbox_path):
-            if osp.isdir(dropbox_path):
-                msg_box = UserDialog(
-                    title="Folder already exists",
-                    message=(
-                        f'The folder "{dropbox_path}" already exists. Would you  '
-                        f"like to replace it or merge its contents with Dropbox?"
-                    ),
-                    button_names=("Replace", "Cancel", "Merge"),
-                    parent=self,
-                )
-                msg_box.setAcceptButtonIcon("edit-clear")
-                res = msg_box.exec_()
-
-            else:
-                msg_box = UserDialog(
-                    title="File conflict",
-                    message=(
-                        f'There already is a file named "{self.dropbox_dirname}" at '
-                        "this location. Would you like to replace it?"
-                    ),
-                    button_names=("Replace", "Cancel"),
-                    parent=self,
-                )
-                res = msg_box.exec_()
-
-            if res == UserDialog.Rejected:
-                return
-            elif res == UserDialog.Accepted:
-                err = delete(dropbox_path)
-                if err:
-                    msg_box = UserDialog(
-                        title="Could not write to destination",
-                        message=(
-                            "Please check if you have permissions to write to the "
-                            "selected location."
-                        ),
-                        parent=self,
-                    )
-                    msg_box.exec_()
-                    return
-            elif res == UserDialog.Accepted2:
-                pass
 
         try:
-            self.mdbx.create_dropbox_directory(dropbox_path)
+
+            if osp.exists(self.dropbox_location):
+
+                if is_empty(self.dropbox_location):
+                    delete(self.dropbox_location, raise_error=True)
+                else:
+                    msg_box = UserDialog(
+                        title="Folder is not empty",
+                        message=(
+                            f'The folder "{osp.basename(self.dropbox_location)}" is '
+                            "not empty. Would you like to delete its content or merge "
+                            "it with your Dropbox?"
+                        ),
+                        button_names=("Delete", "Cancel", "Merge"),
+                        parent=self,
+                    )
+                    msg_box.setAcceptButtonIcon("edit-clear")
+                    res = msg_box.exec_()
+
+                    if res == UserDialog.Rejected:
+                        return
+                    elif res == UserDialog.Accepted:
+                        delete(self.dropbox_location, raise_error=True)
+                    elif res == UserDialog.Accepted2:
+                        pass
+
+            self.mdbx.create_dropbox_directory(self.dropbox_location)
         except OSError:
             msg_box = UserDialog(
-                title="Could not create directory",
+                title="Could not set directory",
                 message=(
                     "Please check if you have permissions to write to the "
                     "selected location."
@@ -323,8 +299,7 @@ class SetupDialog(QtWidgets.QDialog):
     def on_new_dbx_folder(self, new_location):
         self.comboBoxDropboxPath.setCurrentIndex(0)
         if not new_location == "":
-            self.comboBoxDropboxPath.setItemText(0, self.rel_path(new_location))
-            self.comboBoxDropboxPath.setItemIcon(0, native_item_icon(new_location))
+            self.comboBoxDropboxPath.setItemText(0, new_location)
 
         self.dropbox_location = new_location
 
@@ -389,18 +364,6 @@ class SetupDialog(QtWidgets.QDialog):
         for row in range(item.child_count_loaded()):
             index_child = self.dbx_model.index(row, 0, index)
             self.update_selection(index=index_child)
-
-    @staticmethod
-    def rel_path(path):
-        """
-        Returns the path relative to the users directory, or the absolute
-        path if not in a user directory.
-        """
-        usr = osp.abspath(osp.join(get_home_dir(), osp.pardir))
-        if osp.commonprefix([path, usr]) == usr:
-            return osp.relpath(path, usr)
-        else:
-            return path
 
     def changeEvent(self, QEvent):
 

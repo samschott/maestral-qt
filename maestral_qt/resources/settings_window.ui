@@ -138,7 +138,7 @@
      <item row="5" column="0">
       <widget class="QLabel" name="labelDropboxPathTitle">
        <property name="text">
-        <string>Dropbox folder location:</string>
+        <string>Local Dropbox folder:</string>
        </property>
        <property name="alignment">
         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
