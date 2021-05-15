@@ -8,7 +8,7 @@ setup(
     author_email="ss2151@cam.ac.uk",
     version="1.4.4.dev1",
     description="A Qt GUI for the Maestral daemon",
-    url="https://www.maestral.app",
+    url="https://maestral.app",
     license="MIT",
     long_description=open("README.md").read(),
     long_description_content_type="text/markdown",
