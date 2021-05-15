@@ -48,6 +48,7 @@ from maestral_qt.utils import (
     BackgroundTask,
     MaestralBackgroundTask,
     elide_string,
+    markup_urls,
     IS_MACOS,
     IS_BUNDLE,
 )
@@ -526,23 +527,35 @@ class MaestralGuiApp(QtWidgets.QSystemTrayIcon):
         err = errs[-1]
 
         if err["type"] == "NoDropboxDirError":
-            self.restart()  # will launch into setup dialog
-        elif err["type"] == "TokenRevokedError":
+            # Restart and launch into setup dialog.
+            self.restart()
+
+        elif err["type"] in ("TokenRevokedError", "TokenExpiredError"):
+            # sShow relink dialog.
+
             from maestral_qt.relink_dialog import RelinkDialog
 
-            self._exec_relink_dialog(RelinkDialog.REVOKED)
-        elif err["type"] == "TokenExpiredError":
-            from maestral_qt.relink_dialog import RelinkDialog
-
-            self._exec_relink_dialog(RelinkDialog.EXPIRED)
-        elif "MaestralApiError" in err["inherits"] or "SyncError" in err["inherits"]:
-            filename = err["dbx_path"] or err["local_path"]
-            if filename:
-                message = f"Path: {filename}\n" + err["message"]
+            if err["type"] == "TokenRevokedError":
+                reason = RelinkDialog.REVOKED
             else:
-                message = err["message"]
+                reason = RelinkDialog.EXPIRED
+
+            self._exec_relink_dialog(reason)
+
+        elif "MaestralApiError" in err["inherits"] or "SyncError" in err["inherits"]:
+            # This is a known error. We show the error message and the corresponding
+            # file path, if any.
+
+            message = markup_urls(err["message"])
+            filename = err["dbx_path"] or err["local_path"]
+
+            if filename:
+                message = f"Path: {filename}\n{message}"
+
             show_dialog(err["title"], message, level="error")
+
         else:
+            # This is an unexpected error. We show the full stacktrace.
             show_stacktrace_dialog(err["traceback"])
 
     def _exec_relink_dialog(self, reason):

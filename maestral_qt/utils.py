@@ -8,6 +8,7 @@ Created on Wed Oct 31 16:23:13 2018
 # system imports
 import sys
 import os
+import re
 import platform
 
 # external packages
@@ -98,6 +99,29 @@ def get_scaled_font(scaling=1.0, bold=False, italic=False):
     font.setPointSize(font_size)
 
     return font
+
+
+url_regex = re.compile(
+    r"(?i)\b((?:https?://|www\d{0,3}[.]|[a-z0-9.\-]+[.][a-z]{2,4}/)(?:[^\s()<>]+|\(([^\s()<>]+|(\([^\s()<>]+\)))*\))+(?:\(([^\s()<>]+|(\([^\s()<>]+\)))*\)|[^\s`!()\[\]{};:'\".,<>?«»“”‘’]))"
+)
+
+
+def markup_urls(string):
+    """
+    Find any URLs in a string and wrap them in html a tags.
+
+    :param str string: String to parse.
+    :return: Marked-up string.
+    """
+
+    matches = url_regex.findall(string)
+
+    for match in matches:
+        url = "".join(match)
+        href = f'<a href="{url}">{url}</a>'
+        string = string.replace(url, href)
+
+    return string
 
 
 # noinspection PyArgumentList
