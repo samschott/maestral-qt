@@ -11,6 +11,7 @@ from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QPixmap, QPainter
 
 # local imports
+from . import __url__
 from .resources import APP_ICON_PATH
 from .utils import (
     get_scaled_font,
@@ -271,14 +272,14 @@ def show_stacktrace_dialog(traceback):
 
 def show_update_dialog(latest_release, release_notes_md):
 
-    url_r = "https://github.com/samschott/maestral-dropbox/releases"
+    url = f"{__url__}/download"
     message = (
         "Maestral v{0} is available. Please use your package manager to "
         'update Maestral or go to the <a href="{1}">releases</span></a> '
         "page to download the new version. "
         '<div style="height:5px;font-size:5px;">&nbsp;<br></div>'
         "<b>Release notes:</b>"
-    ).format(latest_release, url_r)
+    ).format(latest_release, url)
     release_notes_html = markdown2.markdown(release_notes_md)
     list_style = (
         '<ul style="margin-top: 0px; margin-bottom: 0px; margin-left: -20px; '
