@@ -253,20 +253,16 @@ class SettingsWindow(QtWidgets.QWidget):
 
         if not is_empty(new_location):
 
-            msg_box = UserDialog(
+            UserDialog(
                 title="Folder is not empty",
                 message=(
                     f'The folder "{osp.basename(new_location)}" is not empty. '
-                    "Would you like to delete its contents?"
+                    "Please select an empty folder."
                 ),
-                button_names=("Delete", "Cancel"),
                 parent=self,
-            )
-            msg_box.setAcceptButtonIcon("edit-clear")
-            res = msg_box.exec_()
+            ).exec_()
 
-            if res == UserDialog.Rejected:
-                return
+            return
 
         err = delete(new_location)
         if err:

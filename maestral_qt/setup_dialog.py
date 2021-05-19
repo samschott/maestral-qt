@@ -7,7 +7,6 @@ Created on Wed Oct 31 16:23:13 2018
 """
 
 # system imports
-import os
 import os.path as osp
 from PyQt5 import QtGui, QtCore, QtWidgets, uic
 from PyQt5.QtCore import QModelIndex, Qt
@@ -56,12 +55,13 @@ class SetupDialog(QtWidgets.QDialog):
 
         # set up Dropbox location combobox
 
-        dropbox_dir = self.mdbx.get_conf("main", "path")
+        self.dropbox_location = self.mdbx.get_conf("main", "path")
 
-        if dropbox_dir == "":
-            dropbox_dir = f"{get_home_dir()}/Dropbox ({self.config_name.capitalize()})"
+        if self.dropbox_location == "":
+            folder_name = f"Dropbox ({self.config_name.capitalize()})"
+            self.dropbox_location = osp.join(get_home_dir(), folder_name)
 
-        self.comboBoxDropboxPath.addItem(native_folder_icon(), dropbox_dir)
+        self.comboBoxDropboxPath.addItem(native_folder_icon(), self.dropbox_location)
         self.comboBoxDropboxPath.insertSeparator(1)
         self.comboBoxDropboxPath.addItem(QtGui.QIcon(), "Choose...")
         self.comboBoxDropboxPath.currentIndexChanged.connect(self.on_combobox)
@@ -234,20 +234,17 @@ class SetupDialog(QtWidgets.QDialog):
                         title="Folder is not empty",
                         message=(
                             f'The folder "{osp.basename(self.dropbox_location)}" is '
-                            "not empty. Would you like to delete its content or merge "
-                            "it with your Dropbox?"
+                            "not empty. Would you like to merge its content with your "
+                            "Dropbox?"
                         ),
-                        button_names=("Delete", "Cancel", "Merge"),
+                        button_names=("Cancel", "Merge"),
                         parent=self,
                     )
-                    msg_box.setAcceptButtonIcon("edit-clear")
                     res = msg_box.exec_()
 
-                    if res == UserDialog.Rejected:
+                    if res == UserDialog.Accepted:
                         return
-                    elif res == UserDialog.Accepted:
-                        delete(self.dropbox_location, raise_error=True)
-                    elif res == UserDialog.Accepted2:
+                    elif res == UserDialog.Rejected:
                         pass
 
             self.mdbx.create_dropbox_directory(self.dropbox_location)
