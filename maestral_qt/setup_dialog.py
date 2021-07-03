@@ -8,6 +8,9 @@ Created on Wed Oct 31 16:23:13 2018
 
 # system imports
 import os.path as osp
+from queue import Queue
+
+# external imports
 from PyQt5 import QtGui, QtCore, QtWidgets, uic
 from PyQt5.QtCore import QModelIndex, Qt
 
@@ -19,7 +22,7 @@ from maestral.utils.path import delete
 from .resources import APP_ICON_PATH, SETUP_DIALOG_PATH, native_folder_icon
 from .utils import IS_MACOS, MaestralBackgroundTask, icon_to_pixmap, is_empty
 from .widgets import UserDialog
-from .selective_sync_dialog import AsyncListFolder, DropboxTreeModel, DropboxPathItem
+from .selective_sync_dialog import AsyncListFolder, FileSystemModel, DropboxPathItem
 
 
 # noinspection PyArgumentList
@@ -272,8 +275,7 @@ class SetupDialog(QtWidgets.QDialog):
     @QtCore.pyqtSlot()
     def on_folders_selected(self):
 
-        self.update_selection()
-        self.mdbx.excluded_items = self.excluded_items
+        self.mdbx.excluded_items = self.get_excluded_items()
 
         # if any excluded items are currently on the drive, delete them
         for item in self.excluded_items:
@@ -304,8 +306,10 @@ class SetupDialog(QtWidgets.QDialog):
         self.pushButtonFolderSelectionSelect.setEnabled(False)
 
         self.async_loader = AsyncListFolder(self.mdbx.config_name, self)
-        self.dbx_root = DropboxPathItem(self.mdbx, self.async_loader)
-        self.dbx_model = DropboxTreeModel(self.dbx_root)
+        self.dbx_root = DropboxPathItem(
+            self.async_loader, set(self.mdbx.excluded_items)
+        )
+        self.dbx_model = FileSystemModel(self.dbx_root)
         self.dbx_model.dataChanged.connect(self.update_select_all_checkbox)
         self.treeViewFolders.setModel(self.dbx_model)
 
@@ -345,22 +349,28 @@ class SetupDialog(QtWidgets.QDialog):
             index = self.dbx_model.index(irow, 1, QModelIndex())
             self.dbx_model.setCheckState(index, checked_state)
 
-    def update_selection(self, index=QModelIndex()):
+    def get_excluded_items(self):
 
-        if index.isValid():
-            item = index.internalPointer()
-            item_dbx_path = item._path.lower()
+        # We start with an empty excluded list since this is the initial setup.
+        # We add unchecked items to the excluded list.
 
-            # We have started with all folders included. Therefore just append excluded
-            # folders here.
-            if item.checkState == 0:
-                self.excluded_items.append(item_dbx_path)
-        else:
-            item = self.dbx_model._root_item
+        excluded_items = []
 
-        for row in range(item.child_count_loaded()):
-            index_child = self.dbx_model.index(row, 0, index)
-            self.update_selection(index=index_child)
+        queue = Queue()
+        queue.put(self.dbx_model._root_item)
+
+        while not queue.empty():
+
+            node = queue.get()
+
+            if node.checkState == 0:
+                excluded_items.append(node._path_lower)
+
+            for child in node._children:
+                if isinstance(child, DropboxPathItem):
+                    queue.put(child)
+
+        return excluded_items
 
     def changeEvent(self, QEvent):
 

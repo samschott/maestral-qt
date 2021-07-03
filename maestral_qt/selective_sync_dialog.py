@@ -7,6 +7,7 @@ Created on Wed Oct 31 16:23:13 2018
 """
 import os
 import threading
+from queue import Queue
 
 # external packages
 from PyQt5 import QtCore, QtWidgets, QtGui, uic
@@ -24,7 +25,7 @@ from .widgets import UserDialog
 
 
 # noinspection PyTypeChecker
-class DropboxTreeModel(QAbstractItemModel):
+class FileSystemModel(QAbstractItemModel):
     """A QAbstractItemModel which loads items and their children on-demand and
     asynchronously. It is useful for displaying a hierarchy from a source which is
     slow to load (remote server, slow file system, etc)."""
@@ -176,6 +177,7 @@ class AbstractTreeItem(QtCore.QObject):
         self._children = []
         self._parent = parent
         self._children_update_started = False
+        self._children_update_completed = False
         self._checkStateChanged = False
 
         if self._parent:
@@ -244,7 +246,7 @@ class AbstractTreeItem(QtCore.QObject):
 
     def child_count_loaded(self):
         """The number of children already loaded."""
-        return len([c for c in self._children if not isinstance(c, MessageTreeItem)])
+        return len(self._children) if self._children_update_started else 0
 
     def isSelectionModified(self):
         return False
@@ -300,7 +302,15 @@ class DropboxPathItem(AbstractTreeItem):
     """A Dropbox folder item. It lists its children asynchronously, only when asked to
     by `TreeModel`."""
 
-    def __init__(self, mdbx, async_loader, path="/", is_folder=True, parent=None):
+    def __init__(
+        self,
+        async_loader,
+        unchecked,
+        path_display="/",
+        path_lower="/",
+        is_folder=True,
+        parent=None,
+    ):
         super().__init__(parent=parent)
         if is_folder:
             self.icon = native_folder_icon()
@@ -310,22 +320,22 @@ class DropboxPathItem(AbstractTreeItem):
             self._children = []
         self.is_folder = is_folder
         self.can_have_children = is_folder
-        self._path = path
-        self._basename = os.path.basename(self._path)
-        self._mdbx = mdbx
+        self._path_display = path_display
+        self._path_lower = path_lower
+        self._basename = os.path.basename(self._path_display)
         self._async_loader = async_loader
+        self._unchecked = unchecked
 
         self._checkStateChanged = False
 
         # get info from our own excluded list
-        excluded_items = self._mdbx.excluded_items
-        if path.lower() in excluded_items:
+        if path_lower in unchecked:
             # item is excluded
             self._originalCheckState = 0
-        elif any(is_child(path.lower(), f) for f in excluded_items):
+        elif self._parent is not None and self._parent._originalCheckState == 0:
             # item's parent is excluded
             self._originalCheckState = 0
-        elif any(is_child(f, path.lower()) for f in excluded_items):
+        elif any(is_child(f, path_lower) for f in unchecked):
             # some of item's children are excluded
             self._originalCheckState = 1
         else:
@@ -334,7 +344,7 @@ class DropboxPathItem(AbstractTreeItem):
 
         # overwrite original state if the parent was modified
         if (
-            self._parent
+            self._parent is not None
             and self._parent._checkStateChanged
             and not self._parent.checkState == 1
         ):
@@ -347,7 +357,7 @@ class DropboxPathItem(AbstractTreeItem):
 
     def _create_children_async(self):
         if self.is_folder:
-            self._remote = self._async_loader.listChildren(self._path)
+            self._remote = self._async_loader.listChildren(self._path_lower)
             self._remote.sig_result.connect(self._async_loading_done)
         else:
             self._async_loading_done([])
@@ -363,9 +373,10 @@ class DropboxPathItem(AbstractTreeItem):
         else:
             new_nodes = [
                 DropboxPathItem(
-                    self._mdbx,
                     self._async_loader,
-                    path=e["path_display"],
+                    self._unchecked,
+                    path_display=e["path_display"],
+                    path_lower=e["path_lower"],
                     is_folder=e["type"] == "FolderMetadata",
                     parent=self,
                 )
@@ -495,10 +506,13 @@ class SelectiveSyncDialog(QtWidgets.QDialog):
         self.selectAllCheckBox.clicked.connect(self.on_select_all_clicked)
 
     def populate_folders_list(self, overload=None):
-        self.excluded_items = self.mdbx.excluded_items
+        self.excluded_items = set(self.mdbx.excluded_items)
         self.async_loader = AsyncListFolder(self.mdbx.config_name, self)
-        self.dbx_root = DropboxPathItem(self.mdbx, self.async_loader)
-        self.dbx_model = DropboxTreeModel(self.dbx_root)
+        self.dbx_root = DropboxPathItem(
+            async_loader=self.async_loader,
+            unchecked=set(self.mdbx.excluded_items),
+        )
+        self.dbx_model = FileSystemModel(self.dbx_root)
         self.dbx_model.loading_done.connect(self.ui_loaded)
         self.dbx_model.loading_failed.connect(self.ui_failed)
         self.dbx_model.dataChanged.connect(self.update_select_all_checkbox)
@@ -542,44 +556,55 @@ class SelectiveSyncDialog(QtWidgets.QDialog):
 
         else:
 
-            self.update_selection()
+            excluded_items = self.get_excluded_items()
 
             try:
-                self.mdbx.excluded_items = self.excluded_items
+                self.mdbx.excluded_items = excluded_items
             except BusyError as err:
                 msg_box = UserDialog(err.title, err.message, parent=self)
                 msg_box.open()
             else:
                 self.accept()
 
-    def update_selection(self, index=QModelIndex()):
+    def get_excluded_items(self):
 
-        if index.isValid():
-            item = index.internalPointer()
-            item_dbx_path = item._path.lower()
+        # We load the old excluded list first. This is to preserve any exclusions of
+        # sub-folders which may not be loaded in the GUI. We then update the excluded
+        # list to reflect any changes made by the user in the GUI.
+
+        excluded_items = set(self.mdbx.excluded_items)
+
+        queue = Queue()
+        queue.put(self.dbx_model._root_item)
+
+        while not queue.empty():
+
+            node = queue.get()
 
             # Include items which have been checked / partially checked.
             # Remove items which have been unchecked.
             # The list will be cleaned up later.
 
-            if item.checkState == 0:  # excluded
-                self.excluded_items.append(item_dbx_path)
-            elif item.checkState == 1:  # included but has excluded children
-                self.excluded_items = [
-                    p for p in self.excluded_items if not p == item_dbx_path
-                ]
-            elif item.checkState == 2:  # fully included
-                self.excluded_items = [
-                    p
-                    for p in self.excluded_items
-                    if not is_equal_or_child(p, item_dbx_path)
-                ]
-        else:
-            item = self.dbx_model._root_item
+            if node.checkState == 0:
+                # Path is fully excluded. Add to excluded list.
+                excluded_items.add(node._path_lower)
+            elif node.checkState == 1:
+                # Path is included but has excluded children. Remove only the path
+                # itself from the excluded list.
+                excluded_items.discard(node._path_lower)
+            elif node.checkState == 2:
+                # Path is fully included. Remove it and all its children
+                # from excluded list. We do this here because children might not
+                # have been loaded / expanded and won't be visited during traversal.
+                for path in excluded_items.copy():
+                    if is_equal_or_child(path, node._path_lower):
+                        excluded_items.discard(path)
 
-        for row in range(item.child_count_loaded()):
-            index_child = self.dbx_model.index(row, 0, index)
-            self.update_selection(index=index_child)
+            for child in node._children:
+                if isinstance(child, DropboxPathItem):
+                    queue.put(child)
+
+        return excluded_items
 
     @QtCore.pyqtSlot()
     def ui_failed(self):
