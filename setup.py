@@ -5,7 +5,7 @@ from setuptools import setup, find_packages
 setup(
     name="maestral-qt",
     author="Sam Schott",
-    author_email="ss2151@cam.ac.uk",
+    author_email="sam.schott@outlook.com",
     version="1.4.6",
     description="A Qt GUI for the Maestral daemon",
     url="https://maestral.app",
