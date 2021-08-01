@@ -58,7 +58,7 @@ class SetupDialog(QtWidgets.QDialog):
 
         # set up Dropbox location combobox
 
-        self.dropbox_location = self.mdbx.get_conf("main", "path")
+        self.dropbox_location = self.mdbx.get_conf("sync", "path")
 
         if self.dropbox_location == "":
             folder_name = f"Dropbox ({self.config_name.capitalize()})"
@@ -264,7 +264,7 @@ class SetupDialog(QtWidgets.QDialog):
             return
 
         # switch to next page
-        self.mdbx.set_conf("main", "excluded_items", [])
+        self.mdbx.set_conf("sync", "excluded_items", [])
         self.stackedWidget.slideInIdx(3)
         self.treeViewFolders.setFocus()
 
