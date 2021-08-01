@@ -20,7 +20,7 @@ from maestral.utils.path import delete
 
 # local imports
 from .resources import APP_ICON_PATH, SETUP_DIALOG_PATH, native_folder_icon
-from .utils import IS_MACOS, MaestralBackgroundTask, icon_to_pixmap, is_empty
+from .utils import MaestralBackgroundTask, icon_to_pixmap, is_empty
 from .widgets import UserDialog
 from .selective_sync_dialog import AsyncListFolder, FileSystemModel, DropboxPathItem
 
@@ -35,9 +35,6 @@ class SetupDialog(QtWidgets.QDialog):
         super().__init__(parent=parent)
         # load user interface layout from .ui file
         uic.loadUi(SETUP_DIALOG_PATH, self)
-
-        if IS_MACOS:
-            self.setWindowFlags(Qt.WindowStaysOnTopHint)
 
         self.mdbx = mdbx
         self.config_name = self.mdbx.config_name
