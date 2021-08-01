@@ -29,7 +29,6 @@ from .resources import (
     FACEHOLDER_PATH,
 )
 from .utils import (
-    IS_MACOS,
     LINE_COLOR_DARK,
     LINE_COLOR_LIGHT,
     get_scaled_font,
@@ -96,10 +95,6 @@ class SettingsWindow(QtWidgets.QWidget):
     def __init__(self, parent, mdbx):
         super().__init__()
         uic.loadUi(SETTINGS_WINDOW_PATH, self)
-
-        if IS_MACOS:
-            # noinspection PyTypeChecker
-            self.setWindowFlags(self.windowFlags() | QtCore.Qt.WindowStaysOnTopHint)
 
         self._parent = parent
         self.update_dark_mode()
