@@ -10,8 +10,8 @@ Created on Wed Oct 31 16:23:13 2018
 import os.path as osp
 
 # external imports
-from PyQt5 import QtGui, QtCore, QtWidgets, uic
-from PyQt5.QtCore import Qt
+from PyQt6 import QtGui, QtCore, QtWidgets
+from PyQt6.QtCore import Qt
 
 # maestral modules
 from maestral.utils.appdirs import get_home_dir
@@ -19,28 +19,28 @@ from maestral.utils.path import delete
 from maestral.daemon import stop_maestral_daemon_process
 
 # local imports
-from .resources import APP_ICON_PATH, DROPBOX_LOCATION_DIALOG_PATH, native_folder_icon
+from .resources import APP_ICON_PATH, native_folder_icon
+from .resources.ui_dropbox_location_dialog import Ui_Dialog
 from .utils import MaestralBackgroundTask, icon_to_pixmap, is_empty
 from .widgets import UserDialog
 
 
 # noinspection PyArgumentList
-class DropboxLocationDialog(QtWidgets.QDialog):
+class DropboxLocationDialog(QtWidgets.QDialog, Ui_Dialog):
     """A dialog to link and set up a new Dropbox account."""
 
     accepted = False
 
     def __init__(self, mdbx, parent=None):
         super().__init__(parent=parent)
-        # load user interface layout from .ui file
-        uic.loadUi(DROPBOX_LOCATION_DIALOG_PATH, self)
+        self.setupUi(self)
 
         # noinspection PyTypeChecker
         self.setWindowFlags(
-            Qt.WindowStaysOnTopHint
-            | Qt.Sheet
-            | Qt.WindowTitleHint
-            | Qt.CustomizeWindowHint
+            Qt.WindowType.WindowStaysOnTopHint
+            | Qt.WindowType.Sheet
+            | Qt.WindowType.WindowTitleHint
+            | Qt.WindowType.CustomizeWindowHint
         )
 
         self.mdbx = mdbx
@@ -64,10 +64,16 @@ class DropboxLocationDialog(QtWidgets.QDialog):
         self.comboBoxPath.currentIndexChanged.connect(self.on_combobox)
 
         self.dropbox_folder_dialog = QtWidgets.QFileDialog(self)
-        self.dropbox_folder_dialog.setAcceptMode(QtWidgets.QFileDialog.AcceptOpen)
-        self.dropbox_folder_dialog.setFileMode(QtWidgets.QFileDialog.Directory)
-        self.dropbox_folder_dialog.setOption(QtWidgets.QFileDialog.ShowDirsOnly, True)
-        self.dropbox_folder_dialog.setLabelText(QtWidgets.QFileDialog.Accept, "Select")
+        self.dropbox_folder_dialog.setAcceptMode(
+            QtWidgets.QFileDialog.AcceptMode.AcceptOpen
+        )
+        self.dropbox_folder_dialog.setFileMode(QtWidgets.QFileDialog.FileMode.Directory)
+        self.dropbox_folder_dialog.setOption(
+            QtWidgets.QFileDialog.Option.ShowDirsOnly, True
+        )
+        self.dropbox_folder_dialog.setLabelText(
+            QtWidgets.QFileDialog.DialogLabel.Accept, "Select"
+        )
         self.dropbox_folder_dialog.setDirectory(get_home_dir())
         self.dropbox_folder_dialog.fileSelected.connect(self.on_new_dbx_folder)
         self.dropbox_folder_dialog.rejected.connect(
@@ -77,7 +83,7 @@ class DropboxLocationDialog(QtWidgets.QDialog):
         self.pushButtonSelect.setDefault(True)
 
         # connect buttons to callbacks
-        self.setAttribute(Qt.WA_DeleteOnClose)
+        self.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
         self.pushButtonQuit.clicked.connect(self.on_quit_clicked)
         self.pushButtonSelect.clicked.connect(self.on_selected_clicked)
         self.pushButtonUnlink.clicked.connect(self.on_unlink_clicked)
@@ -132,11 +138,11 @@ class DropboxLocationDialog(QtWidgets.QDialog):
                         button_names=("Cancel", "Merge"),
                         parent=self,
                     )
-                    res = msg_box.exec_()
+                    res = msg_box.exec()
 
-                    if res == UserDialog.Accepted:
+                    if res == UserDialog.DialogCode.Accepted:
                         return
-                    elif res == UserDialog.Rejected:
+                    elif res == UserDialog.DialogCode.Rejected:
                         pass
 
             self.mdbx.create_dropbox_directory(self.dropbox_location)
@@ -149,7 +155,7 @@ class DropboxLocationDialog(QtWidgets.QDialog):
                 ),
                 parent=self,
             )
-            msg_box.exec_()
+            msg_box.exec()
             return
 
         # Resume sync with clean sync state.
@@ -181,10 +187,10 @@ class DropboxLocationDialog(QtWidgets.QDialog):
         self.dropbox_location = new_location
 
     def changeEvent(self, event):
-
-        if event.type() == QtCore.QEvent.PaletteChange:
+        if event.type() == QtCore.QEvent.Type.PaletteChange:
             self.update_dark_mode()
 
     def update_dark_mode(self):
         if self.dbx_model:
-            self.dbx_model.reloadData([Qt.DecorationRole])  # reload folder icons
+            # reload folder icons
+            self.dbx_model.reloadData([Qt.ItemDataRole.DecorationRole])

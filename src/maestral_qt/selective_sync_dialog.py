@@ -1,17 +1,14 @@
-#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""
-Created on Wed Oct 31 16:23:13 2018
 
-@author: samschott
-"""
+# system imports
 import os
 import threading
 from queue import Queue
 
 # external packages
-from PyQt5 import QtCore, QtWidgets, QtGui, uic
-from PyQt5.QtCore import QAbstractItemModel, QModelIndex, Qt, QVariant
+from PyQt6 import QtCore, QtWidgets, QtGui
+from PyQt6.QtCore import QAbstractItemModel, QModelIndex, Qt
+from PyQt6.QtCore import pyqtSignal as Signal
 
 # maestral modules
 from maestral.daemon import MaestralProxy
@@ -20,9 +17,10 @@ from maestral.utils.path import is_child, is_equal_or_child
 from maestral.core import FolderMetadata
 
 # local imports
-from .resources import SELECTIVE_SYNC_DIALOG_PATH, native_folder_icon, native_file_icon
 from .utils import BackgroundTask
 from .widgets import UserDialog
+from .resources import native_folder_icon, native_file_icon
+from .resources.ui_selective_sync_dialog import Ui_SelectiveSyncDialog
 
 
 # noinspection PyTypeChecker
@@ -31,8 +29,8 @@ class FileSystemModel(QAbstractItemModel):
     asynchronously. It is useful for displaying a hierarchy from a source which is
     slow to load (remote server, slow file system, etc)."""
 
-    loading_failed = QtCore.pyqtSignal()
-    loading_done = QtCore.pyqtSignal()
+    loading_failed = Signal()
+    loading_done = Signal()
 
     def __init__(self, root, parent=None, checkbox_column=1):
         super().__init__(parent=parent)
@@ -40,10 +38,9 @@ class FileSystemModel(QAbstractItemModel):
         self._root_item.loading_done.connect(self.reloadData)
         self._root_item.loading_failed.connect(self.on_loading_failed)
         self._header = self._root_item.header()
-        self._flags = Qt.ItemIsUserCheckable
+        self._flags = Qt.ItemFlag.ItemIsUserCheckable
         self.checkbox_column = checkbox_column
 
-    @QtCore.pyqtSlot()
     def on_loading_failed(self):
 
         self.display_message(
@@ -60,7 +57,7 @@ class FileSystemModel(QAbstractItemModel):
     def reloadData(self, roles=None):
 
         if not roles:
-            roles = [Qt.DisplayRole, Qt.CheckStateRole]
+            roles = [Qt.ItemDataRole.DisplayRole, Qt.ItemDataRole.CheckStateRole]
 
         self.dataChanged.emit(QModelIndex(), QModelIndex(), roles)
         self.layoutChanged.emit()
@@ -93,7 +90,7 @@ class FileSystemModel(QAbstractItemModel):
 
     def checkState(self, index):
         if not index.isValid():
-            return QVariant()
+            return None
         else:
             return index.internalPointer().checkState
 
@@ -107,7 +104,10 @@ class FileSystemModel(QAbstractItemModel):
         return False
 
     def setData(self, index, value, role):
-        if role == Qt.CheckStateRole and index.column() == self.checkbox_column:
+        if (
+            role == Qt.ItemDataRole.CheckStateRole
+            and index.column() == self.checkbox_column
+        ):
             self.setCheckState(index, value)
             return True
 
@@ -115,24 +115,27 @@ class FileSystemModel(QAbstractItemModel):
 
     def data(self, index, role):
         if not index.isValid():
-            return QVariant()
+            return None
         item = index.internalPointer()
         column = index.column()
-        if role == Qt.DisplayRole:
+        if role == Qt.ItemDataRole.DisplayRole:
             return item.data(column)
-        if role == Qt.CheckStateRole and column == self.checkbox_column:
+        if role == Qt.ItemDataRole.CheckStateRole and column == self.checkbox_column:
             return item.checkState
-        if role == Qt.DecorationRole and column == 0:
+        if role == Qt.ItemDataRole.DecorationRole and column == 0:
             return item.icon
-        return QVariant()
+        return None
 
     def headerData(self, column, orientation, role):
-        if orientation == Qt.Horizontal and role == Qt.DisplayRole:
+        if (
+            orientation == Qt.Orientation.Horizontal
+            and role == Qt.ItemDataRole.DisplayRole
+        ):
             try:
-                return QVariant(self._header[column])
+                return self._header[column]
             except IndexError:
                 pass
-        return QVariant()
+        return None
 
     def index(self, row, column, parent):
         if not self.hasIndex(row, column, parent):
@@ -170,8 +173,8 @@ class AbstractTreeItem(QtCore.QObject):
     An abstract item for `TreeModel`. To be subclassed depending on the application.
     """
 
-    loading_done = QtCore.pyqtSignal()
-    loading_failed = QtCore.pyqtSignal()
+    loading_done = Signal()
+    loading_failed = Signal()
 
     def __init__(self, parent=None):
         QtCore.QObject.__init__(self, parent=parent)
@@ -263,7 +266,7 @@ class MessageTreeItem(AbstractTreeItem):
         AbstractTreeItem.__init__(self, parent=parent)
         self._parent = parent
         self._message = message
-        self._checkState = QVariant()
+        self._checkState = None
         self.can_have_children = False
 
     def _async_loading_done(self, result):
@@ -273,7 +276,7 @@ class MessageTreeItem(AbstractTreeItem):
         pass
 
     def child_at(self, row):
-        return QVariant()
+        return None
 
     def data(self, column):
         return (self._message, "")[column]
@@ -387,7 +390,7 @@ class DropboxPathItem(AbstractTreeItem):
                 for e in results
             ]
             self._children.extend(new_nodes)
-            self.sort(0, Qt.AscendingOrder)
+            self.sort(0, Qt.SortOrder.AscendingOrder)
             self.loading_done.emit()
 
     def data(self, column):
@@ -430,7 +433,7 @@ class DropboxPathItem(AbstractTreeItem):
         return own_selection_modified or child_selection_modified
 
     def sort(self, column, order):
-        reverse = order == Qt.DescendingOrder
+        reverse = order == Qt.SortOrder.DescendingOrder
 
         self._children.sort(
             key=lambda x: _sort_key(x, column, reverse), reverse=reverse
@@ -492,10 +495,10 @@ class AsyncListFolder(QtCore.QObject):
 
 
 # noinspection PyArgumentList
-class SelectiveSyncDialog(QtWidgets.QDialog):
+class SelectiveSyncDialog(QtWidgets.QDialog, Ui_SelectiveSyncDialog):
     def __init__(self, mdbx, parent=None):
         super().__init__(parent=parent)
-        uic.loadUi(SELECTIVE_SYNC_DIALOG_PATH, self)
+        self.setupUi(self)
         self.setModal(True)
 
         self.mdbx = mdbx
@@ -523,23 +526,22 @@ class SelectiveSyncDialog(QtWidgets.QDialog):
         self.dbx_model.dataChanged.connect(self.update_dialog_buttons)
         self.treeViewFolders.setModel(self.dbx_model)
 
-    @QtCore.pyqtSlot()
     def update_select_all_checkbox(self):
         check_states = []
         for irow in range(self.dbx_model._root_item.child_count_loaded()):
             index = self.dbx_model.index(irow, 1, QModelIndex())
-            check_states.append(self.dbx_model.data(index, Qt.CheckStateRole))
+            check_states.append(
+                self.dbx_model.data(index, Qt.ItemDataRole.CheckStateRole)
+            )
 
         if all(cs == 2 for cs in check_states):
             self.selectAllCheckBox.setChecked(True)
         else:
             self.selectAllCheckBox.setChecked(False)
 
-    @QtCore.pyqtSlot()
     def update_dialog_buttons(self):
         self.updateButton.setEnabled(self.dbx_root.isSelectionModified())
 
-    @QtCore.pyqtSlot(bool)
     def on_select_all_clicked(self, checked):
         checked_state = 2 if checked else 0
         for irow in range(self.dbx_model._root_item.child_count_loaded()):
@@ -610,21 +612,21 @@ class SelectiveSyncDialog(QtWidgets.QDialog):
 
         return excluded_items
 
-    @QtCore.pyqtSlot()
     def ui_failed(self):
         self.updateButton.setEnabled(False)
         self.selectAllCheckBox.setEnabled(False)
 
-    @QtCore.pyqtSlot()
     def ui_loaded(self):
         self.selectAllCheckBox.setEnabled(True)
         self.treeViewFolders.resizeColumnToContents(0)
 
     def changeEvent(self, QEvent):
 
-        if QEvent.type() == QtCore.QEvent.PaletteChange:
+        if QEvent.type() == QtCore.QEvent.Type.PaletteChange:
             self.update_dark_mode()
 
     def update_dark_mode(self):
         if self.dbx_model:
-            self.dbx_model.reloadData([Qt.DecorationRole])  # reload folder icons
+            self.dbx_model.reloadData(
+                [Qt.ItemDataRole.DecorationRole]
+            )  # reload folder icons
