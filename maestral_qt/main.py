@@ -602,7 +602,7 @@ class MaestralGuiApp(QtWidgets.QSystemTrayIcon):
         if IS_BUNDLE:
             launch_command = sys.executable
         else:
-            launch_command = "maestral gui"
+            launch_command = f"{sys.executable} -m maestral_qt"
 
         Popen(
             restart_cmd.format(pid, launch_command, quote(self.config_name)), shell=True
