@@ -364,6 +364,9 @@ class DropboxPathItem(AbstractTreeItem):
 
     def _async_loading_done(self, results):
 
+        if isinstance(results, Exception):
+            raise results
+
         for child in self._children.copy():
             if isinstance(child, MessageTreeItem):
                 self._children.remove(child)
