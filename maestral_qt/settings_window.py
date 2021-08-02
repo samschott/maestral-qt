@@ -49,7 +49,7 @@ NEW_QT = LooseVersion(QtCore.QT_VERSION_STR) >= LooseVersion("5.11")
 class UnlinkDialog(QtWidgets.QDialog):
 
     # noinspection PyArgumentList
-    def __init__(self, mdbx, restart_func, parent=None):
+    def __init__(self, mdbx, on_unlink_complete, parent=None):
         super().__init__(parent=parent)
         # load user interface layout from .ui file
         uic.loadUi(UNLINK_DIALOG_PATH, self)
@@ -57,7 +57,7 @@ class UnlinkDialog(QtWidgets.QDialog):
         self.setWindowFlags(QtCore.Qt.Sheet)
         self.setModal(True)
 
-        self.restart_func = restart_func
+        self.on_unlink_complete = on_unlink_complete
         self.mdbx = mdbx
 
         self.buttonBox.buttons()[0].setText("Unlink")
@@ -75,7 +75,11 @@ class UnlinkDialog(QtWidgets.QDialog):
         self.unlink_thread = MaestralBackgroundTask(
             self, self.mdbx.config_name, "unlink"
         )
-        self.unlink_thread.sig_result.connect(self.restart_func)
+        self.unlink_thread.sig_result.connect(self._on_unlink_complete)
+
+    def _on_unlink_complete(self):
+        super().accept()
+        self.on_unlink_complete()
 
 
 # noinspection PyArgumentList
@@ -104,7 +108,7 @@ class SettingsWindow(QtWidgets.QWidget):
 
         self.mdbx = mdbx
         self.selective_sync_dialog = SelectiveSyncDialog(self.mdbx, parent=self)
-        self.unlink_dialog = UnlinkDialog(self.mdbx, self._parent.restart, parent=self)
+        self.unlink_dialog = UnlinkDialog(self.mdbx, self.on_unlink, parent=self)
         self.autostart = AutoStart(self.mdbx.config_name)
 
         self.labelAccountName.setFont(get_scaled_font(1.5))
@@ -120,7 +124,6 @@ class SettingsWindow(QtWidgets.QWidget):
         # update profile pic and account info periodically
         self.update_timer = QtCore.QTimer()
         self.update_timer.timeout.connect(self.refresh_gui)
-        self.update_timer.start(5000)  # every 5 sec
 
         # connect callbacks
         self.pushButtonUnlink.clicked.connect(self.unlink_dialog.exec_)
@@ -300,6 +303,10 @@ class SettingsWindow(QtWidgets.QWidget):
     def on_notifications_clicked(self, state):
         self.mdbx.notification_level = 15 if state == 2 else 30
 
+    def on_unlink(self):
+        self.update_timer.stop()
+        self._parent.restart()
+
     @staticmethod
     def rel_path(path):
         """
@@ -311,6 +318,14 @@ class SettingsWindow(QtWidgets.QWidget):
             return osp.relpath(path, home)
         else:
             return path
+
+    def show(self) -> None:
+        self.update_timer.start(5000)
+        super().show()
+
+    def closeEvent(self, event):
+        self.update_timer.stop()
+        return super().closeEvent(event)
 
     def changeEvent(self, QEvent):
 
