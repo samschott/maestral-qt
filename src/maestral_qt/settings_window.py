@@ -307,9 +307,9 @@ class SettingsWindow(QtWidgets.QWidget, Ui_SettingsWindow):
         self.update_timer.stop()
         return super().closeEvent(event)
 
-    def changeEvent(self, QEvent):
+    def changeEvent(self, event):
 
-        if QEvent.type() == QtCore.QEvent.Type.PaletteChange:
+        if event.type() == QtCore.QEvent.Type.PaletteChange:
             self.update_dark_mode()
 
     def update_dark_mode(self):

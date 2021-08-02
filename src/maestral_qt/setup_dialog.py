@@ -338,9 +338,9 @@ class SetupDialog(QtWidgets.QDialog, Ui_SetupDialog):
 
         return excluded_items
 
-    def changeEvent(self, QEvent):
+    def changeEvent(self, event):
 
-        if QEvent.type() == QtCore.QEvent.Type.PaletteChange:
+        if event.type() == QtCore.QEvent.Type.PaletteChange:
             self.update_dark_mode()
 
     def update_dark_mode(self):

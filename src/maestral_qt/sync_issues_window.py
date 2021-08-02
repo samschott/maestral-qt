@@ -70,8 +70,8 @@ class SyncIssueWidget(QtWidgets.QWidget, Ui_SyncIssueWidget):
         file_address = parse.quote(self.sync_err.dbx_path)
         click.launch(dbx_address + file_address)
 
-    def changeEvent(self, QEvent):
-        if QEvent.type() == QtCore.QEvent.Type.PaletteChange:
+    def changeEvent(self, event):
+        if event.type() == QtCore.QEvent.Type.PaletteChange:
             self.update_dark_mode()
 
     def update_dark_mode(self):
