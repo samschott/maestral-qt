@@ -663,7 +663,7 @@
         <number>0</number>
        </property>
        <item row="0" column="3">
-        <widget class="QPushButton" name="pushButtonDropboxPathCalcel">
+        <widget class="QPushButton" name="pushButtonDropboxPathCancel">
          <property name="text">
           <string>Cancel</string>
          </property>
@@ -810,7 +810,7 @@
   <tabstop>pushButtonAuthPageCancel</tabstop>
   <tabstop>lineEditAuthCode</tabstop>
   <tabstop>pushButtonDropboxPathSelect</tabstop>
-  <tabstop>pushButtonDropboxPathCalcel</tabstop>
+  <tabstop>pushButtonDropboxPathCancel</tabstop>
   <tabstop>pushButtonDropboxPathUnlink</tabstop>
   <tabstop>comboBoxDropboxPath</tabstop>
   <tabstop>pushButtonFolderSelectionSelect</tabstop>
