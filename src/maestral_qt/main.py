@@ -42,6 +42,7 @@ from maestral.exceptions import (
     TokenRevokedError,
     MaestralApiError,
     UpdateCheckError,
+    NotLinkedError,
 )
 
 # local imports
@@ -414,15 +415,19 @@ class MaestralGuiApp(QtWidgets.QSystemTrayIcon):
     @QtCore.pyqtSlot()
     def on_start_stop_clicked(self):
         """Pause / resume syncing on menu item clicked."""
-        if self.pauseAction.text() == self.PAUSE_TEXT:
-            self.mdbx.stop_sync()
-            self.pauseAction.setText(self.RESUME_TEXT)
-        elif self.pauseAction.text() == self.RESUME_TEXT:
-            self.mdbx.start_sync()
-            self.pauseAction.setText(self.PAUSE_TEXT)
-        elif self.pauseAction.text() == "Start Syncing":
-            self.mdbx.start_sync()
-            self.pauseAction.setText(self.PAUSE_TEXT)
+
+        try:
+            if self.pauseAction.text() == self.PAUSE_TEXT:
+                self.mdbx.stop_sync()
+                self.pauseAction.setText(self.RESUME_TEXT)
+            elif self.pauseAction.text() == self.RESUME_TEXT:
+                self.mdbx.start_sync()
+                self.pauseAction.setText(self.PAUSE_TEXT)
+            elif self.pauseAction.text() == "Start Syncing":
+                self.mdbx.start_sync()
+                self.pauseAction.setText(self.PAUSE_TEXT)
+        except (NotLinkedError, NoDropboxDirError):
+            self.restart()
 
     @QtCore.pyqtSlot()
     def on_settings_clicked(self):
