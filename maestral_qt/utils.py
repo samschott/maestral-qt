@@ -161,7 +161,7 @@ def center_window(widget):
     x = (geometry.width() - widget.width()) / 2
     y = (geometry.height() - widget.height()) / 3
 
-    widget.move(x, y)
+    widget.move(int(x), int(y))
 
 
 # noinspection PyArgumentList, PyTypeChecker, PyCallByClass
@@ -190,8 +190,8 @@ def get_masked_image(path, size=64, overlay_text=""):
     # Crop image to a square:
     imgsize = min(image.width(), image.height())
     rect = QRect(
-        (image.width() - imgsize) / 2,
-        (image.height() - imgsize) / 2,
+        int((image.width() - imgsize) / 2),
+        int((image.height() - imgsize) / 2),
         imgsize,
         imgsize,
     )
@@ -227,7 +227,7 @@ def get_masked_image(path, size=64, overlay_text=""):
     pm = QPixmap.fromImage(out_img)
     pm.setDevicePixelRatio(pr)
     size *= pr
-    pm = pm.scaled(size, size, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+    pm = pm.scaled(int(size), int(size), Qt.KeepAspectRatio, Qt.SmoothTransformation)
 
     return pm
 
