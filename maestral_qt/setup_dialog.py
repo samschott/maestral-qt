@@ -68,6 +68,7 @@ class SetupDialog(QtWidgets.QDialog):
 
         # resize dialog buttons
         width = self.pushButtonAuthPageCancel.width() * 1.1
+        width = int(round(width, 0))
         for b in (
             self.pushButtonAuthPageLink,
             self.pushButtonDropboxPathUnlink,

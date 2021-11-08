@@ -563,11 +563,17 @@ class QProgressIndicator(QtWidgets.QWidget):
             painter.save()
             painter.translate(self.rect().center())
             painter.rotate(self.m_angle - (i * 30.0))
+            
+            width = capsuleWidth * -0.5
+            width = int(round(width, 0))
+            height = (innerRadius + capsuleHeight) * -1
+            height = int(round(height, 0))
+            
             painter.drawRoundedRect(
-                capsuleWidth * -0.5,
-                (innerRadius + capsuleHeight) * -1,
-                capsuleWidth,
-                capsuleHeight,
+                width,
+                height,
+                int(round(capsuleWidth, 0)),
+                int(round(capsuleHeight, 0)),
                 capsuleRadius,
                 capsuleRadius,
             )
