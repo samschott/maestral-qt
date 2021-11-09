@@ -190,9 +190,9 @@ def get_masked_image(path, size=64, overlay_text=""):
     # Crop image to a square:
     imgsize = min(image.width(), image.height())
     width = (image.width() - imgsize) / 2
-    width = int(round(width, 0))
+    width = round(width)
     height = (image.height() - imgsize) / 2
-    height = int(round(height, 0))
+    height = round(height)
     rect = QRect(
         width,
         height,
@@ -231,7 +231,7 @@ def get_masked_image(path, size=64, overlay_text=""):
     pm = QPixmap.fromImage(out_img)
     pm.setDevicePixelRatio(pr)
     size *= pr
-    size = int(round(size, 0))
+    size = round(size)
     pm = pm.scaled(size, size, Qt.KeepAspectRatio, Qt.SmoothTransformation)
 
     return pm
