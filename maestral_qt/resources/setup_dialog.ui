@@ -438,12 +438,6 @@
          <property name="sortingEnabled">
           <bool>true</bool>
          </property>
-         <property name="headerHidden">
-          <bool>true</bool>
-         </property>
-         <attribute name="headerVisible">
-          <bool>false</bool>
-         </attribute>
          <attribute name="headerMinimumSectionSize">
           <number>50</number>
          </attribute>
