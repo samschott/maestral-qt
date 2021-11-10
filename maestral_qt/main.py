@@ -40,6 +40,7 @@ from maestral.errors import KeyringAccessError
 from maestral_qt import __url__
 from maestral_qt.setup_dialog import SetupDialog
 from maestral_qt.relink_dialog import RelinkDialog
+from maestral_qt.dropbox_location_dialog import DropboxLocationDialog
 from maestral_qt.settings_window import SettingsWindow
 from maestral_qt.activity_window import ActivityWindow
 from maestral_qt.sync_issues_window import SyncIssueWindow
@@ -527,16 +528,13 @@ class MaestralGuiApp(QtWidgets.QSystemTrayIcon):
         err = errs[-1]
 
         if err["type"] == "NoDropboxDirError":
-            # Run setup dialog and restart.
-            completed = SetupDialog.configureMaestral(self.mdbx)
-
-            if completed:
-                self.mdbx.start_sync()
-            else:
-                self.quit(stop_daemon=True)
+            # Show location dialog dialog.
+            self._dbx_location_dialog = DropboxLocationDialog(self.mdbx)
+            self._dbx_location_dialog.show()
+            self._dbx_location_dialog.raise_()
 
         elif err["type"] in ("TokenRevokedError", "TokenExpiredError"):
-            # sShow relink dialog.
+            # Show relink dialog.
 
             from maestral_qt.relink_dialog import RelinkDialog
 
