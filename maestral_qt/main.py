@@ -188,7 +188,7 @@ class MaestralGuiApp(QtWidgets.QSystemTrayIcon):
             self.update_error()
             return
 
-        if pending_link or self.mdbx.pending_dropbox_folder:
+        if pending_link:
             self.loading_done = SetupDialog.configureMaestral(self.mdbx)
         else:
             self.loading_done = True
@@ -527,8 +527,13 @@ class MaestralGuiApp(QtWidgets.QSystemTrayIcon):
         err = errs[-1]
 
         if err["type"] == "NoDropboxDirError":
-            # Restart and launch into setup dialog.
-            self.restart()
+            # Run setup dialog and restart.
+            completed = SetupDialog.configureMaestral(self.mdbx)
+
+            if completed:
+                self.mdbx.start_sync()
+            else:
+                self.quit(stop_daemon=True)
 
         elif err["type"] in ("TokenRevokedError", "TokenExpiredError"):
             # sShow relink dialog.
