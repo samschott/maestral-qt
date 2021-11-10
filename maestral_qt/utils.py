@@ -139,8 +139,8 @@ def icon_to_pixmap(icon, width, height=None):
     pr = QtWidgets.QApplication.instance().devicePixelRatio()
 
     if not is_hidpi:
-        width = width * pr
-        height = height * pr
+        width = round(width * pr)
+        height = round(height * pr)
     pixmap = icon.pixmap(width, height)
     if not is_hidpi:
         pixmap.setDevicePixelRatio(pr)
@@ -190,12 +190,11 @@ def get_masked_image(path, size=64, overlay_text=""):
     # Crop image to a square:
     imgsize = min(image.width(), image.height())
     width = (image.width() - imgsize) / 2
-    width = round(width)
     height = (image.height() - imgsize) / 2
-    height = round(height)
+
     rect = QRect(
-        width,
-        height,
+        round(width),
+        round(height),
         imgsize,
         imgsize,
     )
