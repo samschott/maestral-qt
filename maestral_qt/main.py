@@ -536,14 +536,14 @@ class MaestralGuiApp(QtWidgets.QSystemTrayIcon):
         elif err["type"] in ("TokenRevokedError", "TokenExpiredError"):
             # Show relink dialog.
 
-            from maestral_qt.relink_dialog import RelinkDialog
-
             if err["type"] == "TokenRevokedError":
                 reason = RelinkDialog.REVOKED
             else:
                 reason = RelinkDialog.EXPIRED
 
-            self._exec_relink_dialog(reason)
+            self._relink_dialog = RelinkDialog(self, reason)
+            self._relink_dialog.show()
+            self._relink_dialog.raise_()
 
         elif "MaestralApiError" in err["inherits"] or "SyncError" in err["inherits"]:
             # This is a known error. We show the error message and the corresponding
@@ -560,13 +560,6 @@ class MaestralGuiApp(QtWidgets.QSystemTrayIcon):
         else:
             # This is an unexpected error. We show the full stacktrace.
             show_stacktrace_dialog(err["traceback"])
-
-    def _exec_relink_dialog(self, reason):
-
-        relink_dialog = RelinkDialog(self, reason)
-
-        relink_dialog.show()
-        relink_dialog.exec_()
 
     def contextMenuVisible(self):
         return self._context_menu_visible
