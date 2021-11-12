@@ -110,33 +110,6 @@ class SetupDialog(QtWidgets.QDialog):
         self.pushButtonClose.clicked.connect(self.on_accept_requested)
         self.selectAllCheckBox.clicked.connect(self.on_select_all_clicked)
 
-        # check if we are already authenticated, skip authentication if yes
-        if not self.mdbx.pending_link:
-            self.labelDropboxPath.setText(
-                """
-                <html><head/><body>
-                <p align="left">
-                Your Dropbox folder has been moved or deleted from its original
-                location. Syncing will not work until you move it back.
-                <p align="left">
-                To move it back, click "Quit" below, move the Dropbox folder back to its
-                original location, and launch Maestral again.
-                </p>
-                <p align="left">
-                To re-download your Dropbox, please select a new folder below. Select
-                "Unlink" to unlink your Dropbox account from Maestral.
-                </p>
-                </body></html>
-                """
-            )
-            self.pushButtonDropboxPathCalcel.setText("Quit")
-            self.stackedWidget.setCurrentIndex(2)
-            self.stackedWidgetButtons.setCurrentIndex(2)
-
-        else:
-            self.stackedWidget.setCurrentIndex(0)
-            self.stackedWidgetButtons.setCurrentIndex(0)
-
     # =============================================================================
     # Main callbacks
     # =============================================================================

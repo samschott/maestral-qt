@@ -40,6 +40,7 @@ from maestral.errors import KeyringAccessError
 from maestral_qt import __url__
 from maestral_qt.setup_dialog import SetupDialog
 from maestral_qt.relink_dialog import RelinkDialog
+from maestral_qt.dropbox_location_dialog import DropboxLocationDialog
 from maestral_qt.settings_window import SettingsWindow
 from maestral_qt.activity_window import ActivityWindow
 from maestral_qt.sync_issues_window import SyncIssueWindow
@@ -527,25 +528,22 @@ class MaestralGuiApp(QtWidgets.QSystemTrayIcon):
         err = errs[-1]
 
         if err["type"] == "NoDropboxDirError":
-            # Run setup dialog and restart.
-            completed = SetupDialog.configureMaestral(self.mdbx)
-
-            if completed:
-                self.mdbx.start_sync()
-            else:
-                self.quit(stop_daemon=True)
+            # Show location dialog dialog.
+            self._dbx_location_dialog = DropboxLocationDialog(self.mdbx)
+            self._dbx_location_dialog.show()
+            self._dbx_location_dialog.raise_()
 
         elif err["type"] in ("TokenRevokedError", "TokenExpiredError"):
-            # sShow relink dialog.
-
-            from maestral_qt.relink_dialog import RelinkDialog
+            # Show relink dialog.
 
             if err["type"] == "TokenRevokedError":
                 reason = RelinkDialog.REVOKED
             else:
                 reason = RelinkDialog.EXPIRED
 
-            self._exec_relink_dialog(reason)
+            self._relink_dialog = RelinkDialog(self, reason)
+            self._relink_dialog.show()
+            self._relink_dialog.raise_()
 
         elif "MaestralApiError" in err["inherits"] or "SyncError" in err["inherits"]:
             # This is a known error. We show the error message and the corresponding
@@ -562,13 +560,6 @@ class MaestralGuiApp(QtWidgets.QSystemTrayIcon):
         else:
             # This is an unexpected error. We show the full stacktrace.
             show_stacktrace_dialog(err["traceback"])
-
-    def _exec_relink_dialog(self, reason):
-
-        relink_dialog = RelinkDialog(self, reason)
-
-        relink_dialog.show()
-        relink_dialog.exec_()
 
     def contextMenuVisible(self):
         return self._context_menu_visible
