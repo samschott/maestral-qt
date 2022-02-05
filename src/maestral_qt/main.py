@@ -189,7 +189,9 @@ class MaestralGuiApp(QtWidgets.QSystemTrayIcon):
             self.update_error()
             return
 
-        if pending_link:
+        pending_folder = self.mdbx.pending_dropbox_folder
+
+        if pending_link or pending_folder:
             self.loading_done = SetupDialog.configureMaestral(self.mdbx)
         else:
             self.loading_done = True
