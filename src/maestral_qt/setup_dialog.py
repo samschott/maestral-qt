@@ -110,6 +110,9 @@ class SetupDialog(QtWidgets.QDialog):
         self.pushButtonClose.clicked.connect(self.on_accept_requested)
         self.selectAllCheckBox.clicked.connect(self.on_select_all_clicked)
 
+        if not self.mdbx.pending_link:
+            self.stackedWidget.setCurrentIndex(2)
+
     # =============================================================================
     # Main callbacks
     # =============================================================================
