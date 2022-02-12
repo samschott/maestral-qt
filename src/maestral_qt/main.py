@@ -34,7 +34,7 @@ from maestral.daemon import (
     Start,
     CommunicationError,
 )
-from maestral.errors import KeyringAccessError
+from maestral.exceptions import KeyringAccessError
 
 # local imports
 from maestral_qt import __url__

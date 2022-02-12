@@ -15,7 +15,7 @@ from PyQt5.QtCore import QAbstractItemModel, QModelIndex, Qt, QVariant
 
 # maestral modules
 from maestral.daemon import MaestralProxy
-from maestral.errors import NotAFolderError, NotFoundError, BusyError
+from maestral.exceptions import NotAFolderError, NotFoundError, BusyError
 from maestral.utils.path import is_child, is_equal_or_child
 
 # local imports
