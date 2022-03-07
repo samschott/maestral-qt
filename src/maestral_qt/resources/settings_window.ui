@@ -128,7 +128,7 @@
      <item row="9" column="1">
       <widget class="QCheckBox" name="checkBoxNotifications">
        <property name="text">
-        <string>Enable notifications</string>
+        <string>Enable notifications on file changes</string>
        </property>
        <property name="checked">
         <bool>true</bool>
