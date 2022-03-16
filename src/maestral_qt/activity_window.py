@@ -14,6 +14,8 @@ from datetime import datetime
 # external packages
 import click
 from PyQt5 import QtCore, QtGui, QtWidgets, uic
+from maestral.models import ItemType
+from maestral.utils import sanitize_string
 
 # local imports
 from .resources import (
@@ -48,16 +50,14 @@ class SyncEventWidget(QtWidgets.QWidget):
         self.filenameLabel.setFont(get_scaled_font(0.9))
         self.infoLabel.setFont(get_scaled_font(0.9))
 
-        dirname, filename = osp.split(self.sync_event["local_path"])
+        dirname, filename = osp.split(self.sync_event.local_path)
         parent_dir = osp.basename(dirname)
-        change_type = self.sync_event["change_type"].capitalize()
+        change_type = self.sync_event.change_type.value.capitalize()
 
-        dt = datetime.fromtimestamp(
-            self.sync_event["change_time"] or self.sync_event["sync_time"]
-        )
+        dt = datetime.fromtimestamp(self.sync_event.change_time_or_sync_time)
         change_time = dt.strftime("%d %b %Y %H:%M")
 
-        self.filenameLabel.setText(filename)
+        self.filenameLabel.setText(sanitize_string(filename))
         self.infoLabel.setText(f"{change_type} {change_time} • {parent_dir}")
 
         def request_context_menu():
@@ -73,7 +73,7 @@ class SyncEventWidget(QtWidgets.QWidget):
         a0 = self.actionButtonContextMenu.addAction("View in folder")
         a1 = self.actionButtonContextMenu.addAction("View on dropbox.com")
 
-        exists = osp.exists(self.sync_event["local_path"])
+        exists = osp.exists(self.sync_event.local_path)
         a0.setEnabled(exists)
         a1.setEnabled(exists)
 
@@ -83,12 +83,12 @@ class SyncEventWidget(QtWidgets.QWidget):
 
     @QtCore.pyqtSlot()
     def _go_to_local_path(self):
-        click.launch(self.sync_event["local_path"], locate=True)
+        click.launch(self.sync_event.local_path, locate=True)
 
     @QtCore.pyqtSlot()
     def _go_to_online(self):
         dbx_address = "https://www.dropbox.com/preview"
-        file_address = urllib.parse.quote(self.sync_event["dbx_path"])
+        file_address = urllib.parse.quote(self.sync_event.dbx_path)
         click.launch(dbx_address + file_address)
 
     def changeEvent(self, QEvent):
@@ -112,8 +112,8 @@ class SyncEventWidget(QtWidgets.QWidget):
         )
 
         # update item icons (the system may supply different icons in dark mode)
-        if self.sync_event["item_type"] == "file":
-            icon = native_item_icon(self.sync_event["local_path"])
+        if self.sync_event.item_type is ItemType.File:
+            icon = native_item_icon(self.sync_event.local_path)
         else:
             icon = native_folder_icon()
         pixmap = icon_to_pixmap(icon, self.iconLabel.width(), self.iconLabel.height())
@@ -147,10 +147,10 @@ class ActivityWindow(QtWidgets.QWidget):
     def refresh_gui(self):
 
         for event in self.mdbx.get_history():
-            if event["id"] not in self._ids:
+            if event.id not in self._ids:
                 event_widget = SyncEventWidget(event)
                 self.verticalLayout.insertWidget(0, event_widget)
-                self._ids.add(event["id"])
+                self._ids.add(event.id)
 
     def show(self):
         self.update_timer.start()

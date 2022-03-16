@@ -17,6 +17,7 @@ from PyQt5.QtCore import QAbstractItemModel, QModelIndex, Qt, QVariant
 from maestral.daemon import MaestralProxy
 from maestral.exceptions import NotAFolderError, NotFoundError, BusyError
 from maestral.utils.path import is_child, is_equal_or_child
+from maestral.core import FolderMetadata
 
 # local imports
 from .resources import SELECTIVE_SYNC_DIALOG_PATH, native_folder_icon, native_file_icon
@@ -378,9 +379,9 @@ class DropboxPathItem(AbstractTreeItem):
                 DropboxPathItem(
                     self._async_loader,
                     self._unchecked,
-                    path_display=e["path_display"],
-                    path_lower=e["path_lower"],
-                    is_folder=e["type"] == "FolderMetadata",
+                    path_display=e.path_display,
+                    path_lower=e.path_lower,
+                    is_folder=isinstance(e, FolderMetadata),
                     parent=self,
                 )
                 for e in results
@@ -479,7 +480,7 @@ class AsyncListFolder(QtCore.QObject):
             while not self._abort_event.is_set():
                 try:
                     entries = next(entries_iterator)
-                    entries.sort(key=lambda e: e["name"].lower())
+                    entries.sort(key=lambda e: e.name.lower())
                 except (NotAFolderError, NotFoundError):
                     entries = []
                 except ConnectionError:

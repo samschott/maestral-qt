@@ -9,6 +9,7 @@ Created on Wed Oct 31 16:23:13 2018
 import sys
 import os
 import time
+from traceback import format_exception
 from subprocess import Popen
 from datetime import timedelta, datetime
 from shlex import quote
@@ -34,18 +35,25 @@ from maestral.daemon import (
     Start,
     CommunicationError,
 )
-from maestral.exceptions import KeyringAccessError
+from maestral.exceptions import (
+    KeyringAccessError,
+    NoDropboxDirError,
+    TokenExpiredError,
+    TokenRevokedError,
+    MaestralApiError,
+    UpdateCheckError,
+)
 
 # local imports
-from maestral_qt import __url__
-from maestral_qt.setup_dialog import SetupDialog
-from maestral_qt.relink_dialog import RelinkDialog
-from maestral_qt.dropbox_location_dialog import DropboxLocationDialog
-from maestral_qt.settings_window import SettingsWindow
-from maestral_qt.activity_window import ActivityWindow
-from maestral_qt.sync_issues_window import SyncIssueWindow
-from maestral_qt.resources import system_tray_icon, APP_ICON_PATH
-from maestral_qt.utils import (
+from . import __url__
+from .setup_dialog import SetupDialog
+from .relink_dialog import RelinkDialog
+from .dropbox_location_dialog import DropboxLocationDialog
+from .settings_window import SettingsWindow
+from .activity_window import ActivityWindow
+from .sync_issues_window import SyncIssueWindow
+from .resources import system_tray_icon, APP_ICON_PATH
+from .utils import (
     BackgroundTask,
     MaestralBackgroundTask,
     elide_string,
@@ -53,14 +61,14 @@ from maestral_qt.utils import (
     IS_MACOS,
     IS_BUNDLE,
 )
-from maestral_qt.widgets import (
+from .widgets import (
     BackgroundTaskProgressDialog,
     UserDialog,
     show_dialog,
     show_stacktrace_dialog,
     show_update_dialog,
 )
-from maestral_qt.autostart import AutoStart
+from .autostart import AutoStart
 
 
 # noinspection PyTypeChecker,PyArgumentList
@@ -371,22 +379,22 @@ class MaestralGuiApp(QtWidgets.QSystemTrayIcon):
     @QtCore.pyqtSlot(dict)
     def _notify_updates_user_requested(self, res):
 
-        if res["error"]:
-            show_dialog("Could not check for updates", res["error"], level="warning")
-        elif res["update_available"]:
+        if isinstance(res, UpdateCheckError):
+            show_dialog(res.title, res.message, level="warning")
+        elif res.update_available:
             show_update_dialog(res["latest_release"], res["release_notes"])
-        elif not res["update_available"]:
+        else:
             message = "Maestral v{} is the newest version available.".format(
-                res["latest_release"]
+                res.latest_release
             )
             show_dialog("You’re up-to-date!", message)
 
     @QtCore.pyqtSlot(dict)
     def _notify_updates_auto(self, res):
 
-        if res["update_available"]:
+        if res.update_available:
             self.mdbx.set_state("app", "update_notification_last", time.time())
-            show_update_dialog(res["latest_release"], res["release_notes"])
+            show_update_dialog(res.latest_release, res.release_notes)
 
     @QtCore.pyqtSlot()
     def on_website_clicked(self):
@@ -529,16 +537,16 @@ class MaestralGuiApp(QtWidgets.QSystemTrayIcon):
 
         err = errs[-1]
 
-        if err["type"] == "NoDropboxDirError":
+        if isinstance(err, NoDropboxDirError):
             # Show location dialog dialog.
             self._dbx_location_dialog = DropboxLocationDialog(self.mdbx)
             self._dbx_location_dialog.show()
             self._dbx_location_dialog.raise_()
 
-        elif err["type"] in ("TokenRevokedError", "TokenExpiredError"):
+        elif isinstance(err, (TokenRevokedError, TokenExpiredError)):
             # Show relink dialog.
 
-            if err["type"] == "TokenRevokedError":
+            if isinstance(err, TokenExpiredError):
                 reason = RelinkDialog.REVOKED
             else:
                 reason = RelinkDialog.EXPIRED
@@ -547,21 +555,27 @@ class MaestralGuiApp(QtWidgets.QSystemTrayIcon):
             self._relink_dialog.show()
             self._relink_dialog.raise_()
 
-        elif "MaestralApiError" in err["inherits"] or "SyncError" in err["inherits"]:
+        elif isinstance(err, MaestralApiError):
             # This is a known error. We show the error message and the corresponding
             # file path, if any.
 
-            message = markup_urls(err["message"])
-            filename = err["dbx_path"] or err["local_path"]
+            message = markup_urls(err.message)
+            filename = err.dbx_path or err.local_path
 
             if filename:
                 message = f"Path: {filename}\n{message}"
 
-            show_dialog(err["title"], message, level="error")
+            show_dialog(err.title, message, level="error")
 
         else:
-            # This is an unexpected error. We show the full stacktrace.
-            show_stacktrace_dialog(err["traceback"])
+            # This is an unexpected error. We show the full stacktrace if available.
+            if err.__traceback__:
+                details = "".join(
+                    format_exception(err.__class__, err, err.__traceback__)
+                )
+                show_stacktrace_dialog(details)
+            else:
+                show_dialog("An unexpected error occurred", str(err), level="error")
 
     def contextMenuVisible(self):
         return self._context_menu_visible

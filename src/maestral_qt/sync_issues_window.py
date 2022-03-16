@@ -13,6 +13,7 @@ import urllib
 # external packages
 import click
 from PyQt5 import QtCore, QtGui, QtWidgets, uic
+from maestral.utils import sanitize_string
 
 # local imports
 from .resources import SYNC_ISSUES_WINDOW_PATH, SYNC_ISSUE_WIDGET_PATH, native_item_icon
@@ -41,10 +42,8 @@ class SyncIssueWidget(QtWidgets.QWidget):
         self.errorLabel.setFont(get_scaled_font(scaling=0.85))
         self.update_dark_mode()  # set appropriate item icon and colors in style sheet
 
-        self.pathLabel.setText(osp.basename(self.sync_err["local_path"]))
-        self.errorLabel.setText(
-            self.sync_err["title"] + ":\n" + self.sync_err["message"]
-        )
+        self.pathLabel.setText(sanitize_string(osp.basename(self.sync_err.local_path)))
+        self.errorLabel.setText(self.sync_err.title + ":\n" + self.sync_err.message)
 
         def request_context_menu():
             self.actionButton.customContextMenuRequested.emit(self.actionButton.pos())
@@ -59,7 +58,7 @@ class SyncIssueWidget(QtWidgets.QWidget):
         a0 = self.actionButtonContextMenu.addAction("View in folder")
         a1 = self.actionButtonContextMenu.addAction("View on dropbox.com")
 
-        a0.setEnabled(osp.exists(self.sync_err["local_path"]))
+        a0.setEnabled(osp.exists(self.sync_err.local_path))
 
         a0.triggered.connect(self._go_to_local_path)
         a1.triggered.connect(self._go_to_online)
@@ -67,12 +66,12 @@ class SyncIssueWidget(QtWidgets.QWidget):
 
     @QtCore.pyqtSlot()
     def _go_to_local_path(self):
-        click.launch(self.sync_err["local_path"], locate=True)
+        click.launch(self.sync_err.local_path, locate=True)
 
     @QtCore.pyqtSlot()
     def _go_to_online(self):
         dbx_address = "https://www.dropbox.com/preview"
-        file_address = urllib.parse.quote(self.sync_err["dbx_path"])
+        file_address = urllib.parse.quote(self.sync_err.dbx_path)
         click.launch(dbx_address + file_address)
 
     def changeEvent(self, QEvent):
@@ -96,7 +95,7 @@ class SyncIssueWidget(QtWidgets.QWidget):
         )
 
         # update item icons (the system may supply different icons in dark mode)
-        icon = native_item_icon(self.sync_err["local_path"])
+        icon = native_item_icon(self.sync_err.local_path)
         pixmap = icon_to_pixmap(icon, self.iconLabel.width(), self.iconLabel.height())
         self.iconLabel.setPixmap(pixmap)
 
