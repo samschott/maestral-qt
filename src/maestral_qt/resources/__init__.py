@@ -3,12 +3,7 @@
 import os
 import os.path as osp
 import platform
-
-try:
-    from importlib.resources import path
-except ImportError:
-    from importlib_resources import path
-
+from importlib.resources import path
 
 from PyQt6 import QtWidgets, QtCore, QtGui
 
