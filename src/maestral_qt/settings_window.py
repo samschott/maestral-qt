@@ -1,17 +1,11 @@
-# !/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""
-Created on Wed Oct 31 16:23:13 2018
 
-@author: samschott
-"""
 # system imports
 import os.path as osp
 import time
-from distutils.version import LooseVersion
 
 # external packages
-from PyQt5 import QtGui, QtCore, QtWidgets, uic
+from PyQt6 import QtGui, QtCore, QtWidgets
 
 # maestral modules
 from maestral import __version__ as __daemon_version__
@@ -21,13 +15,6 @@ from maestral.utils.appdirs import get_home_dir
 # local imports
 from . import __version__, __author__, __url__
 from .selective_sync_dialog import SelectiveSyncDialog
-from .resources import (
-    native_item_icon,
-    UNLINK_DIALOG_PATH,
-    SETTINGS_WINDOW_PATH,
-    APP_ICON_PATH,
-    FACEHOLDER_PATH,
-)
 from .utils import (
     LINE_COLOR_DARK,
     LINE_COLOR_LIGHT,
@@ -41,19 +28,23 @@ from .utils import (
 )
 from .widgets import UserDialog
 from .autostart import AutoStart
+from .resources import (
+    native_item_icon,
+    APP_ICON_PATH,
+    FACEHOLDER_PATH,
+)
+from .resources.ui_settings_window import Ui_SettingsWindow
+from .resources.ui_unlink_dialog import Ui_UnlinkDialog
 
-NEW_QT = LooseVersion(QtCore.QT_VERSION_STR) >= LooseVersion("5.11")
 
-
-class UnlinkDialog(QtWidgets.QDialog):
+class UnlinkDialog(QtWidgets.QDialog, Ui_UnlinkDialog):
 
     # noinspection PyArgumentList
     def __init__(self, mdbx, on_unlink_complete, parent=None):
         super().__init__(parent=parent)
-        # load user interface layout from .ui file
-        uic.loadUi(UNLINK_DIALOG_PATH, self)
+        self.setupUi(self)
 
-        self.setWindowFlags(QtCore.Qt.Sheet)
+        self.setWindowFlags(QtCore.Qt.WindowType.Sheet)
         self.setModal(True)
 
         self.on_unlink_complete = on_unlink_complete
@@ -82,7 +73,7 @@ class UnlinkDialog(QtWidgets.QDialog):
 
 
 # noinspection PyArgumentList
-class SettingsWindow(QtWidgets.QWidget):
+class SettingsWindow(QtWidgets.QWidget, Ui_SettingsWindow):
     """A widget showing all of Maestral's settings."""
 
     _update_interval_mapping = {
@@ -94,7 +85,7 @@ class SettingsWindow(QtWidgets.QWidget):
 
     def __init__(self, parent, mdbx):
         super().__init__()
-        uic.loadUi(SETTINGS_WINDOW_PATH, self)
+        self.setupUi(self)
 
         self._parent = parent
         self.update_dark_mode()
@@ -121,7 +112,7 @@ class SettingsWindow(QtWidgets.QWidget):
         self.update_timer.timeout.connect(self.refresh_gui)
 
         # connect callbacks
-        self.pushButtonUnlink.clicked.connect(self.unlink_dialog.exec_)
+        self.pushButtonUnlink.clicked.connect(self.unlink_dialog.exec)
         self.pushButtonExcludedFolders.clicked.connect(
             self.selective_sync_dialog.populate_folders_list
         )
@@ -138,15 +129,18 @@ class SettingsWindow(QtWidgets.QWidget):
         )
         self.dropbox_folder_dialog = QtWidgets.QFileDialog(self, caption=msg)
         self.dropbox_folder_dialog.setModal(True)
-        self.dropbox_folder_dialog.setAcceptMode(QtWidgets.QFileDialog.AcceptOpen)
-        self.dropbox_folder_dialog.setFileMode(QtWidgets.QFileDialog.Directory)
-        self.dropbox_folder_dialog.setOption(QtWidgets.QFileDialog.ShowDirsOnly)
-        self.dropbox_folder_dialog.setLabelText(QtWidgets.QFileDialog.Accept, "Select")
+        self.dropbox_folder_dialog.setAcceptMode(
+            QtWidgets.QFileDialog.AcceptMode.AcceptOpen
+        )
+        self.dropbox_folder_dialog.setFileMode(QtWidgets.QFileDialog.FileMode.Directory)
+        self.dropbox_folder_dialog.setOption(QtWidgets.QFileDialog.Option.ShowDirsOnly)
+        self.dropbox_folder_dialog.setLabelText(
+            QtWidgets.QFileDialog.DialogLabel.Accept, "Select"
+        )
         self.dropbox_folder_dialog.finished.connect(self.on_new_dbx_folder)
 
         center_window(self)
 
-    @QtCore.pyqtSlot()
     def refresh_gui(self):
 
         # populate account info
@@ -204,14 +198,10 @@ class SettingsWindow(QtWidgets.QWidget):
 
         # if the display name is longer than 230 pixels, reduce font-size
         default_font = get_scaled_font(1.5)
-        if NEW_QT:
-            account_display_name_length = QtGui.QFontMetrics(
-                default_font
-            ).horizontalAdvance(acc_display_name)
-        else:
-            account_display_name_length = QtGui.QFontMetrics(default_font).width(
-                acc_display_name
-            )
+        account_display_name_length = QtGui.QFontMetrics(
+            default_font
+        ).horizontalAdvance(acc_display_name)
+
         if account_display_name_length > 240:
             font = get_scaled_font(scaling=1.5 * 240 / account_display_name_length)
             self.labelAccountName.setFont(font)
@@ -224,14 +214,12 @@ class SettingsWindow(QtWidgets.QWidget):
         self.labelAccountInfo.setText(acc_mail + acc_type_text)
         self.labelSpaceUsage.setText(acc_space_usage)
 
-    @QtCore.pyqtSlot(int)
     def on_combobox_path(self, idx):
         if idx == 2:
             initial_dir = osp.dirname(self.mdbx.dropbox_path)
             self.dropbox_folder_dialog.open()
             self.dropbox_folder_dialog.setDirectory(initial_dir)
 
-    @QtCore.pyqtSlot(int)
     def on_combobox_update_interval(self, idx):
         self.mdbx.set_conf(
             "app", "update_notification_interval", self._update_interval_mapping[idx]
@@ -241,7 +229,7 @@ class SettingsWindow(QtWidgets.QWidget):
 
         self.comboBoxDropboxPath.setCurrentIndex(0)
 
-        if res == QtWidgets.QDialog.Rejected:
+        if res == QtWidgets.QDialog.DialogCode.Rejected:
             return
 
         new_location = self.dropbox_folder_dialog.selectedFiles()[0]
@@ -258,7 +246,7 @@ class SettingsWindow(QtWidgets.QWidget):
                     "Please select an empty folder."
                 ),
                 parent=self,
-            ).exec_()
+            ).exec()
 
             return
 
@@ -275,7 +263,6 @@ class SettingsWindow(QtWidgets.QWidget):
 
         task.sig_result.connect(self.on_move_completed)
 
-    @QtCore.pyqtSlot(object)
     def on_move_completed(self, result):
 
         if isinstance(result, Exception):
@@ -290,11 +277,9 @@ class SettingsWindow(QtWidgets.QWidget):
             self.comboBoxDropboxPath.setItemText(0, self.rel_path(new_location))
             self.comboBoxDropboxPath.setItemIcon(0, native_item_icon(new_location))
 
-    @QtCore.pyqtSlot(int)
     def on_start_on_login_clicked(self, state):
         self.autostart.enabled = state == 2
 
-    @QtCore.pyqtSlot(int)
     def on_notifications_clicked(self, state):
         self.mdbx.notification_level = 15 if state == 2 else 30
 
@@ -322,9 +307,9 @@ class SettingsWindow(QtWidgets.QWidget):
         self.update_timer.stop()
         return super().closeEvent(event)
 
-    def changeEvent(self, QEvent):
+    def changeEvent(self, event):
 
-        if QEvent.type() == QtCore.QEvent.PaletteChange:
+        if event.type() == QtCore.QEvent.Type.PaletteChange:
             self.update_dark_mode()
 
     def update_dark_mode(self):

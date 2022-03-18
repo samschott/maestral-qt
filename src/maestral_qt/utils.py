@@ -1,10 +1,5 @@
-# !/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""
-Created on Wed Oct 31 16:23:13 2018
 
-@author: samschott
-"""
 # system imports
 import sys
 import os
@@ -12,9 +7,10 @@ import re
 import platform
 
 # external packages
-from PyQt5 import QtCore, QtGui, QtWidgets
-from PyQt5.QtCore import Qt, QRect
-from PyQt5.QtGui import QBrush, QImage, QPainter, QPixmap
+from PyQt6 import QtCore, QtGui, QtWidgets
+from PyQt6.QtCore import Qt, QRect
+from PyQt6.QtGui import QBrush, QImage, QPainter, QPixmap
+from PyQt6.QtCore import pyqtSignal as Signal
 from Pyro5.errors import ConnectionClosedError
 
 # maestral modules
@@ -22,6 +18,7 @@ from maestral.daemon import MaestralProxy
 
 # local imports
 from .resources import rgb_to_luminance
+
 
 THEME_DARK = "dark"
 THEME_LIGHT = "light"
@@ -74,7 +71,9 @@ def elide_string(string, font=None, pixels=200, side="right"):
         font = QtWidgets.QLabel().font()
 
     metrics = QtGui.QFontMetrics(font)
-    mode = Qt.ElideRight if side == "right" else Qt.ElideLeft
+    mode = (
+        Qt.TextElideMode.ElideRight if side == "right" else Qt.TextElideMode.ElideLeft
+    )
 
     return metrics.elidedText(string, mode, pixels)
 
@@ -134,18 +133,7 @@ def icon_to_pixmap(icon, width, height=None):
     :return: ``QPixmap`` instance.
     """
     height = height or width
-
-    is_hidpi = QtCore.QCoreApplication.testAttribute(Qt.AA_UseHighDpiPixmaps)
-    pr = QtWidgets.QApplication.instance().devicePixelRatio()
-
-    if not is_hidpi:
-        width = round(width * pr)
-        height = round(height * pr)
-    pixmap = icon.pixmap(width, height)
-    if not is_hidpi:
-        pixmap.setDevicePixelRatio(pr)
-
-    return pixmap
+    return icon.pixmap(width, height)
 
 
 # noinspection PyArgumentList
@@ -185,7 +173,7 @@ def get_masked_image(path, size=64, overlay_text=""):
 
     # Load image and convert to 32-bit ARGB (adds an alpha channel):
     image = QImage.fromData(imgdata, imgtype)
-    image.convertToFormat(QImage.Format_ARGB32)
+    image.convertToFormat(QImage.Format.Format_ARGB32)
 
     # Crop image to a square:
     imgsize = min(image.width(), image.height())
@@ -202,16 +190,16 @@ def get_masked_image(path, size=64, overlay_text=""):
 
     # Create the output image with the same dimensions and an alpha channel
     # and make it completely transparent:
-    out_img = QImage(imgsize, imgsize, QImage.Format_ARGB32)
-    out_img.fill(Qt.transparent)
+    out_img = QImage(imgsize, imgsize, QImage.Format.Format_ARGB32)
+    out_img.fill(Qt.GlobalColor.transparent)
 
     # Create a texture brush and paint a circle with the original image onto
     # the output image:
     brush = QBrush(image)  # Create texture brush
     painter = QPainter(out_img)  # Paint the output image
     painter.setBrush(brush)  # Use the image texture brush
-    painter.setPen(Qt.NoPen)  # Don't draw an outline
-    painter.setRenderHint(QPainter.Antialiasing, True)  # Use AA
+    painter.setPen(Qt.PenStyle.NoPen)  # Don't draw an outline
+    painter.setRenderHint(QPainter.RenderHint.Antialiasing, True)  # Use AA
     painter.drawEllipse(0, 0, imgsize, imgsize)  # Actually draw the circle
 
     if overlay_text:
@@ -219,8 +207,10 @@ def get_masked_image(path, size=64, overlay_text=""):
         font = QtGui.QFont("Arial Rounded MT Bold")
         font.setPointSize(imgsize * 0.4)
         painter.setFont(font)
-        painter.setPen(Qt.white)
-        painter.drawText(QRect(0, 0, imgsize, imgsize), Qt.AlignCenter, overlay_text)
+        painter.setPen(Qt.GlobalColor.white)
+        painter.drawText(
+            QRect(0, 0, imgsize, imgsize), Qt.AlignmentFlag.AlignCenter, overlay_text
+        )
 
     painter.end()  # We are done (segfault if you forget this)
 
@@ -229,9 +219,13 @@ def get_masked_image(path, size=64, overlay_text=""):
     pr = QtWidgets.QApplication.instance().devicePixelRatio()
     pm = QPixmap.fromImage(out_img)
     pm.setDevicePixelRatio(pr)
-    size *= pr
-    size = round(size)
-    pm = pm.scaled(size, size, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+    size = int(pr * size)
+    pm = pm.scaled(
+        size,
+        size,
+        Qt.AspectRatioMode.KeepAspectRatio,
+        Qt.TransformationMode.SmoothTransformation,
+    )
 
     return pm
 
@@ -243,7 +237,7 @@ def window_theme():
     :rtype: bool
     """
     w = QtWidgets.QWidget()
-    bg_color = w.palette().color(QtGui.QPalette.Background)
+    bg_color = w.palette().color(QtGui.QPalette.ColorRole.Window)
     bg_color_rgb = [bg_color.red(), bg_color.green(), bg_color.blue()]
     luminance = rgb_to_luminance(*bg_color_rgb)
 
@@ -261,8 +255,8 @@ def is_dark_window():
 
 
 class WorkerEmitter(QtCore.QObject):
-    sig_result = QtCore.pyqtSignal(object)
-    sig_done = QtCore.pyqtSignal()
+    sig_result = Signal(object)
+    sig_done = Signal()
 
 
 class Worker(QtCore.QRunnable):
@@ -338,8 +332,8 @@ class MaestralWorker(Worker):
 class BackgroundTask(QtCore.QObject):
     """A utility class to manage a worker thread."""
 
-    sig_result = QtCore.pyqtSignal(object)
-    sig_done = QtCore.pyqtSignal()
+    sig_result = Signal(object)
+    sig_done = Signal()
 
     def __init__(
         self, parent=None, target=None, args=None, kwargs=None, autostart=True

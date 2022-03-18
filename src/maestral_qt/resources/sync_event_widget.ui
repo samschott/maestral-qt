@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>SyncIssueWidget</class>
- <widget class="QWidget" name="SyncIssueWidget">
+ <class>SyncEventWidget</class>
+ <widget class="QWidget" name="SyncEventWidget">
   <property name="geometry">
    <rect>
     <x>0</x>

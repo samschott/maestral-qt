@@ -1,40 +1,34 @@
-# !/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""
-Created on Wed Oct 31 16:23:13 2018
-
-@author: samschott
-"""
 
 # system imports
 import os.path as osp
 from queue import Queue
 
 # external imports
-from PyQt5 import QtGui, QtCore, QtWidgets, uic
-from PyQt5.QtCore import QModelIndex, Qt
+from PyQt6 import QtGui, QtCore, QtWidgets
+from PyQt6.QtCore import QModelIndex, Qt
 
 # maestral modules
 from maestral.utils.appdirs import get_home_dir
 from maestral.utils.path import delete
 
 # local imports
-from .resources import APP_ICON_PATH, SETUP_DIALOG_PATH, native_folder_icon
 from .utils import MaestralBackgroundTask, icon_to_pixmap, is_empty
 from .widgets import UserDialog
 from .selective_sync_dialog import AsyncListFolder, FileSystemModel, DropboxPathItem
+from .resources import APP_ICON_PATH, native_folder_icon
+from .resources.ui_setup_dialog import Ui_SetupDialog
 
 
 # noinspection PyArgumentList
-class SetupDialog(QtWidgets.QDialog):
+class SetupDialog(QtWidgets.QDialog, Ui_SetupDialog):
     """A dialog to link and set up a new Dropbox account."""
 
     accepted = False
 
     def __init__(self, mdbx, parent=None):
         super().__init__(parent=parent)
-        # load user interface layout from .ui file
-        uic.loadUi(SETUP_DIALOG_PATH, self)
+        self.setupUi(self)
 
         self.mdbx = mdbx
         self.config_name = self.mdbx.config_name
@@ -76,17 +70,23 @@ class SetupDialog(QtWidgets.QDialog):
             self.pushButtonFolderSelectionBack,
             self.pushButtonFolderSelectionSelect,
             self.pushButtonAuthPageCancel,
-            self.pushButtonDropboxPathCalcel,
+            self.pushButtonDropboxPathCancel,
             self.pushButtonClose,
         ):
             b.setMinimumWidth(width)
             b.setMaximumWidth(width)
 
         self.dropbox_folder_dialog = QtWidgets.QFileDialog(self)
-        self.dropbox_folder_dialog.setAcceptMode(QtWidgets.QFileDialog.AcceptOpen)
-        self.dropbox_folder_dialog.setFileMode(QtWidgets.QFileDialog.Directory)
-        self.dropbox_folder_dialog.setOption(QtWidgets.QFileDialog.ShowDirsOnly, True)
-        self.dropbox_folder_dialog.setLabelText(QtWidgets.QFileDialog.Accept, "Select")
+        self.dropbox_folder_dialog.setAcceptMode(
+            QtWidgets.QFileDialog.AcceptMode.AcceptOpen
+        )
+        self.dropbox_folder_dialog.setFileMode(QtWidgets.QFileDialog.FileMode.Directory)
+        self.dropbox_folder_dialog.setOption(
+            QtWidgets.QFileDialog.Option.ShowDirsOnly, True
+        )
+        self.dropbox_folder_dialog.setLabelText(
+            QtWidgets.QFileDialog.DialogLabel.Accept, "Select"
+        )
         self.dropbox_folder_dialog.setDirectory(get_home_dir())
         self.dropbox_folder_dialog.fileSelected.connect(self.on_new_dbx_folder)
         self.dropbox_folder_dialog.rejected.connect(
@@ -94,11 +94,11 @@ class SetupDialog(QtWidgets.QDialog):
         )
 
         # connect buttons to callbacks
-        self.setAttribute(Qt.WA_DeleteOnClose)
+        self.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
         self.pushButtonLink.clicked.connect(self.on_link_clicked)
         self.pushButtonAuthPageCancel.clicked.connect(self.on_reject_requested)
         self.pushButtonAuthPageLink.clicked.connect(self.on_auth_clicked)
-        self.pushButtonDropboxPathCalcel.clicked.connect(self.on_reject_requested)
+        self.pushButtonDropboxPathCancel.clicked.connect(self.on_reject_requested)
         self.pushButtonDropboxPathSelect.clicked.connect(
             self.on_dropbox_location_selected
         )
@@ -124,14 +124,12 @@ class SetupDialog(QtWidgets.QDialog):
         else:
             self.on_reject_requested()
 
-    @QtCore.pyqtSlot()
     def on_accept_requested(self):
         del self.mdbx
 
         self.accepted = True
         self.accept()
 
-    @QtCore.pyqtSlot()
     def on_reject_requested(self):
         self.accepted = False
         self.reject()
@@ -140,13 +138,11 @@ class SetupDialog(QtWidgets.QDialog):
         self.mdbx.unlink()
         self.stackedWidget.slideInIdx(0)
 
-    @QtCore.pyqtSlot()
     def on_link_clicked(self):
 
         self.stackedWidget.fadeInIdx(1)
         self.pushButtonAuthPageLink.setFocus()
 
-    @QtCore.pyqtSlot()
     def on_auth_clicked(self):
 
         if self.lineEditAuthCode.text() == "":
@@ -192,7 +188,6 @@ class SetupDialog(QtWidgets.QDialog):
         self.pushButtonAuthPageLink.setEnabled(True)
         self.lineEditAuthCode.setEnabled(True)
 
-    @QtCore.pyqtSlot()
     def on_dropbox_location_selected(self):
 
         # start with clean sync state
@@ -217,11 +212,11 @@ class SetupDialog(QtWidgets.QDialog):
                         button_names=("Cancel", "Merge"),
                         parent=self,
                     )
-                    res = msg_box.exec_()
+                    res = msg_box.exec()
 
-                    if res == UserDialog.Accepted:
+                    if res == UserDialog.DialogCode.Accepted:
                         return
-                    elif res == UserDialog.Rejected:
+                    elif res == UserDialog.DialogCode.Rejected:
                         pass
 
             self.mdbx.create_dropbox_directory(self.dropbox_location)
@@ -234,7 +229,7 @@ class SetupDialog(QtWidgets.QDialog):
                 ),
                 parent=self,
             )
-            msg_box.exec_()
+            msg_box.exec()
             return
 
         # switch to next page
@@ -246,7 +241,6 @@ class SetupDialog(QtWidgets.QDialog):
         if not self.excluded_items:  # don't repopulate
             self.populate_folders_list()
 
-    @QtCore.pyqtSlot()
     def on_folders_selected(self):
 
         self.mdbx.excluded_items = self.get_excluded_items()
@@ -263,12 +257,10 @@ class SetupDialog(QtWidgets.QDialog):
     # Helper functions
     # =============================================================================
 
-    @QtCore.pyqtSlot(int)
     def on_combobox(self, idx):
         if idx == 2:
             self.dropbox_folder_dialog.open()
 
-    @QtCore.pyqtSlot(str)
     def on_new_dbx_folder(self, new_location):
         self.comboBoxDropboxPath.setCurrentIndex(0)
         if not new_location == "":
@@ -305,18 +297,18 @@ class SetupDialog(QtWidgets.QDialog):
             lambda: self.treeViewFolders.resizeColumnToContents(0)
         )
 
-    @QtCore.pyqtSlot()
     def update_select_all_checkbox(self):
         check_states = []
         for irow in range(self.dbx_model._root_item.child_count_loaded()):
             index = self.dbx_model.index(irow, 1, QModelIndex())
-            check_states.append(self.dbx_model.data(index, Qt.CheckStateRole))
+            check_states.append(
+                self.dbx_model.data(index, Qt.ItemDataRole.CheckStateRole)
+            )
         if all(cs == 2 for cs in check_states):
             self.selectAllCheckBox.setChecked(True)
         else:
             self.selectAllCheckBox.setChecked(False)
 
-    @QtCore.pyqtSlot(bool)
     def on_select_all_clicked(self, checked):
         checked_state = 2 if checked else 0
         for irow in range(self.dbx_model._root_item.child_count_loaded()):
@@ -346,20 +338,22 @@ class SetupDialog(QtWidgets.QDialog):
 
         return excluded_items
 
-    def changeEvent(self, QEvent):
+    def changeEvent(self, event):
 
-        if QEvent.type() == QtCore.QEvent.PaletteChange:
+        if event.type() == QtCore.QEvent.Type.PaletteChange:
             self.update_dark_mode()
 
     def update_dark_mode(self):
         if self.dbx_model:
-            self.dbx_model.reloadData([Qt.DecorationRole])  # reload folder icons
+            self.dbx_model.reloadData(
+                [Qt.ItemDataRole.DecorationRole]
+            )  # reload folder icons
 
     # static method to create the dialog and return Maestral instance on success
     @staticmethod
     def configureMaestral(mdbx, parent=None):
         fsd = SetupDialog(mdbx, parent)
         fsd.show()
-        fsd.exec_()
+        fsd.exec()
 
         return fsd.accepted

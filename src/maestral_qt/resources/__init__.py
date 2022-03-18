@@ -1,21 +1,11 @@
-# !/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""
-Created on Wed Oct 31 16:23:13 2018
 
-@author: samschott
-"""
 import os
 import os.path as osp
 import platform
+from importlib.resources import path
 
-try:
-    from importlib.resources import path
-except ImportError:
-    from importlib_resources import path
-
-
-from PyQt5 import QtWidgets, QtCore, QtGui
+from PyQt6 import QtWidgets, QtCore, QtGui
 
 _icon_provider = QtWidgets.QFileIconProvider()
 _tmp_file_for_ext = dict()
@@ -28,16 +18,6 @@ def resource_path(name):
 
 APP_ICON_PATH = resource_path("maestral.png")
 FACEHOLDER_PATH = resource_path("faceholder.png")
-
-SETUP_DIALOG_PATH = resource_path("setup_dialog.ui")
-SETTINGS_WINDOW_PATH = resource_path("settings_window.ui")
-UNLINK_DIALOG_PATH = resource_path("unlink_dialog.ui")
-RELINK_DIALOG_PATH = resource_path("relink_dialog.ui")
-DROPBOX_LOCATION_DIALOG_PATH = resource_path("dropbox_location_dialog.ui")
-SYNC_ISSUES_WINDOW_PATH = resource_path("sync_issues_window.ui")
-SYNC_ISSUE_WIDGET_PATH = resource_path("sync_issue_widget.ui")
-SYNC_EVENT_WIDGET_PATH = resource_path("sync_event_widget.ui")
-SELECTIVE_SYNC_DIALOG_PATH = resource_path("selective_sync_dialog.ui")
 
 THEME_DARK = "dark"
 THEME_LIGHT = "light"
@@ -107,7 +87,9 @@ def native_folder_icon():
 
 def native_file_icon():
     """Returns the system's default file icon."""
-    return _icon_provider.icon(_icon_provider.File)
+    # use a real file here because Qt may otherwise
+    # return the wrong folder icon in some cases
+    return _icon_provider.icon(QtCore.QFileInfo(resource_path("file")))
 
 
 # noinspection PyCallByClass,PyArgumentList
@@ -192,23 +174,20 @@ def systray_theme(icon_geometry=None):
         if not icon_geometry or icon_geometry.isEmpty():
             # ---- guess the location of the status bar --------------------------------
 
-            rec_screen = QtWidgets.QDesktopWidget().screenGeometry()
-            rec_available = QtWidgets.QDesktopWidget().availableGeometry()
+            primary_screen = QtGui.QGuiApplication.primaryScreen()
+
+            rec_screen = primary_screen.geometry()
+            rec_available = primary_screen.availableGeometry()
 
             # convert to QRegion for subtraction
             region_screen = QtGui.QRegion(rec_screen)
             region_available = QtGui.QRegion(rec_available)
 
             # subtract and convert back to QRect
-            rects_diff = region_screen.subtracted(region_available).rects()
-            if len(rects_diff) > 0:
-                # there seems to be a task bar
-                taskBarRect = rects_diff[0]
-            else:
-                taskBarRect = rec_screen
+            task_bar_rect = region_screen.subtracted(region_available).boundingRect()
 
-            px = taskBarRect.left() + 2
-            py = taskBarRect.bottom() - 2
+            px = task_bar_rect.left() + 2
+            py = task_bar_rect.bottom() - 2
 
         else:  # use the given location from icon_geometry
             px = icon_geometry.left()
@@ -248,8 +227,7 @@ def _pixel_at(x, y):
     0..256 limits)
     """
 
-    desktop_id = QtWidgets.QApplication.desktop().winId()
-    screen = QtWidgets.QApplication.primaryScreen()
-    color = screen.grabWindow(desktop_id, x, y, 1, 1).toImage().pixel(0, 0)
+    screen = QtGui.QGuiApplication.primaryScreen()
+    color = screen.grabWindow(0, x, y, 1, 1).toImage().pixel(0, 0)
 
     return ((color >> 16) & 0xFF), ((color >> 8) & 0xFF), (color & 0xFF)

@@ -1,14 +1,10 @@
-# !/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""
-Created on Wed Oct 31 16:23:13 2018
 
-@author: samschott
-"""
+# external packages
 import markdown2
-from PyQt5 import QtWidgets, QtGui, QtCore
-from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QPixmap, QPainter
+from PyQt6 import QtWidgets, QtGui, QtCore
+from PyQt6.QtCore import Qt
+from PyQt6.QtGui import QPixmap, QPainter
 
 # local imports
 from . import __url__
@@ -36,14 +32,14 @@ class BackgroundTaskProgressDialog(QtWidgets.QDialog):
     def __init__(self, title, message="", cancel=True, parent=None, width=450):
         super().__init__(parent=parent)
         self.setModal(True)
-        self.setWindowModality(Qt.WindowModal)
+        self.setWindowModality(Qt.WindowModality.WindowModal)
         self.setWindowFlags(
-            Qt.WindowStaysOnTopHint
-            | Qt.Sheet
-            | Qt.WindowTitleHint
-            | Qt.CustomizeWindowHint
+            Qt.WindowType.WindowStaysOnTopHint
+            | Qt.WindowType.Sheet
+            | Qt.WindowType.WindowTitleHint
+            | Qt.WindowType.CustomizeWindowHint
         )
-        self.setAttribute(Qt.WA_DeleteOnClose)
+        self.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
         self.setWindowTitle("")
         self.setFixedWidth(width)
 
@@ -54,17 +50,19 @@ class BackgroundTaskProgressDialog(QtWidgets.QDialog):
         self.titleLabel = QtWidgets.QLabel(self)
         self.infoLabel = QtWidgets.QLabel(self)
         self.progressBar = QtWidgets.QProgressBar()
-        self.buttonBox = QtWidgets.QDialogButtonBox(QtWidgets.QDialogButtonBox.Cancel)
+        self.buttonBox = QtWidgets.QDialogButtonBox(
+            QtWidgets.QDialogButtonBox.StandardButton.Cancel
+        )
 
         self.iconLabel.setMinimumSize(_USER_DIALOG_ICON_SIZE, _USER_DIALOG_ICON_SIZE)
         self.iconLabel.setMaximumSize(_USER_DIALOG_ICON_SIZE, _USER_DIALOG_ICON_SIZE)
-        self.iconLabel.setAlignment(Qt.AlignTop)
+        self.iconLabel.setAlignment(Qt.AlignmentFlag.AlignTop)
         self.titleLabel.setFont(get_scaled_font(bold=True))
         self.infoLabel.setFont(get_scaled_font(scaling=0.9))
         self.infoLabel.setFixedWidth(width - 150)
         self.infoLabel.setSizePolicy(
-            QtWidgets.QSizePolicy.MinimumExpanding,
-            QtWidgets.QSizePolicy.MinimumExpanding,
+            QtWidgets.QSizePolicy.Policy.MinimumExpanding,
+            QtWidgets.QSizePolicy.Policy.MinimumExpanding,
         )
         self.infoLabel.setWordWrap(True)
         self.infoLabel.setOpenExternalLinks(True)
@@ -126,12 +124,12 @@ class UserDialog(QtWidgets.QDialog):
         """
         super().__init__(parent=parent)
         self.setModal(True)
-        self.setWindowModality(Qt.WindowModal)
+        self.setWindowModality(Qt.WindowModality.WindowModal)
         self.setWindowFlags(
-            Qt.WindowStaysOnTopHint
-            | Qt.Sheet
-            | Qt.WindowTitleHint
-            | Qt.CustomizeWindowHint
+            Qt.WindowType.WindowStaysOnTopHint
+            | Qt.WindowType.Sheet
+            | Qt.WindowType.WindowTitleHint
+            | Qt.WindowType.CustomizeWindowHint
         )
         self.setWindowTitle("")
 
@@ -149,8 +147,8 @@ class UserDialog(QtWidgets.QDialog):
         self.titleLabel.setFont(get_scaled_font(bold=True))
         self.infoLabel.setFont(get_scaled_font(scaling=0.9))
         self.infoLabel.setSizePolicy(
-            QtWidgets.QSizePolicy.MinimumExpanding,
-            QtWidgets.QSizePolicy.MinimumExpanding,
+            QtWidgets.QSizePolicy.Policy.MinimumExpanding,
+            QtWidgets.QSizePolicy.Policy.MinimumExpanding,
         )
         self.infoLabel.setWordWrap(True)
         self.infoLabel.setOpenExternalLinks(True)
@@ -168,10 +166,12 @@ class UserDialog(QtWidgets.QDialog):
         if checkbox:
             self.checkbox = QtWidgets.QCheckBox(checkbox)
 
-        self.buttonBox = QtWidgets.QDialogButtonBox(QtWidgets.QDialogButtonBox.Ok)
+        self.buttonBox = QtWidgets.QDialogButtonBox(
+            QtWidgets.QDialogButtonBox.StandardButton.Ok
+        )
         self.buttonBox.accepted.connect(self.accept)
 
-        self.gridLayout.addWidget(self.iconLabel, 0, 0, 2, 1, Qt.AlignTop)
+        self.gridLayout.addWidget(self.iconLabel, 0, 0, 2, 1, Qt.AlignmentFlag.AlignTop)
         self.gridLayout.addWidget(self.titleLabel, 0, 1, 1, 1)
         self.gridLayout.addWidget(self.infoLabel, 1, 1, 1, 1)
         if details:
@@ -217,7 +217,9 @@ class UserDialog(QtWidgets.QDialog):
             self.buttonBox.buttons()[0].setIcon(QtGui.QIcon.fromTheme(icon))
 
     def addCancelButton(self, name="Cancel", icon=None):
-        self._cancelButton = self.buttonBox.addButton(QtWidgets.QDialogButtonBox.Cancel)
+        self._cancelButton = self.buttonBox.addButton(
+            QtWidgets.QDialogButtonBox.StandardButton.Cancel
+        )
         self._cancelButton.setText(name)
         if isinstance(icon, QtGui.QIcon):
             self._cancelButton.setIcon(icon)
@@ -230,7 +232,7 @@ class UserDialog(QtWidgets.QDialog):
 
     def addSecondAcceptButton(self, name, icon="dialog-ok"):
         self._acceptButton2 = self.buttonBox.addButton(
-            QtWidgets.QDialogButtonBox.Ignore
+            QtWidgets.QDialogButtonBox.StandardButton.Ignore
         )
         self._acceptButton2.setText(name)
         if isinstance(icon, QtGui.QIcon):
@@ -248,7 +250,7 @@ class UserDialog(QtWidgets.QDialog):
 
 
 def show_dialog(title, message, details=None, level="info"):
-    UserDialog(title, message, details).exec_()
+    UserDialog(title, message, details).exec()
 
 
 def show_stacktrace_dialog(traceback):
@@ -267,7 +269,7 @@ def show_stacktrace_dialog(traceback):
         button_names=("Close",),
     )
 
-    error_dialog.exec_()
+    error_dialog.exec()
 
 
 def show_update_dialog(latest_release, release_notes_md):
@@ -287,7 +289,7 @@ def show_update_dialog(latest_release, release_notes_md):
     )
     styled_release_notes = release_notes_html.replace("<ul>", list_style)
     update_dialog = UserDialog("Update available", message, styled_release_notes)
-    update_dialog.exec_()
+    update_dialog.exec()
 
 
 # ======================================================================================
@@ -337,9 +339,9 @@ class AnimatedStackedWidget(QtWidgets.QStackedWidget):
     def __init__(self, parent=None):
         super().__init__(parent=parent)
 
-        self.m_direction = Qt.Horizontal
+        self.m_direction = Qt.Orientation.Horizontal
         self.m_speed = 300
-        self.m_animationtype = QtCore.QEasingCurve.OutCubic
+        self.m_animationtype = QtCore.QEasingCurve.Type.OutCubic
         self.m_now = 0
         self.m_next = 0
         self.m_wrap = False
@@ -358,13 +360,11 @@ class AnimatedStackedWidget(QtWidgets.QStackedWidget):
     def setWrap(self, wrap):
         self.m_wrap = wrap
 
-    @QtCore.pyqtSlot()
     def slideInPrev(self):
         now = self.currentIndex()
         if self.m_wrap or now > 0:
             self.slideInIdx(now - 1)
 
-    @QtCore.pyqtSlot()
     def slideInNext(self):
         now = self.currentIndex()
         if self.m_wrap or now < (self.count() - 1):
@@ -393,7 +393,7 @@ class AnimatedStackedWidget(QtWidgets.QStackedWidget):
         offsetx, offsety = self.frameRect().width(), self.frameRect().height()
         self.widget(_next).setGeometry(self.frameRect())
 
-        if not self.m_direction == Qt.Horizontal:
+        if not self.m_direction == Qt.Orientation.Horizontal:
             if _now < _next:
                 offsetx, offsety = 0, -offsety
             else:
@@ -433,9 +433,8 @@ class AnimatedStackedWidget(QtWidgets.QStackedWidget):
         self.m_next = _next
         self.m_now = _now
         self.m_active = True
-        anim_group.start(QtCore.QAbstractAnimation.DeleteWhenStopped)
+        anim_group.start(QtCore.QAbstractAnimation.DeletionPolicy.DeleteWhenStopped)
 
-    @QtCore.pyqtSlot()
     def animationDoneSlot(self):
         self.setCurrentIndex(self.m_next)
         self.widget(self.m_now).hide()
@@ -482,8 +481,10 @@ class QProgressIndicator(QtWidgets.QWidget):
         self.update_dark_mode()
 
         # Set size and focus policy
-        self.setSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed)
-        self.setFocusPolicy(Qt.NoFocus)
+        self.setSizePolicy(
+            QtWidgets.QSizePolicy.Policy.Fixed, QtWidgets.QSizePolicy.Policy.Fixed
+        )
+        self.setFocusPolicy(Qt.FocusPolicy.NoFocus)
 
     def animationDelay(self):
         return self.m_delay
@@ -541,7 +542,7 @@ class QProgressIndicator(QtWidgets.QWidget):
         width = min(self.width(), self.height())
 
         painter = QPainter(self)
-        painter.setRenderHint(QPainter.Antialiasing)
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
 
         outerRadius = (width - 1) * 0.5
         innerRadius = (width - 1) * 0.5 * 0.4375
@@ -558,7 +559,7 @@ class QProgressIndicator(QtWidgets.QWidget):
             else:
                 color.setAlphaF(0.2)
 
-            painter.setPen(Qt.NoPen)
+            painter.setPen(Qt.PenStyle.NoPen)
             painter.setBrush(color)
             painter.save()
             painter.translate(self.rect().center())
@@ -577,9 +578,9 @@ class QProgressIndicator(QtWidgets.QWidget):
             )
             painter.restore()
 
-    def changeEvent(self, QEvent):
+    def changeEvent(self, event):
 
-        if QEvent.type() == QtCore.QEvent.PaletteChange:
+        if event.type() == QtCore.QEvent.Type.PaletteChange:
             self.update_dark_mode()
 
     def update_dark_mode(self):
@@ -592,7 +593,7 @@ class QProgressIndicator(QtWidgets.QWidget):
 class CustomCombobox(QtWidgets.QComboBox):
     def paintEvent(self, e):
         painter = QtWidgets.QStylePainter(self)
-        painter.setPen(self.palette().color(QtGui.QPalette.Text))
+        painter.setPen(self.palette().color(QtGui.QPalette.ColorRole.Text))
 
         opt = QtWidgets.QStyleOptionComboBox()
         self.initStyleOption(opt)
@@ -601,8 +602,8 @@ class CustomCombobox(QtWidgets.QComboBox):
             # see QTBUG-78727 and QTBUG-78727
             opt.rect.adjust(-2, 0, 2, 0)
 
-        painter.drawComplexControl(QtWidgets.QStyle.CC_ComboBox, opt)
-        painter.drawControl(QtWidgets.QStyle.CE_ComboBoxLabel, opt)
+        painter.drawComplexControl(QtWidgets.QStyle.ComplexControl.CC_ComboBox, opt)
+        painter.drawControl(QtWidgets.QStyle.ControlElement.CE_ComboBoxLabel, opt)
 
 
 class QElidedLabel(QtWidgets.QLabel):
@@ -614,10 +615,10 @@ class QElidedLabel(QtWidgets.QLabel):
 
     """
 
-    def __init__(self, parent=None, elidemode=Qt.ElideRight):
+    def __init__(self, parent=None, elidemode=Qt.TextElideMode.ElideRight):
         super().__init__(parent)
         self.setSizePolicy(
-            QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Minimum
+            QtWidgets.QSizePolicy.Policy.Preferred, QtWidgets.QSizePolicy.Policy.Minimum
         )
         self._elidemode = elidemode
         self._elided_text = ""
@@ -630,7 +631,7 @@ class QElidedLabel(QtWidgets.QLabel):
         """
         if self.text():
             self._elided_text = self.fontMetrics().elidedText(
-                self.text(), self._elidemode, width, Qt.TextShowMnemonic
+                self.text(), self._elidemode, width, Qt.TextFlag.TextShowMnemonic
             )
         else:
             self._elided_text = ""
@@ -651,7 +652,7 @@ class QElidedLabel(QtWidgets.QLabel):
             txt: The text to set (string).
         """
         super().setText(txt)
-        if self._elidemode != Qt.ElideNone:
+        if self._elidemode != Qt.TextElideMode.ElideNone:
             self._update_elided_text(self.geometry().width())
 
     def resizeEvent(self, e):
@@ -662,7 +663,7 @@ class QElidedLabel(QtWidgets.QLabel):
 
     def paintEvent(self, e):
         """Override QLabel::paintEvent to draw elided text."""
-        if self._elidemode == Qt.ElideNone:
+        if self._elidemode == Qt.TextElideMode.ElideNone:
             super().paintEvent(e)
         else:
             e.accept()

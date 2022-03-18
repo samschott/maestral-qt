@@ -1,22 +1,18 @@
-# !/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""
-Created on Wed Oct 31 16:23:13 2018
 
-@author: samschott
-"""
 # external packages
-from PyQt5 import QtCore, QtWidgets, QtGui, uic
-from PyQt5.QtCore import Qt
+from PyQt6 import QtCore, QtWidgets, QtGui
+from PyQt6.QtCore import Qt
 
 # local imports
-from .resources import RELINK_DIALOG_PATH, APP_ICON_PATH
 from .utils import get_scaled_font, icon_to_pixmap
 from .utils import MaestralBackgroundTask
+from .resources import APP_ICON_PATH
+from .resources.ui_relink_dialog import Ui_RelinkDialog
 
 
 # noinspection PyArgumentList
-class RelinkDialog(QtWidgets.QDialog):
+class RelinkDialog(QtWidgets.QDialog, Ui_RelinkDialog):
     """
     A dialog to show when Maestral's Dropbox access has expired or has been revoked.
     """
@@ -31,13 +27,14 @@ class RelinkDialog(QtWidgets.QDialog):
 
     def __init__(self, parent, reason=EXPIRED):
         super().__init__()
-        uic.loadUi(RELINK_DIALOG_PATH, self)
+        self.setupUi(self)
+
         # noinspection PyTypeChecker
         self.setWindowFlags(
-            Qt.WindowStaysOnTopHint
-            | Qt.Sheet
-            | Qt.WindowTitleHint
-            | Qt.CustomizeWindowHint
+            Qt.WindowType.WindowStaysOnTopHint
+            | Qt.WindowType.Sheet
+            | Qt.WindowType.WindowTitleHint
+            | Qt.WindowType.CustomizeWindowHint
         )
 
         self._parent = parent
@@ -80,18 +77,15 @@ class RelinkDialog(QtWidgets.QDialog):
         self.pushButtonCancel.setFocus()
         self.adjustSize()
 
-    @QtCore.pyqtSlot()
     def quit(self):
         self.set_ui_busy()
         self._parent.quit(stop_daemon=True)
 
-    @QtCore.pyqtSlot()
     def delete_creds_and_quit(self):
         self.set_ui_busy()
         self.mdbx.unlink()
         self._parent.quit(stop_daemon=True)
 
-    @QtCore.pyqtSlot(str)
     def _update_appearance(self, text):
         placeholder_text = self.lineEditAuthCode.placeholderText()
         if text == "":
@@ -119,7 +113,6 @@ class RelinkDialog(QtWidgets.QDialog):
             self.pushButtonLink.setEnabled(True)
             self.lineEditAuthCode.setStyleSheet("")
 
-    @QtCore.pyqtSlot()
     def on_link_clicked(self):
         token = self.lineEditAuthCode.text()
         if token == "":
@@ -134,7 +127,6 @@ class RelinkDialog(QtWidgets.QDialog):
         )
         self.auth_task.sig_result.connect(self.on_link_done)
 
-    @QtCore.pyqtSlot(object)
     def on_link_done(self, res):
 
         if res == 0:

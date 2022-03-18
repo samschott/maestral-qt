@@ -1,22 +1,15 @@
-# !/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""
-Created on Wed Oct 31 16:23:13 2018
-
-@author: samschott
-"""
 
 # system imports
 import os.path as osp
-import urllib
+from urllib import parse
 
 # external packages
 import click
-from PyQt5 import QtCore, QtGui, QtWidgets, uic
+from PyQt6 import QtCore, QtGui, QtWidgets
 from maestral.utils import sanitize_string
 
 # local imports
-from .resources import SYNC_ISSUES_WINDOW_PATH, SYNC_ISSUE_WIDGET_PATH, native_item_icon
 from .utils import (
     icon_to_pixmap,
     get_scaled_font,
@@ -25,17 +18,20 @@ from .utils import (
     LINE_COLOR_DARK,
     LINE_COLOR_LIGHT,
 )
+from .resources import native_item_icon
+from .resources.ui_sync_issues_window import Ui_SyncIssuesWindow
+from .resources.ui_sync_issue_widget import Ui_SyncIssueWidget
 
 
 # noinspection PyArgumentList
-class SyncIssueWidget(QtWidgets.QWidget):
+class SyncIssueWidget(QtWidgets.QWidget, Ui_SyncIssueWidget):
     """
     A widget to graphically display a Maestral sync issue.
     """
 
     def __init__(self, sync_err, parent=None):
         super().__init__(parent=parent)
-        uic.loadUi(SYNC_ISSUE_WIDGET_PATH, self)
+        self.setupUi(self)
 
         self.sync_err = sync_err
 
@@ -48,7 +44,9 @@ class SyncIssueWidget(QtWidgets.QWidget):
         def request_context_menu():
             self.actionButton.customContextMenuRequested.emit(self.actionButton.pos())
 
-        self.actionButton.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
+        self.actionButton.setContextMenuPolicy(
+            QtCore.Qt.ContextMenuPolicy.CustomContextMenu
+        )
         self.actionButton.pressed.connect(request_context_menu)
         self.actionButton.customContextMenuRequested.connect(self.showContextMenu)
 
@@ -62,26 +60,24 @@ class SyncIssueWidget(QtWidgets.QWidget):
 
         a0.triggered.connect(self._go_to_local_path)
         a1.triggered.connect(self._go_to_online)
-        self.actionButtonContextMenu.exec_(self.mapToGlobal(pos))
+        self.actionButtonContextMenu.exec(self.mapToGlobal(pos))
 
-    @QtCore.pyqtSlot()
     def _go_to_local_path(self):
         click.launch(self.sync_err.local_path, locate=True)
 
-    @QtCore.pyqtSlot()
     def _go_to_online(self):
         dbx_address = "https://www.dropbox.com/preview"
-        file_address = urllib.parse.quote(self.sync_err.dbx_path)
+        file_address = parse.quote(self.sync_err.dbx_path)
         click.launch(dbx_address + file_address)
 
-    def changeEvent(self, QEvent):
-        if QEvent.type() == QtCore.QEvent.PaletteChange:
+    def changeEvent(self, event):
+        if event.type() == QtCore.QEvent.Type.PaletteChange:
             self.update_dark_mode()
 
     def update_dark_mode(self):
         # update style sheet with new colors
         line_rgb = LINE_COLOR_DARK if is_dark_window() else LINE_COLOR_LIGHT
-        bg_color = self.palette().color(QtGui.QPalette.Base)
+        bg_color = self.palette().color(QtGui.QPalette.ColorRole.Base)
         bg_color_rgb = [bg_color.red(), bg_color.green(), bg_color.blue()]
         self.frame.setStyleSheet(
             """
@@ -101,15 +97,15 @@ class SyncIssueWidget(QtWidgets.QWidget):
 
 
 # noinspection PyArgumentList
-class SyncIssueWindow(QtWidgets.QWidget):
+class SyncIssueWindow(QtWidgets.QWidget, Ui_SyncIssuesWindow):
     """
     A widget to graphically display all Maestral sync issues.
     """
 
     def __init__(self, mdbx, parent=None):
         super().__init__(parent=parent)
-        uic.loadUi(SYNC_ISSUES_WINDOW_PATH, self)
-        self.setWindowFlags(QtCore.Qt.WindowStaysOnTopHint)
+        self.setupUi(self)
+        self.setWindowFlags(QtCore.Qt.WindowType.WindowStaysOnTopHint)
 
         self.mdbx = mdbx
         self.sync_issue_widgets = []
