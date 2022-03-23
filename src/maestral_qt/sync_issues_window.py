@@ -29,17 +29,18 @@ class SyncIssueWidget(QtWidgets.QWidget, Ui_SyncIssueWidget):
     A widget to graphically display a Maestral sync issue.
     """
 
-    def __init__(self, sync_err, parent=None):
+    def __init__(self, sync_err, local_path, parent=None):
         super().__init__(parent=parent)
         self.setupUi(self)
 
         self.sync_err = sync_err
+        self.local_path = local_path
 
         self.errorLabel.setFont(get_scaled_font(scaling=0.85))
         self.update_dark_mode()  # set appropriate item icon and colors in style sheet
 
-        self.pathLabel.setText(sanitize_string(osp.basename(self.sync_err.local_path)))
-        self.errorLabel.setText(self.sync_err.title + ":\n" + self.sync_err.message)
+        self.pathLabel.setText(sanitize_string(osp.basename(self.sync_err.dbx_path)))
+        self.errorLabel.setText(f"{self.sync_err.title}:\n{self.sync_err.message}")
 
         def request_context_menu():
             self.actionButton.customContextMenuRequested.emit(self.actionButton.pos())
@@ -52,18 +53,20 @@ class SyncIssueWidget(QtWidgets.QWidget, Ui_SyncIssueWidget):
 
     def showContextMenu(self, pos):
 
-        self.actionButtonContextMenu = QtWidgets.QMenu()
-        a0 = self.actionButtonContextMenu.addAction("View in folder")
-        a1 = self.actionButtonContextMenu.addAction("View on dropbox.com")
-
-        a0.setEnabled(osp.exists(self.sync_err.local_path))
+        self.contentMenu = QtWidgets.QMenu()
+        a0 = self.contentMenu.addAction("View in folder")
+        a1 = self.contentMenu.addAction("View on dropbox.com")
 
         a0.triggered.connect(self._go_to_local_path)
         a1.triggered.connect(self._go_to_online)
-        self.actionButtonContextMenu.exec(self.mapToGlobal(pos))
+
+        a0.setEnabled(osp.exists(self.local_path))
+        a1.setEnabled(True)
+
+        self.contentMenu.exec(self.mapToGlobal(pos))
 
     def _go_to_local_path(self):
-        click.launch(self.sync_err.local_path, locate=True)
+        click.launch(self.local_path, locate=True)
 
     def _go_to_online(self):
         dbx_address = "https://www.dropbox.com/preview"
@@ -91,7 +94,7 @@ class SyncIssueWidget(QtWidgets.QWidget, Ui_SyncIssueWidget):
         )
 
         # update item icons (the system may supply different icons in dark mode)
-        icon = native_item_icon(self.sync_err.local_path)
+        icon = native_item_icon(self.local_path)
         pixmap = icon_to_pixmap(icon, self.iconLabel.width(), self.iconLabel.height())
         self.iconLabel.setPixmap(pixmap)
 
@@ -105,7 +108,6 @@ class SyncIssueWindow(QtWidgets.QWidget, Ui_SyncIssuesWindow):
     def __init__(self, mdbx, parent=None):
         super().__init__(parent=parent)
         self.setupUi(self)
-        self.setWindowFlags(QtCore.Qt.WindowType.WindowStaysOnTopHint)
 
         self.mdbx = mdbx
         self.sync_issue_widgets = []
@@ -133,8 +135,8 @@ class SyncIssueWindow(QtWidgets.QWidget, Ui_SyncIssuesWindow):
             self.add_issue(issue)
 
     def add_issue(self, sync_issue):
-
-        issue_widget = SyncIssueWidget(sync_issue)
+        local_path = self.mdbx.to_local_path(sync_issue.dbx_path)
+        issue_widget = SyncIssueWidget(sync_issue, local_path)
         self.sync_issue_widgets.append(issue_widget)
         self.verticalLayout.addWidget(issue_widget)
 
