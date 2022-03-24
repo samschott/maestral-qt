@@ -36,6 +36,10 @@ class SyncIssueWidget(QtWidgets.QWidget, Ui_SyncIssueWidget):
         self.sync_err = sync_err
         self.local_path = local_path
 
+        dbx_address = "https://www.dropbox.com/preview"
+        file_address = parse.quote(self.sync_err.dbx_path)
+        self.dropbox_url = dbx_address + file_address
+
         self.errorLabel.setFont(get_scaled_font(scaling=0.85))
         self.update_dark_mode()  # set appropriate item icon and colors in style sheet
 
@@ -57,21 +61,19 @@ class SyncIssueWidget(QtWidgets.QWidget, Ui_SyncIssueWidget):
         a0 = self.contentMenu.addAction("View in folder")
         a1 = self.contentMenu.addAction("View on dropbox.com")
 
-        a0.triggered.connect(self._go_to_local_path)
-        a1.triggered.connect(self._go_to_online)
+        def launch_local():
+            click.launch(self.local_path, locate=True)
+
+        def launch_online():
+            click.launch(self.dropbox_url)
+
+        a0.triggered.connect(launch_local)
+        a1.triggered.connect(launch_online)
 
         a0.setEnabled(osp.exists(self.local_path))
         a1.setEnabled(True)
 
         self.contentMenu.exec(self.mapToGlobal(pos))
-
-    def _go_to_local_path(self):
-        click.launch(self.local_path, locate=True)
-
-    def _go_to_online(self):
-        dbx_address = "https://www.dropbox.com/preview"
-        file_address = parse.quote(self.sync_err.dbx_path)
-        click.launch(dbx_address + file_address)
 
     def changeEvent(self, event):
         if event.type() == QtCore.QEvent.Type.PaletteChange:
