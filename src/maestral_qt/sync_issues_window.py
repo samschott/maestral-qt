@@ -29,12 +29,11 @@ class SyncIssueWidget(QtWidgets.QWidget, Ui_SyncIssueWidget):
     A widget to graphically display a Maestral sync issue.
     """
 
-    def __init__(self, sync_err, local_path, parent=None):
+    def __init__(self, sync_err, parent=None):
         super().__init__(parent=parent)
         self.setupUi(self)
 
         self.sync_err = sync_err
-        self.local_path = local_path
 
         dbx_address = "https://www.dropbox.com/preview"
         file_address = parse.quote(self.sync_err.dbx_path)
@@ -62,7 +61,7 @@ class SyncIssueWidget(QtWidgets.QWidget, Ui_SyncIssueWidget):
         a1 = self.contentMenu.addAction("View on dropbox.com")
 
         def launch_local():
-            click.launch(self.local_path, locate=True)
+            click.launch(self.sync_err.local_path, locate=True)
 
         def launch_online():
             click.launch(self.dropbox_url)
@@ -70,7 +69,7 @@ class SyncIssueWidget(QtWidgets.QWidget, Ui_SyncIssueWidget):
         a0.triggered.connect(launch_local)
         a1.triggered.connect(launch_online)
 
-        a0.setEnabled(osp.exists(self.local_path))
+        a0.setEnabled(osp.exists(self.sync_err.local_path))
         a1.setEnabled(True)
 
         self.contentMenu.exec(self.mapToGlobal(pos))
@@ -96,7 +95,7 @@ class SyncIssueWidget(QtWidgets.QWidget, Ui_SyncIssueWidget):
         )
 
         # update item icons (the system may supply different icons in dark mode)
-        icon = native_item_icon(self.local_path)
+        icon = native_item_icon(self.sync_err.local_path)
         pixmap = icon_to_pixmap(icon, self.iconLabel.width(), self.iconLabel.height())
         self.iconLabel.setPixmap(pixmap)
 
@@ -137,8 +136,7 @@ class SyncIssueWindow(QtWidgets.QWidget, Ui_SyncIssuesWindow):
             self.add_issue(issue)
 
     def add_issue(self, sync_issue):
-        local_path = self.mdbx.to_local_path(sync_issue.dbx_path)
-        issue_widget = SyncIssueWidget(sync_issue, local_path)
+        issue_widget = SyncIssueWidget(sync_issue)
         self.sync_issue_widgets.append(issue_widget)
         self.verticalLayout.addWidget(issue_widget)
 
