@@ -374,7 +374,7 @@ class MaestralGuiApp(QtWidgets.QSystemTrayIcon):
         if isinstance(res, UpdateCheckError):
             show_dialog(res.title, res.message, level="warning")
         elif res.update_available:
-            show_update_dialog(res["latest_release"], res["release_notes"])
+            show_update_dialog(res.latest_release, res.release_notes)
         else:
             message = "Maestral v{} is the newest version available.".format(
                 res.latest_release
