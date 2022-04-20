@@ -98,8 +98,7 @@ def system_tray_icon(status, geometry=None):
     will be used:
 
     1) macOS: Black SVG icons with transparent background. macOS will adapt the
-       appearance as necessary. This only works reliably in Qt >= 5.15 which is not yet
-       released.
+       appearance as necessary. This only works reliably in Qt >= 5.15.
     2) Linux: Any icons installed in the system theme. Maestral will prefer "symbolic"
        icons named "maestral-status-{status}-symbolic" over regular icons named
        "maestral-status-{status}". It will fall back to manually setting the icon in a
