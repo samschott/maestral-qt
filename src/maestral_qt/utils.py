@@ -5,6 +5,7 @@ import sys
 import os
 import re
 import platform
+import traceback
 
 # external packages
 from PyQt6 import QtCore, QtGui, QtWidgets
@@ -284,8 +285,8 @@ class Worker(QtCore.QRunnable):
                         return
             else:
                 self.emitter.sig_result.emit(res)
-        except Exception as exc:
-            self.emitter.sig_result.emit(exc)
+        except Exception:
+            traceback.print_exc()
         finally:
             self.emitter.sig_done.emit()
 
@@ -323,7 +324,8 @@ class MaestralWorker(Worker):
         except ConnectionClosedError:
             pass
         except Exception as exc:
-            self.emitter.sig_result.emit(exc)
+            print("".join(exc._pyroTraceback))
+            print("{}: {}".format(type(exc).__name__, exc))
         finally:
             self.connection = None
             self.emitter.sig_done.emit()
