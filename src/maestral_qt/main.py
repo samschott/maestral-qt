@@ -154,7 +154,6 @@ class MaestralGuiApp(QtWidgets.QSystemTrayIcon):
         self._context_menu_visible = False
 
     def update_ui(self):
-
         if self.loading_done:
             try:
                 self.update_status()
@@ -174,16 +173,13 @@ class MaestralGuiApp(QtWidgets.QSystemTrayIcon):
             QtCore.QTimer.singleShot(1000, self.show_when_systray_available)
 
     def load_tray_icons(self):
-
         icons = dict()
-
         for key in self.icon_mapping:
             icons[key] = system_tray_icon(self.icon_mapping[key], self.geometry())
 
         return icons
 
     def load_maestral(self):
-
         self.mdbx = self.get_or_start_maestral_daemon()
 
         try:
@@ -206,7 +202,6 @@ class MaestralGuiApp(QtWidgets.QSystemTrayIcon):
             self.quit()
 
     def get_or_start_maestral_daemon(self):
-
         res = start_maestral_daemon_process(self.config_name)
 
         if res == Start.Failed:
@@ -225,7 +220,6 @@ class MaestralGuiApp(QtWidgets.QSystemTrayIcon):
         return MaestralProxy(self.config_name)
 
     def setup_ui_unlinked(self):
-
         self.setToolTip("Not linked.")
         self.menu.clear()
 
@@ -255,7 +249,6 @@ class MaestralGuiApp(QtWidgets.QSystemTrayIcon):
         quitAction.triggered.connect(self.quit)
 
     def setup_ui_linked(self):
-
         self.autostart = None
         self.settings_window = SettingsWindow(self, self.mdbx)
 
@@ -346,7 +339,6 @@ class MaestralGuiApp(QtWidgets.QSystemTrayIcon):
     # callbacks for user interaction
 
     def auto_check_for_updates(self):
-
         last_update_check = self.mdbx.get_state("app", "update_notification_last")
         interval = self.mdbx.get_conf("app", "update_notification_interval")
         if interval == 0:  # checks disabled
@@ -358,7 +350,6 @@ class MaestralGuiApp(QtWidgets.QSystemTrayIcon):
             checker.sig_result.connect(self._notify_updates_auto)
 
     def on_check_for_updates_clicked(self):
-
         checker = MaestralBackgroundTask(
             self, self.mdbx.config_name, "check_for_updates"
         )
@@ -370,7 +361,6 @@ class MaestralGuiApp(QtWidgets.QSystemTrayIcon):
         checker.sig_result.connect(self._notify_updates_user_requested)
 
     def _notify_updates_user_requested(self, res):
-
         if isinstance(res, UpdateCheckError):
             show_dialog(res.title, res.message, level="warning")
         elif res.update_available:
@@ -382,7 +372,6 @@ class MaestralGuiApp(QtWidgets.QSystemTrayIcon):
             show_dialog("You’re up-to-date!", message)
 
     def _notify_updates_auto(self, res):
-
         if res.update_available:
             self.mdbx.set_state("app", "update_notification_last", time.time())
             show_update_dialog(res.latest_release, res.release_notes)
@@ -401,7 +390,6 @@ class MaestralGuiApp(QtWidgets.QSystemTrayIcon):
 
     def on_start_stop_clicked(self):
         """Pause / resume syncing on menu item clicked."""
-
         try:
             if self.pauseAction.text() == self.PAUSE_TEXT:
                 self.mdbx.stop_sync()
@@ -469,7 +457,6 @@ class MaestralGuiApp(QtWidgets.QSystemTrayIcon):
 
     def update_status(self):
         """Change icon according to status."""
-
         n_sync_errors = len(self.mdbx.sync_errors)
         status = self.mdbx.status
         is_paused = self.mdbx.paused
@@ -572,7 +559,6 @@ class MaestralGuiApp(QtWidgets.QSystemTrayIcon):
             quitting the GUI, if ``False``, it will be kept alive. If ``None``, the
             daemon will only be PAUSED if it was started by the GUI (default).
         """
-
         self._wait_for_status.cancel()
 
         # stop sync daemon if we started it or ``stop_daemon`` is ``True``
@@ -588,7 +574,6 @@ class MaestralGuiApp(QtWidgets.QSystemTrayIcon):
 
     def restart(self):
         """Restarts the Maestral GUI and sync daemon."""
-
         pid = os.getpid()  # get ID of current process
 
         if IS_MACOS:

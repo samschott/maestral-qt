@@ -38,7 +38,6 @@ from .resources.ui_unlink_dialog import Ui_UnlinkDialog
 
 
 class UnlinkDialog(QtWidgets.QDialog, Ui_UnlinkDialog):
-
     # noinspection PyArgumentList
     def __init__(self, mdbx, on_unlink_complete, parent=None):
         super().__init__(parent=parent)
@@ -59,7 +58,6 @@ class UnlinkDialog(QtWidgets.QDialog, Ui_UnlinkDialog):
         self.iconLabel.setPixmap(pixmap)
 
     def accept(self):
-
         self.buttonBox.setEnabled(False)
         self.progressIndicator.startAnimation()
         self.unlink_thread = MaestralBackgroundTask(
@@ -142,7 +140,6 @@ class SettingsWindow(QtWidgets.QWidget, Ui_SettingsWindow):
         center_window(self)
 
     def refresh_gui(self):
-
         # populate account info
         self.set_profile_pic_from_cache()
         self.set_account_info_from_cache()
@@ -175,7 +172,6 @@ class SettingsWindow(QtWidgets.QWidget, Ui_SettingsWindow):
         self.labelCopyright.setText(self.labelCopyright.text().format(year, __author__))
 
     def set_profile_pic_from_cache(self):
-
         try:
             pixmap = get_masked_image(
                 self.mdbx.account_profile_pic_path, size=self._profile_pic_height
@@ -186,7 +182,6 @@ class SettingsWindow(QtWidgets.QWidget, Ui_SettingsWindow):
         self.labelUserProfilePic.setPixmap(pixmap)
 
     def set_account_info_from_cache(self):
-
         acc_display_name = self.mdbx.get_state("account", "display_name")
         acc_mail = self.mdbx.get_state("account", "email")
         acc_type = self.mdbx.get_state("account", "type")
@@ -226,7 +221,6 @@ class SettingsWindow(QtWidgets.QWidget, Ui_SettingsWindow):
         )
 
     def on_new_dbx_folder(self, res):
-
         self.comboBoxDropboxPath.setCurrentIndex(0)
 
         if res == QtWidgets.QDialog.DialogCode.Rejected:
@@ -238,7 +232,6 @@ class SettingsWindow(QtWidgets.QWidget, Ui_SettingsWindow):
             return
 
         if not is_empty(new_location):
-
             UserDialog(
                 title="Folder is not empty",
                 message=(
@@ -264,7 +257,6 @@ class SettingsWindow(QtWidgets.QWidget, Ui_SettingsWindow):
         task.sig_result.connect(self.on_move_completed)
 
     def on_move_completed(self, result):
-
         if isinstance(result, Exception):
             title = "Could not move directory"
             msg = str(result.args[0])
@@ -308,7 +300,6 @@ class SettingsWindow(QtWidgets.QWidget, Ui_SettingsWindow):
         return super().closeEvent(event)
 
     def changeEvent(self, event):
-
         if event.type() == QtCore.QEvent.Type.PaletteChange:
             self.update_dark_mode()
 

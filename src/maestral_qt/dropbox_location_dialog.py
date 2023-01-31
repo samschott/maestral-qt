@@ -118,13 +118,9 @@ class DropboxLocationDialog(QtWidgets.QDialog, Ui_Dialog):
 
     @QtCore.pyqtSlot()
     def on_selected_clicked(self):
-
         # apply dropbox path
-
         try:
-
             if osp.exists(self.dropbox_location):
-
                 if is_empty(self.dropbox_location):
                     delete(self.dropbox_location, raise_error=True)
                 else:

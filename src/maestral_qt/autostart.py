@@ -23,7 +23,6 @@ class AutoStart:
     _impl: AutoStartBase
 
     def __init__(self, config_name: str) -> None:
-
         self.implementation = self._get_available_implementation()
 
         start_cmd_list = [sys.executable, "-m", "maestral_qt", "-c", config_name]
@@ -34,7 +33,6 @@ class AutoStart:
             self._impl = AutoStartLaunchd(bundle_id, start_cmd)
 
         elif self.implementation == SupportedImplementations.xdg_desktop:
-
             additional_keys = {
                 "Icon": "maestral",
                 "X-GNOME-Autostart-enabled": "true",
@@ -72,23 +70,18 @@ class AutoStart:
 
     def enable(self) -> None:
         """Setter: True if autostart is enabled."""
-
         if self.enabled:
             return
-
         self._impl.enable()
 
     def disable(self) -> None:
         """Setter: True if autostart is enabled."""
-
         if not self.enabled:
             return
-
         self._impl.disable()
 
     def _get_available_implementation(self) -> Optional[SupportedImplementations]:
         """Returns the supported implementation depending on the platform."""
-
         system = platform.system()
 
         if system == "Darwin":

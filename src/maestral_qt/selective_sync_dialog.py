@@ -42,20 +42,17 @@ class FileSystemModel(QAbstractItemModel):
         self.checkbox_column = checkbox_column
 
     def on_loading_failed(self):
-
         self.display_message(
             "Could not connect to Dropbox. Please check your internet connection."
         )
 
     def display_message(self, message):
-
         self._root_item._children = [MessageTreeItem(self._root_item, message=message)]
 
         self.loading_failed.emit()
         self.modelReset.emit()
 
     def reloadData(self, roles=None):
-
         if not roles:
             roles = [Qt.ItemDataRole.DisplayRole, Qt.ItemDataRole.CheckStateRole]
 
@@ -286,9 +283,7 @@ class MessageTreeItem(AbstractTreeItem):
 
 
 def _sort_key(item, column, reverse):
-
     if column == 0 and isinstance(item, DropboxPathItem):
-
         if item.is_folder is not reverse:
             prefix = "\x00"
         else:
@@ -367,7 +362,6 @@ class DropboxPathItem(AbstractTreeItem):
             self._async_loading_done([])
 
     def _async_loading_done(self, results):
-
         if isinstance(results, Exception):
             raise results
 
@@ -400,7 +394,6 @@ class DropboxPathItem(AbstractTreeItem):
         return ["Name", "Included"]
 
     def _checkStatePropagateToChildren(self, state):
-
         # propagate to children if checked or unchecked
         if state in (0, 2) and self.child_count_loaded() > 0:
             for child in self._children:
@@ -556,14 +549,11 @@ class SelectiveSyncDialog(QtWidgets.QDialog, Ui_SelectiveSyncDialog):
         """
         Apply changes to local Dropbox folder.
         """
-
         if not self.mdbx.connected:
             self.dbx_model.on_loading_failed()
 
         else:
-
             excluded_items = self.get_excluded_items()
-
             try:
                 self.mdbx.excluded_items = excluded_items
             except BusyError as err:
@@ -573,18 +563,15 @@ class SelectiveSyncDialog(QtWidgets.QDialog, Ui_SelectiveSyncDialog):
                 self.accept()
 
     def get_excluded_items(self):
-
         # We load the old excluded list first. This is to preserve any exclusions of
         # sub-folders which may not be loaded in the GUI. We then update the excluded
         # list to reflect any changes made by the user in the GUI.
-
         excluded_items = set(self.mdbx.excluded_items)
 
         queue = Queue()
         queue.put(self.dbx_model._root_item)
 
         while not queue.empty():
-
             node = queue.get()
 
             # Include items which have been checked / partially checked.
@@ -621,7 +608,6 @@ class SelectiveSyncDialog(QtWidgets.QDialog, Ui_SelectiveSyncDialog):
         self.treeViewFolders.resizeColumnToContents(0)
 
     def changeEvent(self, event):
-
         if event.type() == QtCore.QEvent.Type.PaletteChange:
             self.update_dark_mode()
 

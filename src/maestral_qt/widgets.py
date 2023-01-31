@@ -25,6 +25,7 @@ _USER_DIALOG_ICON_SIZE = 60
 # Dialogs
 # ======================================================================================
 
+
 # noinspection PyArgumentList, PyTypeChecker, PyCallByClass
 class BackgroundTaskProgressDialog(QtWidgets.QDialog):
     """A progress dialog to show during long-running background tasks."""
@@ -254,26 +255,21 @@ def show_dialog(title, message, details=None, level="info"):
 
 
 def show_stacktrace_dialog(traceback):
-
     title = "An unexpected error occurred"
-
     message = (
         "You can report this issue together with the traceback below on GitHub. "
         "Please restart Maestral to continue syncing."
     )
-
     error_dialog = UserDialog(
         title,
         message,
         details=traceback,
         button_names=("Close",),
     )
-
     error_dialog.exec()
 
 
 def show_update_dialog(latest_release, release_notes_md):
-
     url = f"{__url__}/download"
     message = (
         "Maestral v{0} is available. Please use your package manager to "
@@ -296,9 +292,9 @@ def show_update_dialog(latest_release, release_notes_md):
 # Animation widgets
 # ======================================================================================
 
+
 # noinspection PyArgumentList
 class FaderWidget(QtWidgets.QWidget):
-
     pixmap_opacity = 1.0
 
     def __init__(self, old_widget, new_widget, duration=300):
@@ -452,6 +448,7 @@ class AnimatedStackedWidget(QtWidgets.QStackedWidget):
 # Misc
 # ======================================================================================
 
+
 # noinspection PyArgumentList
 class QProgressIndicator(QtWidgets.QWidget):
     """
@@ -579,7 +576,6 @@ class QProgressIndicator(QtWidgets.QWidget):
             painter.restore()
 
     def changeEvent(self, event):
-
         if event.type() == QtCore.QEvent.Type.PaletteChange:
             self.update_dark_mode()
 

@@ -118,7 +118,6 @@ class SetupDialog(QtWidgets.QDialog, Ui_SetupDialog):
     # =============================================================================
 
     def closeEvent(self, event):
-
         if self.stackedWidget.currentIndex == 4:
             self.on_accept_requested()
         else:
@@ -139,12 +138,10 @@ class SetupDialog(QtWidgets.QDialog, Ui_SetupDialog):
         self.stackedWidget.slideInIdx(0)
 
     def on_link_clicked(self):
-
         self.stackedWidget.fadeInIdx(1)
         self.pushButtonAuthPageLink.setFocus()
 
     def on_auth_clicked(self):
-
         if self.lineEditAuthCode.text() == "":
             msg = "Please enter an authentication token."
             msg_box = UserDialog("Authentication failed.", msg, parent=self)
@@ -157,7 +154,6 @@ class SetupDialog(QtWidgets.QDialog, Ui_SetupDialog):
             self.link_async()
 
     def link_async(self):
-
         token = self.lineEditAuthCode.text()
 
         self.auth_task = MaestralBackgroundTask(
@@ -166,7 +162,6 @@ class SetupDialog(QtWidgets.QDialog, Ui_SetupDialog):
         self.auth_task.sig_result.connect(self.on_link_done)
 
     def on_link_done(self, res):
-
         if res == 0:
             # switch to next page
             self.stackedWidget.slideInIdx(2)
@@ -189,16 +184,12 @@ class SetupDialog(QtWidgets.QDialog, Ui_SetupDialog):
         self.lineEditAuthCode.setEnabled(True)
 
     def on_dropbox_location_selected(self):
-
         # start with clean sync state
         self.mdbx.reset_sync_state()
 
         # apply dropbox path
-
         try:
-
             if osp.exists(self.dropbox_location):
-
                 if is_empty(self.dropbox_location):
                     delete(self.dropbox_location, raise_error=True)
                 else:
@@ -242,7 +233,6 @@ class SetupDialog(QtWidgets.QDialog, Ui_SetupDialog):
             self.populate_folders_list()
 
     def on_folders_selected(self):
-
         self.mdbx.excluded_items = self.get_excluded_items()
 
         # if any excluded items are currently on the drive, delete them
@@ -316,17 +306,14 @@ class SetupDialog(QtWidgets.QDialog, Ui_SetupDialog):
             self.dbx_model.setCheckState(index, checked_state)
 
     def get_excluded_items(self):
-
         # We start with an empty excluded list since this is the initial setup.
         # We add unchecked items to the excluded list.
-
         excluded_items = []
 
         queue = Queue()
         queue.put(self.dbx_model._root_item)
 
         while not queue.empty():
-
             node = queue.get()
 
             if node.checkState == 0:
@@ -339,7 +326,6 @@ class SetupDialog(QtWidgets.QDialog, Ui_SetupDialog):
         return excluded_items
 
     def changeEvent(self, event):
-
         if event.type() == QtCore.QEvent.Type.PaletteChange:
             self.update_dark_mode()
 

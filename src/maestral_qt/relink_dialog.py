@@ -128,7 +128,6 @@ class RelinkDialog(QtWidgets.QDialog, Ui_RelinkDialog):
         self.auth_task.sig_result.connect(self.on_link_done)
 
     def on_link_done(self, res):
-
         if res == 0:
             self.lineEditAuthCode.setPlaceholderText(self.VALID_MSG)
             QtWidgets.QApplication.processEvents()

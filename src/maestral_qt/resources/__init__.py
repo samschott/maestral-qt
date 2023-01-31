@@ -119,7 +119,6 @@ def system_tray_icon(status, geometry=None):
         icon.setIsMask(True)
 
     else:
-
         # Prefer icons from theme if installed / existing. Fall back to loading our own
         # SVG icon with a color contrasting the status bar.
 
@@ -138,7 +137,6 @@ def system_tray_icon(status, geometry=None):
             icon = QtGui.QIcon()
 
         if icon.isNull():
-
             color = "light" if is_dark_status_bar(geometry) else "dark"
 
             # We create our icon from a pixmap instead of the SVG directly, this works
@@ -169,7 +167,6 @@ def systray_theme(icon_geometry=None):
     c2 = _pixel_at(800, 800)
 
     if not c0 == c1 == c2 == (0, 0, 0):  # we can trust pixel colors from screenshots
-
         if not icon_geometry or icon_geometry.isEmpty():
             # ---- guess the location of the status bar --------------------------------
 

@@ -65,7 +65,6 @@ class SyncEventWidget(QtWidgets.QWidget, Ui_SyncEventWidget):
         self.actionButton.customContextMenuRequested.connect(self.showContextMenu)
 
     def showContextMenu(self, pos):
-
         self.actionButtonContextMenu = QtWidgets.QMenu()
         a0 = self.actionButtonContextMenu.addAction("View in folder")
         a1 = self.actionButtonContextMenu.addAction("View on dropbox.com")
@@ -139,7 +138,6 @@ class ActivityWindow(QtWidgets.QWidget, Ui_SyncIssuesWindow):
         self.update_timer.start(1000)  # every 1 sec
 
     def refresh_gui(self):
-
         for event in self.mdbx.get_history():
             if event.id not in self._ids:
                 event_widget = SyncEventWidget(event)

@@ -55,7 +55,6 @@ class SyncIssueWidget(QtWidgets.QWidget, Ui_SyncIssueWidget):
         self.actionButton.customContextMenuRequested.connect(self.showContextMenu)
 
     def showContextMenu(self, pos):
-
         self.contentMenu = QtWidgets.QMenu()
         a0 = self.contentMenu.addAction("View in folder")
         a1 = self.contentMenu.addAction("View on dropbox.com")
@@ -122,7 +121,6 @@ class SyncIssueWindow(QtWidgets.QWidget, Ui_SyncIssuesWindow):
         self.update_timer.start(1000)  # every 1 sec
 
     def refresh_gui(self):
-
         sync_errors_list = self.mdbx.sync_errors  # get a new copy
 
         self.clear()
@@ -141,7 +139,6 @@ class SyncIssueWindow(QtWidgets.QWidget, Ui_SyncIssuesWindow):
         self.verticalLayout.addWidget(issue_widget)
 
     def clear(self):
-
         while self.verticalLayout.itemAt(0):
             item = self.verticalLayout.takeAt(0)
             w = item.widget()

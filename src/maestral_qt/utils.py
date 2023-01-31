@@ -271,9 +271,7 @@ class Worker(QtCore.QRunnable):
         self.emitter = WorkerEmitter()
 
     def run(self):
-
         try:
-
             res = self._target(*self._args, **self._kwargs)
 
             if hasattr(res, "__next__"):
@@ -301,14 +299,11 @@ class MaestralWorker(Worker):
         super().__init__(target, args, kwargs)
 
     def run(self):
-
         try:
             with MaestralProxy(self.config_name) as proxy:
-
                 self.connection = proxy._m._pyroConnection
 
                 func = proxy.__getattr__(self._target)
-
                 res = func(*self._args, **self._kwargs)
 
                 if hasattr(res, "__next__"):
@@ -350,7 +345,6 @@ class BackgroundTask(QtCore.QObject):
             self.start()
 
     def start(self):
-
         self.worker = Worker(target=self._target, args=self._args, kwargs=self._kwargs)
         self.worker.emitter.sig_result.connect(self.sig_result.emit)
         self.worker.emitter.sig_done.connect(self.sig_done.emit)
@@ -374,7 +368,6 @@ class MaestralBackgroundTask(BackgroundTask):
         super().__init__(parent, target, args, kwargs, autostart)
 
     def start(self):
-
         self.worker = MaestralWorker(
             config_name=self.config_name,
             target=self._target,
