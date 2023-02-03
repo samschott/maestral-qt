@@ -15,6 +15,7 @@ from maestral.utils.appdirs import get_home_dir
 # local imports
 from . import __version__, __author__, __url__
 from .selective_sync_dialog import SelectiveSyncDialog
+from .bandwidth_dialog import BandwidthDialog
 from .utils import (
     LINE_COLOR_DARK,
     LINE_COLOR_LIGHT,
@@ -92,6 +93,7 @@ class SettingsWindow(QtWidgets.QWidget, Ui_SettingsWindow):
 
         self.mdbx = mdbx
         self.selective_sync_dialog = SelectiveSyncDialog(self.mdbx, parent=self)
+        self.bandwidth_dialog = BandwidthDialog(self.mdbx, parent=self)
         self.unlink_dialog = UnlinkDialog(self.mdbx, self.on_unlink, parent=self)
         self.autostart = AutoStart(self.mdbx.config_name)
 
@@ -115,6 +117,7 @@ class SettingsWindow(QtWidgets.QWidget, Ui_SettingsWindow):
             self.selective_sync_dialog.populate_folders_list
         )
         self.pushButtonExcludedFolders.clicked.connect(self.selective_sync_dialog.open)
+        self.pushButtonBandwidthLimits.clicked.connect(self.bandwidth_dialog.open)
         self.checkBoxStartup.stateChanged.connect(self.on_start_on_login_clicked)
         self.checkBoxNotifications.stateChanged.connect(self.on_notifications_clicked)
         self.comboBoxUpdateInterval.currentIndexChanged.connect(
