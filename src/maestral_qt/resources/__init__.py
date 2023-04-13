@@ -121,14 +121,12 @@ def system_tray_icon(status, geometry=None):
     else:
         # Prefer icons from theme if installed / existing. Fall back to loading our own
         # SVG icon with a color contrasting the status bar.
-
         theme_icon_name = f"maestral_tray-{status}"
         theme_icon_name_symbolic = f"maestral_tray-{status}-symbolic"
 
         # Prefer "symbolic" icons where the appearance is adapted by the platform
         # automatically. Specs for symbolic icons and their use in the system tray
         # vary between platforms. Fall back to regular icons instead.
-
         if QtGui.QIcon.hasThemeIcon(theme_icon_name_symbolic):
             icon = QtGui.QIcon.fromTheme(theme_icon_name_symbolic)
         elif QtGui.QIcon.hasThemeIcon(theme_icon_name):
@@ -222,7 +220,6 @@ def _pixel_at(x, y):
     Returns (r, g, b) color code for a pixel with given coordinates (each value is in
     0..256 limits)
     """
-
     screen = QtGui.QGuiApplication.primaryScreen()
     color = screen.grabWindow(0, x, y, 1, 1).toImage().pixel(0, 0)
 
