@@ -11,8 +11,9 @@ from maestral.autostart import (
     AutoStartLaunchd,
     AutoStartXDGDesktop,
     SupportedImplementations,
+    get_command_path,
 )
-from maestral.constants import BUNDLE_ID
+from maestral.constants import BUNDLE_ID, FROZEN
 
 
 class AutoStart:
@@ -25,12 +26,16 @@ class AutoStart:
     def __init__(self, config_name: str) -> None:
         self.implementation = self._get_available_implementation()
 
-        start_cmd_list = [sys.executable, "-m", "maestral_qt", "-c", config_name]
-        start_cmd = " ".join(start_cmd_list)
-        bundle_id = "{}.{}".format(BUNDLE_ID, config_name)
+        if FROZEN:
+            start_cmd = [sys.executable, "--config-name", config_name]
+        else:
+            command_location = get_command_path("maestral-qt", "maestral_qt")
+            start_cmd = [command_location, "--config-name", config_name]
 
         if self.implementation == SupportedImplementations.launchd:
-            self._impl = AutoStartLaunchd(bundle_id, start_cmd)
+            self._impl = AutoStartLaunchd(
+                f"{BUNDLE_ID}.{config_name}", " ".join(start_cmd)
+            )
 
         elif self.implementation == SupportedImplementations.xdg_desktop:
             additional_keys = {
@@ -43,7 +48,7 @@ class AutoStart:
             self._impl = AutoStartXDGDesktop(
                 filename=f"maestral-{config_name}.desktop",
                 app_name="Maestral",
-                start_cmd=start_cmd,
+                start_cmd=" ".join(start_cmd),
                 **additional_keys,
             )
         else:
