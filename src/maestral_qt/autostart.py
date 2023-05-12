@@ -33,9 +33,7 @@ class AutoStart:
             start_cmd = [command_location, "--config-name", config_name]
 
         if self.implementation == SupportedImplementations.launchd:
-            self._impl = AutoStartLaunchd(
-                f"{BUNDLE_ID}.{config_name}", " ".join(start_cmd)
-            )
+            self._impl = AutoStartLaunchd(f"{BUNDLE_ID}.{config_name}", start_cmd)
 
         elif self.implementation == SupportedImplementations.xdg_desktop:
             additional_keys = {
