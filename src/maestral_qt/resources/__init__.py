@@ -3,17 +3,22 @@
 import os
 import os.path as osp
 import platform
-from importlib.resources import path
 
 from PyQt6 import QtWidgets, QtCore, QtGui
 
+try:
+    from importlib.resources import as_file, files  # type: ignore
+
+    def resource_path(package: str, resource: str):
+        return as_file(files(package) / resource)
+
+except ImportError:
+    from importlib.resources import path as resource_path
+
+
+
 _icon_provider = QtWidgets.QFileIconProvider()
 _tmp_file_for_ext = dict()
-
-
-def resource_path(name):
-    """Returns the resource path as a string. Extracts the resource if necessary."""
-    return str(path("maestral_qt.resources", name).__enter__())
 
 
 APP_ICON_PATH = resource_path("maestral.png")
