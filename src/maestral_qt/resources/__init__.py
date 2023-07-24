@@ -9,13 +9,14 @@ from PyQt6 import QtWidgets, QtCore, QtGui
 try:
     from importlib.resources import as_file, files  # type: ignore
 
-    def resource_path(package: str, resource: str):
-        return as_file(files(package) / resource)
+    def resource_path(resource: str) -> str:
+        return str(files("maestral_qt.resources") / resource)
 
 except ImportError:
-    from importlib.resources import path as resource_path
+    from importlib.resources import path
 
-
+    def resource_path(resource: str) -> str:
+        return str(path("maestral_qt.resources", resource).__enter__())
 
 _icon_provider = QtWidgets.QFileIconProvider()
 _tmp_file_for_ext = dict()
