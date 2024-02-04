@@ -18,6 +18,7 @@ except ImportError:
     def resource_path(resource: str) -> str:
         return str(path("maestral_qt.resources", resource).__enter__())
 
+
 _icon_provider = QtWidgets.QFileIconProvider()
 _tmp_file_for_ext = dict()
 

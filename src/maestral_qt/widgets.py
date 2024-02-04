@@ -603,7 +603,6 @@ class CustomCombobox(QtWidgets.QComboBox):
 
 
 class QElidedLabel(QtWidgets.QLabel):
-
     """A QLabel with elided text
 
     Eliding is loosely based on
