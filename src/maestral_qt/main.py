@@ -279,6 +279,10 @@ class MaestralGuiApp(QtWidgets.QSystemTrayIcon):
 
         self.statusAction = self.menu.addAction(IDLE)
         self.statusAction.setEnabled(False)
+
+        self.syncIssuesAction = self.menu.addAction("Show Sync Issues...")
+        self.syncIssuesAction.triggered.connect(self.on_sync_issues_clicked)
+
         self.pauseAction = self.menu.addAction(
             self.RESUME_TEXT if self.mdbx.paused else self.PAUSE_TEXT
         )
@@ -308,8 +312,6 @@ class MaestralGuiApp(QtWidgets.QSystemTrayIcon):
         self.resumeNotificationsAction = QtGui.QAction("Turn on notifications")
         self.resumeNotificationsAction.triggered.connect(lambda: snooze_for(0))
 
-        self.syncIssuesAction = self.menu.addAction("Show Sync Issues...")
-        self.syncIssuesAction.triggered.connect(self.on_sync_issues_clicked)
         rebuildAction = self.menu.addAction("Rebuild index...")
         rebuildAction.triggered.connect(self.on_rebuild_clicked)
 
@@ -458,11 +460,13 @@ class MaestralGuiApp(QtWidgets.QSystemTrayIcon):
     def update_status(self):
         """Change icon according to status."""
         n_sync_errors = len(self.mdbx.sync_errors)
+        has_sync_issues = n_sync_errors > 0
+
         status = self.mdbx.status
         is_paused = self.mdbx.paused
 
         # update icon
-        if n_sync_errors > 0 and status == IDLE:
+        if has_sync_issues and status == IDLE:
             new_icon = SYNC_ERROR
         else:
             new_icon = status
@@ -471,12 +475,13 @@ class MaestralGuiApp(QtWidgets.QSystemTrayIcon):
 
         # update action texts
         if self.contextMenuVisible():
-            if n_sync_errors > 0:
+            self.syncIssuesAction.setEnabled(has_sync_issues)
+            if has_sync_issues:
                 self.syncIssuesAction.setText(
                     "Show Sync Issues ({0})...".format(n_sync_errors)
                 )
             else:
-                self.syncIssuesAction.setText("Show Sync Issues...")
+                self.syncIssuesAction.setText("No Sync Issues")
 
             self.pauseAction.setText(self.RESUME_TEXT if is_paused else self.PAUSE_TEXT)
             self.accountUsageAction.setText(self.mdbx.get_state("account", "usage"))
