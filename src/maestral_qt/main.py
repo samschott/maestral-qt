@@ -179,8 +179,21 @@ class MaestralGuiApp(QtWidgets.QSystemTrayIcon):
 
         return icons
 
-    def load_maestral(self):
-        self.mdbx = self.get_or_start_maestral_daemon()
+    def load_maestral(self, start_result):
+        if start_result == Start.Failed:
+            title = "Could not start Maestral"
+            message = (
+                "Could not start or connect to sync daemon. Please try again "
+                "and contact the developer if this issue persists."
+            )
+            show_dialog(title, message, level="error")
+            self.quit()
+        elif start_result == Start.AlreadyRunning:
+            self._started = False
+        elif start_result == Start.Ok:
+            self._started = True
+
+        self.mdbx = MaestralProxy(self.config_name)
 
         try:
             pending_link = self.mdbx.pending_link
@@ -200,24 +213,6 @@ class MaestralGuiApp(QtWidgets.QSystemTrayIcon):
             self.mdbx.start_sync()
         else:
             self.quit()
-
-    def get_or_start_maestral_daemon(self):
-        res = start_maestral_daemon_process(self.config_name)
-
-        if res == Start.Failed:
-            title = "Could not start Maestral"
-            message = (
-                "Could not start or connect to sync daemon. Please try again "
-                "and contact the developer if this issue persists."
-            )
-            show_dialog(title, message, level="error")
-            self.quit()
-        elif res == Start.AlreadyRunning:
-            self._started = False
-        elif res == Start.Ok:
-            self._started = True
-
-        return MaestralProxy(self.config_name)
 
     def setup_ui_unlinked(self):
         self.setToolTip("Not linked.")
@@ -600,17 +595,17 @@ class MaestralGuiApp(QtWidgets.QSystemTrayIcon):
 
 
 # noinspection PyArgumentList
-def run(config_name="maestral"):
+def run(config_name, start_result: Start):
     """
     This is the main interactive entry point which starts the Qt GUI.
 
-    :param str config_name: Name of Maestral config to run.
+    :param config_name: Name of Maestral config to run.
+    :param start_result: Result from starting the sync daemon.
     """
-
     app = QtWidgets.QApplication(["Maestral"])
     app.setWindowIcon(QtGui.QIcon(APP_ICON_PATH))
     app.setQuitOnLastWindowClosed(False)
 
     maestral_gui = MaestralGuiApp(config_name)
-    maestral_gui.load_maestral()
+    maestral_gui.load_maestral(start_result)
     sys.exit(app.exec())
