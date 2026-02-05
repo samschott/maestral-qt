@@ -4,6 +4,7 @@
 import argparse
 
 # local imports
+from maestral.daemon import Start
 from maestral_qt.main import run
 
 
@@ -17,7 +18,7 @@ def main():
     parser.add_argument("-c", "--config-name", default="maestral")
     parsed_args = parser.parse_args()
 
-    run(parsed_args.config_name)
+    run(parsed_args.config_name, Start.Uninitialized)
 
 
 if __name__ == "__main__":

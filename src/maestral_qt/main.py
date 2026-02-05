@@ -607,5 +607,6 @@ def run(config_name, start_result: Start):
     app.setQuitOnLastWindowClosed(False)
 
     maestral_gui = MaestralGuiApp(config_name)
+    start_result = start_maestral_daemon_process(config_name=maestral_gui.config_name)
     maestral_gui.load_maestral(start_result)
     sys.exit(app.exec())
